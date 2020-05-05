@@ -1,0 +1,29 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="system">res/icons/emblem-system-symbolic.svg</file>
+        <file alias="empty">res/icons/empty.png</file>
+        <file alias="loading">res/icons/animagion.gif</file>
+        <file alias="gizmoduck">res/icons/icon.png</file>
+        <file alias="tor_on">res/icons/network-vpn-symbolic.svg</file>
+        <file alias="tor_off">res/icons/network-vpn-acquiring-symbolic.svg</file>
+        <file alias="close">res/icons/window-close-symbolic.svg</file>
+        <file alias="forward">res/icons/media-playback-start-symbolic.svg</file>
+        <file alias="refresh">res/icons/view-refresh-symbolic.svg</file>
+        <file alias="back">res/icons/media-playback-start-symbolic-rtl.svg</file>
+        <file alias="tox_offline">res/icons/user-offline-symbolic.svg</file>
+        <file alias="tox_away">res/icons/user-away-symbolic.svg</file>
+        <file alias="tox_idle">res/icons/user-idle-symbolic.svg</file>
+        <file>res/icons/user-not-tracked-symbolic.svg</file>
+        <file alias="tox_connecting">res/icons/user-status-pending-symbolic.svg</file>
+        <file>res/icons/user-invisible-symbolic.svg</file>
+        <file alias="tox_online">res/icons/user-available-symbolic.svg</file>
+        <file>res/icons/user-busy-symbolic.svg</file>
+        <file alias="attachment">res/icons/mail-attachment-symbolic.svg</file>
+    </qresource>
+    <qresource prefix="/scripts">
+        <file alias="custom_css">res/scripts/custom_css.js</file>
+    </qresource>
+    <qresource prefix="/locale">
+        <file>gizmoduck_ru.qm</file>
+    </qresource>
+</RCC>

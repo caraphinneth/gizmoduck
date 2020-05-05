@@ -1,0 +1,6 @@
+#Allow common captcha providers.
+authedmine.com
+solvemedia.com
+hcaptcha.com
+recaptcha.net
+sinajs.cn

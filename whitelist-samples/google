@@ -1,0 +1,13 @@
+#Allow embedding Google services (maps, calendars, on-site search etc).
+googleapis.com
+apis.google.com
+client-channel.google.com
+google.com/cse
+google.com/jsapi
+google.com/uds
+google.com/complete/search
+calendar.google.com
+maps.google.com
+google.com/calendar/embed
+google.com/maps/embed
+google.com/recaptcha

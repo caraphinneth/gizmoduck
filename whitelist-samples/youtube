@@ -1,0 +1,10 @@
+#Allow embedding youtube videos.
+googlevideo.com
+ytimg.com
+img.youtube.com
+youtube.com/yts/
+youtube.com/get_video_info
+youtube.com/embed/
+youtube.com/iframe_api
+youtube.com/s/player
+youtube.com/api/timedtext
