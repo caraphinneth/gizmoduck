@@ -1,9 +1,11 @@
 #pragma once
 #include <QTabWidget>
 #include <QWebEngineHistory>
+#include <QWebEngineFullScreenRequest>
 #include "webview.h"
 #include "setting_tab.h"
 #include "debug_tab.h"
+#include "fullscreen.h"
 #include "request_filter.h"
 #include "tox_ui.h"
 
@@ -53,8 +55,9 @@ public slots:
 private slots:
 
     void current_changed();
+    void fullscreen_request (QWebEngineFullScreenRequest request);
 
 private:
     RequestFilter* request_filter;
-
+    QScopedPointer<FullScreenWindow> fullscreen;
 };

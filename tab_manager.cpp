@@ -236,6 +236,7 @@ WebView *TabWidget::create_tab (bool background)
          seview->setUrl (QUrl::fromUserInput (url));
     });
 
+    connect(view->page(), &QWebEnginePage::fullScreenRequested, this, &TabWidget::fullscreen_request);
 
     if (!background)
     {
@@ -566,4 +567,25 @@ DebugTab *TabWidget::debug_tab()
     setCurrentWidget (view);
 
     return view;
+}
+
+void TabWidget::fullscreen_request (QWebEngineFullScreenRequest request)
+{
+    WebView *view = qobject_cast<WebView*>(widget (currentIndex()));
+    if (view)
+    {
+        if (request.toggleOn())
+        {
+            if (fullscreen)
+                return;
+            request.accept();
+            fullscreen.reset(new FullScreenWindow (view));
+        } else
+        {
+            if (!fullscreen)
+                return;
+            request.accept();
+            fullscreen.reset();
+        }
+    }
 }

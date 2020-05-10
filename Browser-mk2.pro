@@ -22,6 +22,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += main.cpp \
     browser_mainwindow.cpp \
     dockwidget.cpp \
+    fullscreen.cpp \
     message_log.cpp \
     tab_manager.cpp \
     tox_client.c \
@@ -40,6 +41,7 @@ SOURCES += main.cpp \
 HEADERS += \
     browser_mainwindow.h \
     dockwidget.h \
+    fullscreen.h \
     message_log.h \
     tab_manager.h \
     tox_client.h \
