@@ -1,4 +1,5 @@
 #include <QAuthenticator>
+#include <QIcon>
 #include <QVBoxLayout>
 #include <QLineEdit>
 #include <QTimer>
@@ -13,10 +14,23 @@ WebPage::WebPage (QWebEngineProfile *profile, QWidget *parent): QWebEnginePage (
     connect(this, &QWebEnginePage::recommendedStateChanged, this, [this]() {
         if (recommendedState()==QWebEnginePage::LifecycleState::Active)
             lifecycle->start (1);
-        else if (recommendedState()==QWebEnginePage::LifecycleState::Frozen)
-            lifecycle->start (15*60*1000);
-        else if (recommendedState()==QWebEnginePage::LifecycleState::Discarded)
-            lifecycle->start (15*60*1000);
+        else if  (!isVisible())
+        {
+            if (recommendedState()==QWebEnginePage::LifecycleState::Frozen)
+                lifecycle->start (15*60*1000);
+            else if (recommendedState()==QWebEnginePage::LifecycleState::Discarded)
+                lifecycle->start (15*60*1000);
+        }
+    });
+
+    connect (this, &QWebEnginePage::lifecycleStateChanged, [this](QWebEnginePage::LifecycleState state)
+    {
+        if (state == QWebEnginePage::LifecycleState::Discarded)
+            emit iconChanged (QIcon (QStringLiteral (":/icons/sleep")));
+        else if (state == QWebEnginePage::LifecycleState::Frozen)
+            emit iconChanged (QIcon (QStringLiteral (":/icons/freeze")));
+        else
+            emit iconChanged (icon());
     });
 
     connect(lifecycle, &QTimer::timeout, this, [this]() {

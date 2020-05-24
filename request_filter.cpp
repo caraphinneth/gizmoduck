@@ -388,12 +388,6 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo &info)
             return true;
         }
     }
-    // Otherwise gather stats.
-    intelligent_resolver_class *group;
-    intelligent_resolver_record *record;
-    intelligent_resolver_data_update (info.firstPartyUrl(), TLD (destination_host).join("."), info.resourceType());
-    group = intelligent_resolver->value (info.firstPartyUrl());
-    record = group->value (info.resourceType());
 
     // Okay, if it's third-party... we block by default and whitelist what's truly needed.
     // Always whitelist:
@@ -419,6 +413,13 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo &info)
         debug_message ("URL: "+url+", source: "+info.firstPartyUrl ().toString ()+", TLD+1: "+TLD (source_host).first());
         return false;
     }
+
+    // Otherwise gather stats.
+    intelligent_resolver_class *group;
+    intelligent_resolver_record *record;
+    intelligent_resolver_data_update (info.firstPartyUrl(), TLD (destination_host).join("."), info.resourceType());
+    group = intelligent_resolver->value (info.firstPartyUrl());
+    record = group->value (info.resourceType());
 
     /* if
     (

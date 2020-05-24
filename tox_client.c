@@ -14,6 +14,7 @@ Tox *create_tox()
 
     tox_options_default(&options);
     options.ipv6_enabled = false;
+    options.local_discovery_enabled = false;
 
     printf("Reading settings...\n");
 
