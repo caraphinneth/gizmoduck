@@ -1,6 +1,7 @@
-#include "file_dialog.h"
 #include <QGridLayout>
 #include <QMovie>
+
+#include "file_dialog.h"
 
 // Custom file dialog with image preview for uploads.
 FileDialog::FileDialog (QWidget *parent, const QString &caption, const QString &directory, const QString &filter) : QFileDialog (parent, caption, directory, filter)

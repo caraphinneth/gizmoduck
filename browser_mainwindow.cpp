@@ -1,8 +1,8 @@
-#include <QVBoxLayout>
-#include <QToolBar>
-#include <QTabBar>
 #include <QNetworkProxyFactory>
 #include <QSettings>
+#include <QToolBar>
+#include <QTabBar>
+#include <QVBoxLayout>
 
 #include "browser_mainwindow.h"
 #include "dockwidget.h"

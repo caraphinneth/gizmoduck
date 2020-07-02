@@ -1,8 +1,9 @@
 #include <QAuthenticator>
 #include <QIcon>
-#include <QVBoxLayout>
 #include <QLineEdit>
 #include <QTimer>
+#include <QVBoxLayout>
+
 #include "webpage.h"
 #include "file_dialog.h"
 
@@ -13,8 +14,8 @@ WebPage::WebPage (QWebEngineProfile *profile, QWidget *parent): QWebEnginePage (
     lifecycle = new QTimer (this);
     connect(this, &QWebEnginePage::recommendedStateChanged, this, [this]() {
         if (recommendedState()==QWebEnginePage::LifecycleState::Active)
-            lifecycle->start (1);
-        else if  (!isVisible())
+            lifecycle->start (500);
+        else if (!isVisible())
         {
             if (recommendedState()==QWebEnginePage::LifecycleState::Frozen)
                 lifecycle->start (15*60*1000);

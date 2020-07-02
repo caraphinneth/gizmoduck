@@ -1,9 +1,11 @@
-#include "side_tabs.h"
+#include <QAbstractItemDelegate>
+#include <QPushButton>
 #include <QStylePainter>
 #include <QStyleOptionTab>
+
+#include "side_tabs.h"
+
 #include <QDebug>
-#include <QPushButton>
-#include <QAbstractItemDelegate>
 
 // Side tabs, polishing still needed.
 SideTabs::SideTabs (QWidget *parent, int w, int h): QTabBar (parent)

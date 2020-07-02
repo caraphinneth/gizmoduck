@@ -1,4 +1,5 @@
-#include <QNetworkProxy>
+//#include <QNetworkProxy>
+
 #include "setting_tab.h"
 
 QString read_comment (QString filename)
@@ -165,10 +166,11 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
     QCheckBox *gpu_rasterizer = new QCheckBox (tr("Enable GPU rasterization of web pages. This is usually faster, but may also introduce delayed response.\nThere's no best answer here."), this);
     if (settings.value ("gpu_enabled", false).toBool())
         gpu_rasterizer->setChecked(true);
-
+    /*
     QCheckBox *zero_copy = new QCheckBox (tr("Enable faster zero-copy implementation for CPU-rasterized pages.\nIdeally, this will allow the rasterizer to switch between GPU and zero-copy implementation based on the content.\nThis is currently in development, typical problems you may face: rendering crash when switching to console and back; black view if the option above was not enabled."), this);
     if (settings.value ("zero_copy", false).toBool())
         zero_copy->setChecked(true);
+    */
 
     settings.endGroup();
 
@@ -186,7 +188,7 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
         }
         settings.endGroup();
     });
-
+    /*
     connect (zero_copy, &QCheckBox::toggled, [this](bool checked)
     {
         QSettings settings;
@@ -201,10 +203,11 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
         }
         settings.endGroup();
     });
+    */
 
     QVBoxLayout *rasterizer_layout = new QVBoxLayout (this);
     rasterizer_layout->addWidget (gpu_rasterizer);
-    rasterizer_layout->addWidget (zero_copy);
+    //rasterizer_layout->addWidget (zero_copy);
     rasterizer->setLayout (rasterizer_layout);
 
     QGroupBox *experimental = new QGroupBox (tr("Expert settings (applied on restart)"), this);
@@ -213,11 +216,12 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
     QCheckBox *ignore_gpu_blacklist = new QCheckBox (tr("Force GPU acceleration. Note that in most cases web tabs will be accelerated anyway, but this may help with video decoding.\nMay as well have no real effect."), this);
     if (settings.value ("ignore_gpu_blacklist", false).toBool())
        ignore_gpu_blacklist->setChecked(true);
-
+    /*
     QCheckBox *enable_gpu_buffers = new QCheckBox (tr("Enabled hardware-accelerated GPU memory buffers. Note this will have no real effect on most systems despite being reported as enabled."), this);
     if (settings.value ("enable_gpu_buffers", false).toBool())
         enable_gpu_buffers->setChecked(true);
-    settings.endGroup ();
+    */
+    settings.endGroup();
 
     connect (ignore_gpu_blacklist, &QCheckBox::toggled, [this](bool checked)
     {
@@ -233,7 +237,7 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
         }
         settings.endGroup();
     });
-
+    /*
     connect (enable_gpu_buffers, &QCheckBox::toggled, [this](bool checked)
     {
         QSettings settings;
@@ -248,11 +252,11 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
         }
         settings.endGroup();
     });
-
+    */
 
     QVBoxLayout *experimental_layout = new QVBoxLayout (this);
     experimental_layout->addWidget (ignore_gpu_blacklist);
-    experimental_layout->addWidget (enable_gpu_buffers);
+    //experimental_layout->addWidget (enable_gpu_buffers);
     experimental->setLayout (experimental_layout);
 
     QGroupBox* content_filters = new QGroupBox (tr("Content Filters:"), this);
@@ -269,6 +273,7 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
 
     settings.beginGroup ("Filtering");
     QStringList enabled_filters = settings.value ("enabled").toStringList();
+    qDebug() << enabled_filters;
     settings.endGroup();
 
     foreach (QString filename, all_filters)
@@ -298,7 +303,7 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
         if (settings.value ("enabled").toStringList() !=list)
         {
             settings.setValue ("enabled", QVariant::fromValue(list));
-            emit reload_filters ();
+            emit reload_filters();
         }
         settings.endGroup();
         comment->setText (read_comment ("./whitelist/"+item->text()));

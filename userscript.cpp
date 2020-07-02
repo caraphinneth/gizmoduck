@@ -1,4 +1,5 @@
 #include <QFile>
+
 #include "userscript.h"
 
 UserScript::UserScript(): QWebEngineScript()

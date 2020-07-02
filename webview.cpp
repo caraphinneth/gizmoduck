@@ -1,11 +1,13 @@
+#include <QApplication>
 #include <QContextMenuEvent>
 #include <QMenu>
-#include <QWebEngineContextMenuData>
 #include <QMouseEvent>
+#include <QWebEngineContextMenuData>
+
 #include "browser_mainwindow.h"
 #include "tab_manager.h"
 #include "webview.h"
-#include <QApplication>
+
 #include "QDebug"
 //#include <QTimer>
 //#include <QStackedLayout>
@@ -179,7 +181,7 @@ void WebView::contextMenuEvent (QContextMenuEvent *event)
     }
 
     QAction *action3 = new QAction (tr("Translate Page"), this);
-    action3->setData ("http://translate.google.com/translate?js=n&sl=auto&tl=en&u="+this->url().toString());
+    action3->setData ("https://translate.google.com/translate?js=n&sl=auto&tl=en&u="+this->url().toString());
     connect (action3, &QAction::triggered, this, &WebView::follow_link);
     menu->addAction (action3);
 

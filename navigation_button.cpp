@@ -1,5 +1,6 @@
-#include "navigation_button.h"
 #include "QMouseEvent"
+
+#include "navigation_button.h"
 
 // Custom buttons reacting to various sorts of clicks differently.
 NavButton::NavButton (QWidget *parent): QPushButton (parent)

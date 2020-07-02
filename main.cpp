@@ -1,12 +1,15 @@
 #include <QApplication>
-#include <QTranslator>
 #include <QLibraryInfo>
+#include <QTranslator>
+
 #include "browser_mainwindow.h"
 
 int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute (Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setAttribute (Qt::AA_UseHighDpiPixmaps);
+    QCoreApplication::setAttribute (Qt::AA_ShareOpenGLContexts);
+
     QCoreApplication::setApplicationName ("Gizmoduck");
    // QCoreApplication::setOrganizationName ("Clockwork Fairies");
     //setWindowTitle( QCoreApplication::applicationName() );
@@ -47,22 +50,29 @@ int main(int argc, char *argv[])
         arguments.append ("--enable-gpu-rasterization");
     else
         arguments.append ("--disable-gpu-rasterization");
+    /*
     if (settings.value ("zero_copy", false).toBool())
         arguments.append ("--enable-zero-copy");
     else
         arguments.append ("--disable-zero-copy");
+    */
     settings.endGroup();
 
     settings.beginGroup ("Experimental");
     if (settings.value ("ignore_gpu_blacklist", false).toBool())
         arguments.append ("--ignore-gpu-blacklist");
+    /*
     if (settings.value ("enable_gpu_buffers", false).toBool())
         arguments.append ("--enable-native-gpu-memory-buffers");
     else
         arguments.append ("--disable-native-gpu-memory-buffers");
+    */
     settings.endGroup();
 
+    arguments.append ("--proxy-pac-url=file:///home/daiyousei/build-Browser-mk2-Desktop-Release/proxy.pac");
+    arguments.append ("--enable-vulkan");
     arguments.append ("--allow-file-access-from-files");
+
     argc=arguments.count();
 
     char **newargv = new char* [arguments.count()];

@@ -1,10 +1,11 @@
-#include "QHostAddress"
-#include "QDebug"
 #include "QDir"
+#include "QHostAddress"
 #include "QRegularExpression"
 #include "QSettings"
 
 #include "request_filter.h"
+
+#include "QDebug"
 
 QList <whitelist_record> load_filter_from_file (QString filename, QWebEngineUrlRequestInfo::ResourceType type)
 {
@@ -104,6 +105,9 @@ QString ResourceClass (QWebEngineUrlRequestInfo::ResourceType type)
     case QWebEngineUrlRequestInfo::ResourceTypeServiceWorker: resource_type = "service worker"; break;
     case QWebEngineUrlRequestInfo::ResourceTypeCspReport: resource_type = "policy report (you should not GET this)"; break;
     case QWebEngineUrlRequestInfo::ResourceTypePluginResource: resource_type = "plugin reaching out"; break;
+    case QWebEngineUrlRequestInfo::ResourceTypeNavigationPreloadMainFrame: resource_type = "main frame preload service worker"; break;
+    case QWebEngineUrlRequestInfo::ResourceTypeNavigationPreloadSubFrame: resource_type = "subframe preload service worker"; break;
+
     default: resource_type = "UNKNOWN (websocket connection?)";
     }
     return resource_type;
@@ -129,6 +133,8 @@ QWebEngineUrlRequestInfo::ResourceType ResourceClass (QString type)
     if (type == "service worker") return QWebEngineUrlRequestInfo::ResourceTypeServiceWorker;
     if (type == "policy report") return QWebEngineUrlRequestInfo::ResourceTypeCspReport;
     if (type == "plugin reaching out") return QWebEngineUrlRequestInfo::ResourceTypePluginResource;
+    if (type == "main frame preload service worker") return QWebEngineUrlRequestInfo::ResourceTypeNavigationPreloadMainFrame;
+    if (type == "subframe preload service worker") return QWebEngineUrlRequestInfo::ResourceTypeNavigationPreloadSubFrame;
     return QWebEngineUrlRequestInfo::ResourceTypeMainFrame;
 }
 
@@ -143,6 +149,7 @@ void RequestFilter::load_filters()
     QSettings settings;
     settings.beginGroup ("Filtering");
     QStringList enabled_filters = settings.value ("enabled").toStringList();
+    qDebug() << enabled_filters;
     settings.endGroup();
 
     foreach (QString filename, enabled_filters)
@@ -178,6 +185,7 @@ void RequestFilter::interceptRequest (QWebEngineUrlRequestInfo &info)
     }
     else
     {
+        //info.block (true);
         info.redirect (QUrl::fromUserInput ("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="));
     }
 }
@@ -208,9 +216,10 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo &info)
     // Always allow certain request types.
     if
     (
-            (info.resourceType() == (QWebEngineUrlRequestInfo::ResourceTypeFavicon))||
-            (info.resourceType() == (QWebEngineUrlRequestInfo::ResourceTypeFontResource))||
-            (info.resourceType() == (QWebEngineUrlRequestInfo::ResourceTypeStylesheet))
+            (info.resourceType() == QWebEngineUrlRequestInfo::ResourceTypeMainFrame)||
+            (info.resourceType() == QWebEngineUrlRequestInfo::ResourceTypeFavicon)||
+            (info.resourceType() == QWebEngineUrlRequestInfo::ResourceTypeFontResource)||
+            (info.resourceType() == QWebEngineUrlRequestInfo::ResourceTypeStylesheet)
     )
     {
         // debug_message ("Requested " + ResourceClass (info.resourceType ())+" "+url+" allowed.");
@@ -250,7 +259,7 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo &info)
             url.contains ("/ads/")||
             url.contains ("/ptracking")||
             url.contains ("/get_video_info")|| // This one's complicated... youtube uses this to deliver ads when first-party, but not remotely. Can break youtube gaming?
-
+            url.contains ("/cthru")||
             destination_host.startsWith ("ad.")||
             destination_host.startsWith ("ads.")||
             destination_host.startsWith ("ads-")

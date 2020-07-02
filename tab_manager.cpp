@@ -2,14 +2,15 @@
 #include <QHBoxLayout>
 #include <QEvent>
 #include <QSaveFile>
+#include <QTabBar>
+#include <QWebEngineProfile>
+#include <QWebEngineSettings>
 #include <QWebEngineScriptCollection>
-#include "QTabBar"
-#include "QWebEngineProfile"
-#include "QWebEngineSettings"
-#include "tab_manager.h"
-#include "webpage.h"
+
 #include "side_tabs.h"
+#include "tab_manager.h"
 #include "userscript.h"
+#include "webpage.h"
 
 // The tab widget with web views and more for tab contents. Navigation functions are also handled by this one.
 TabWidget::TabWidget (QWidget *parent): QTabWidget (parent)
@@ -21,12 +22,13 @@ TabWidget::TabWidget (QWidget *parent): QTabWidget (parent)
     //profile->settings()->setAttribute (QWebEngineSettings::ScreenCaptureEnabled,true);
     profile->settings()->setAttribute (QWebEngineSettings::JavascriptCanOpenWindows, false);
     profile->settings()->setAttribute (QWebEngineSettings::PluginsEnabled, true);
-    profile->settings()->setAttribute (QWebEngineSettings::XSSAuditingEnabled, false);
+    //profile->settings()->setAttribute (QWebEngineSettings::XSSAuditingEnabled, false);
     //profile->settings()->setAttribute (QWebEngineSettings::FocusOnNavigationEnabled, true);
     profile->settings()->setAttribute (QWebEngineSettings::WebRTCPublicInterfacesOnly, true);
     profile->settings()->setAttribute (QWebEngineSettings::PlaybackRequiresUserGesture, false);
     profile->settings()->setAttribute (QWebEngineSettings::DnsPrefetchEnabled, true);
     //profile->settings()->setUnknownUrlSchemePolicy (QWebEngineSettings::AllowAllUnknownUrlSchemes);
+    profile->settings()->setAttribute (QWebEngineSettings::AllowRunningInsecureContent, true);
 
     profile->settings()->setFontFamily (QWebEngineSettings::StandardFont, "Roboto");
     profile->settings()->setFontFamily (QWebEngineSettings::SerifFont, "Roboto");
@@ -227,13 +229,13 @@ WebView *TabWidget::create_tab (bool background)
     connect (view, &WebView::search_requested, [this] (QString text)
     {
          WebView *seview = create_tab (false);
-         seview->setUrl (QUrl::fromUserInput ("https://duckduckgo.com/?q="+text));
+         seview->load (QUrl::fromUserInput ("https://duckduckgo.com/?q="+text));
     });
 
     connect (view, &WebView::link_requested, [this] (const QString url)
     {
          WebView *seview = create_tab (false);
-         seview->setUrl (QUrl::fromUserInput (url));
+         seview->load (QUrl::fromUserInput (url));
     });
 
     connect(view->page(), &QWebEnginePage::fullScreenRequested, this, &TabWidget::fullscreen_request);
@@ -246,7 +248,7 @@ WebView *TabWidget::create_tab (bool background)
         //tabBar()->setStyleSheet (QString ("QTabBar::tab { width: %1px; } ") .arg(view->size().height()/count()-1));
         //tabBar()->setStyleSheet (QString ("QTabBar::tab { height: %1px; width: %2px; }").arg (view->size().height()/count()-1).arg(tabBar()->minimumHeight()));
         //tabBar()->setTabButton (indexOf(view), SideTabs::RightSide, new QToolButton(this));
-    view->setUrl (QUrl::fromUserInput("about:blank"));
+    view->load (QUrl::fromUserInput("about:blank"));
     return view;
 }
 
@@ -308,7 +310,7 @@ void TabWidget::set_url (const QUrl &url)
     WebView *view = qobject_cast<WebView*>(widget (currentIndex()));
     if (view)
     {
-         view->setUrl (url);
+         view->load (url);
         //view->setFocus();
     }
 }
@@ -364,7 +366,7 @@ void TabWidget::refresh_no_cache()
 void TabWidget::open_in_background_tab (const QUrl &url)
 {
     WebView *new_tab = create_tab (true);
-    new_tab->setUrl(url);
+    new_tab->load(url);
 }
 
 //TODO: change to tab cloning. This implementation opens a page with no history. Though that conserves memory.
