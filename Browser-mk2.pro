@@ -3,10 +3,13 @@ QT += widgets webenginewidgets sql
 CONFIG += c++14 exceptions_off
 CONFIG -= app_bundle
 
-QMAKE_CXXFLAGS+="-O2 -march=native -ftree-vectorize -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block -flto=8"
-QMAKE_LFLAGS+="-flto"
+QMAKE_CXXFLAGS+="-O2 -march=native -ftree-vectorize -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block"
+#-flto=8" QMAKE_LFLAGS+="-flto"
 
-LIBS += -ltoxcore -lsodium
+contains(USE_TOX, 1) {
+    DEFINES += ENABLE_TOX
+    LIBS += -ltoxcore -lsodium
+}
 
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
@@ -25,8 +28,6 @@ SOURCES += main.cpp \
     fullscreen.cpp \
     message_log.cpp \
     tab_manager.cpp \
-    tox_client.c \
-    tox_ui.cpp \
     webview.cpp \
     navigation_button.cpp \
     webpage.cpp \
@@ -36,16 +37,15 @@ SOURCES += main.cpp \
     gl_widget.cpp \
     debug_tab.cpp \
     userscript.cpp \
-    request_filter.cpp
+    request_filter.cpp 
 
 HEADERS += \
     browser_mainwindow.h \
     dockwidget.h \
     fullscreen.h \
     message_log.h \
+    tab_groups.h \
     tab_manager.h \
-    tox_client.h \
-    tox_ui.h \
     webview.h \
     navigation_button.h \
     webpage.h \
@@ -56,6 +56,16 @@ HEADERS += \
     gl_widget.h \
     debug_tab.h \
     userscript.h
+
+contains(USE_TOX, 1) {
+    SOURCES += \
+        tox_client.c \
+        tox_ui.cpp
+
+    HEADERS += \
+    tox_client.h \
+    tox_ui.h
+}
 
 TRANSLATIONS = gizmoduck_ru.ts
 

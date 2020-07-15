@@ -1,5 +1,7 @@
 #pragma once
 #include <QWebEngineView>
+#include "tab_groups.h"
+#include "webpage.h"
 //#if QT_VERSION < 0x051000
 //#include <QPointer>
 //#endif
@@ -10,6 +12,9 @@ struct WebView : public QWebEngineView
 
 public:
     WebView (QWidget *parent = nullptr);
+
+    //QString host;
+    //TabGroup* pages;
 
     // int loadProgress() const;
    // bool isWebActionEnabled(QWebEnginePage::WebAction webAction) const;
@@ -33,6 +38,7 @@ signals:
 private:
     void search_selected();
     void follow_link();
+    void intercept_popup(const QUrl &url);
 
     QPoint position;
    // void createWebActionTrigger(QWebEnginePage *page, QWebEnginePage::WebAction);

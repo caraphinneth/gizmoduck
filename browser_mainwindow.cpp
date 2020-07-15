@@ -77,9 +77,11 @@ MainWindow::MainWindow()
     settings_button->setIcon (QIcon (QStringLiteral (":/icons/system")));
     settings_button->setToolTip (tr("Settings"));
 
+#ifdef ENABLE_TOX
     tox_button = new NavButton (toolbar);
     tox_button->setIcon (QIcon (QStringLiteral (":/icons/tox_connecting")));
     toolbar->addWidget (tox_button);
+#endif
 
     toolbar->addWidget (settings_button);
 
@@ -187,6 +189,11 @@ MainWindow::MainWindow()
         }
     });
 
+    connect (tab_manager, &TabWidget::tabBarDoubleClicked, [this]()
+    {
+        address_box->selectAll();
+        address_box->setFocus();
+    });
 
     connect (back_button, &NavButton::left_clicked, tab_manager, &TabWidget::back);
     connect (forward_button, &NavButton::left_clicked, tab_manager, &TabWidget::forward);
@@ -203,7 +210,7 @@ MainWindow::MainWindow()
 
     connect (close_button, &NavButton::left_clicked, [this]()
     {
-        tab_manager->close_tab (tab_manager->currentIndex());
+        tab_manager->close_page (tab_manager->currentIndex());
     });
 
     connect (close_button, &NavButton::right_clicked, tab_manager, &TabWidget::restore_tab);
@@ -213,6 +220,7 @@ MainWindow::MainWindow()
         printf ("Placeholder!\n");
     });
 
+#ifdef ENABLE_TOX
     tox_manager = new ToxManager;
 
     connect (tox_manager, &ToxManager::friend_message_received, this, &MainWindow::chat);
@@ -247,7 +255,7 @@ MainWindow::MainWindow()
             emit chat_area->file_received (filename);
         }
     });
-
+#endif
 
     QAction *toggle_search = new QAction (this);
     toggle_search->setShortcut (Qt::Key_F | Qt::CTRL);
@@ -300,10 +308,15 @@ TabWidget *MainWindow::tabWidget() const
 
 void MainWindow::closeEvent (QCloseEvent*)
 {
+#ifdef ENABLE_TOX
     delete tox_manager;
+#endif
+
+    tab_manager->cleanup();
     save_settings();
 }
 
+#ifdef ENABLE_TOX
 void MainWindow::chat(const QString &message, const long friend_number)
 {
     if (!active_chats.contains (friend_number))
@@ -328,3 +341,4 @@ void MainWindow::chat(const QString &message, const long friend_number)
     ToxWidget *chat_area = active_chats.value (friend_number);
     emit chat_area->message_received (message);
 }
+#endif

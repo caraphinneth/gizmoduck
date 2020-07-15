@@ -15,5 +15,5 @@ private slots:
 
 protected:
     QStringList chooseFiles (QWebEnginePage::FileSelectionMode mode, const QStringList &oldFiles, const QStringList &acceptedMimeTypes) override; // Overload to implement non-useless file dialog.
-
+    bool acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame);
 };

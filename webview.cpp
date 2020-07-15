@@ -82,34 +82,49 @@ WebView::WebView (QWidget *parent): QWebEngineView (parent)
 */
 }
 
-QWebEngineView *WebView::createWindow (QWebEnginePage::WebWindowType type)
+QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType type)
 {
     MainWindow *win = qobject_cast<MainWindow*>(window());
     if (!win)
         return nullptr;
 
+/*
     switch (type)
     {
         case QWebEnginePage::WebBrowserTab:
-            return win->tabWidget()->create_tab (false);
+            return win->tabWidget()->create_tab (false, false);
 
         case QWebEnginePage::WebBrowserBackgroundTab:
-            return win->tabWidget()->create_tab (true);
+            return win->tabWidget()->create_tab (true, false);
 
         case QWebEnginePage::WebBrowserWindow:
-            return win->tabWidget()->create_tab (false);
+            return win->tabWidget()->create_tab (false, false);
 
         case QWebEnginePage::WebDialog:
         {
-            return win->tabWidget()->create_tab();
+            return win->tabWidget()->create_tab(true, false);
             //WebPopupWindow *popup = new WebPopupWindow(page()->profile());
             //return popup->view();
         }
     }
+
     return nullptr;
+    */
+
+    WebView* view = new WebView();
+    connect (view, &WebView::urlChanged, this, &WebView::intercept_popup);
+    return view;
 }
 
-void WebView::search_selected ()
+void WebView::intercept_popup(const QUrl &url)
+{
+    if(WebView* view = qobject_cast<WebView*>(sender()))
+    {
+        emit link_requested (url.toString());
+        view->deleteLater();
+    }
+}
+void WebView::search_selected()
 {
     QAction *action = qobject_cast<QAction *> (sender());
 
@@ -119,7 +134,7 @@ void WebView::search_selected ()
     emit search_requested (action->data().toString());
 }
 
-void WebView::follow_link ()
+void WebView::follow_link()
 {
     QAction *action = qobject_cast<QAction *> (sender());
 

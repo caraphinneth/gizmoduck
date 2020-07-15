@@ -12,7 +12,7 @@ public:
 
 private:
     void paintEvent (QPaintEvent*);
+    void wheelEvent (QWheelEvent* event);
     QMovie *loading_icon;
-
 };
 

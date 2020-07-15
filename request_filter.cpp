@@ -201,7 +201,6 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo &info)
     {
         return false;
     }
-
     // Always block certain request types.
     /*else if
     (

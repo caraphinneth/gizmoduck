@@ -5,6 +5,7 @@
 #include <QVBoxLayout>
 
 #include "webpage.h"
+#include "webview.h"
 #include "file_dialog.h"
 
 WebPage::WebPage (QWebEngineProfile *profile, QWidget *parent): QWebEnginePage (profile, parent)
@@ -14,7 +15,8 @@ WebPage::WebPage (QWebEngineProfile *profile, QWidget *parent): QWebEnginePage (
     lifecycle = new QTimer (this);
     connect(this, &QWebEnginePage::recommendedStateChanged, this, [this]() {
         if (recommendedState()==QWebEnginePage::LifecycleState::Active)
-            lifecycle->start (500);
+            //lifecycle->start (1);
+            setLifecycleState (QWebEnginePage::LifecycleState::Active);
         else if (!isVisible())
         {
             if (recommendedState()==QWebEnginePage::LifecycleState::Frozen)
@@ -38,6 +40,7 @@ WebPage::WebPage (QWebEngineProfile *profile, QWidget *parent): QWebEnginePage (
         if (lifecycleState() != recommendedState())
         {
             setLifecycleState (recommendedState());
+            qDebug() << "State for" << url() << "changed to" << lifecycleState ();
         }
     });
 }
@@ -98,4 +101,19 @@ void WebPage::handleAuthenticationRequired (const QUrl &url, QAuthenticator *aut
 
 }
 
+bool WebPage::acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
+{
+    //if (isMainFrame)
+      //  qDebug() << "Going to url" << url << "by navitype" << type;
+    if ((type == QWebEnginePage::NavigationTypeLinkClicked) && isMainFrame)
+    {
+        WebView* v = qobject_cast<WebView*>(view());
+        if (v)
+        {
+            emit v->link_requested (url.toString());
+            return false;
+        }
+    }
+    return true;
+}
 

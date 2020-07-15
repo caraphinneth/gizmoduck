@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
     */
     settings.endGroup();
 
-    arguments.append ("--proxy-pac-url=file:///home/daiyousei/build-Browser-mk2-Desktop-Release/proxy.pac");
+    //arguments.append ("--proxy-pac-url=file:///home/daiyousei/build-Browser-mk2-Desktop-Release/proxy.pac");
     arguments.append ("--enable-vulkan");
     arguments.append ("--allow-file-access-from-files");
 
