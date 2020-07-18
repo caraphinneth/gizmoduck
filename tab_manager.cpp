@@ -178,7 +178,6 @@ WebView *TabWidget::create_tab()
         if (index != -1)
         {
             tabBar()->setTabData (index, url);
-            //emit update_session(); // This will recurse badly, don't do this.
         }
         if (currentIndex() == index)
            emit url_changed (url);
@@ -269,18 +268,42 @@ void TabWidget::close_page (int index)
                 QSaveFile file ("recently_closed.dat"); // For now only handles one...
                 file.open (QIODevice::WriteOnly);
                 QDataStream out (&file);
-                WebPage* p = qobject_cast<WebPage*>(view->page());
-                qDebug() << "Saving page" << p->url().toString();
-                out << *p->history();
-                file.commit();
-                qDebug() << "Removing allocation" << p->history()->currentItem().url().adjusted (QUrl::RemoveQuery).toString();
-                group->remove (p->history()->currentItem().url().adjusted (QUrl::RemoveQuery).toString());
-                p->deleteLater();
+                WebPage* p;
+                if (group->contains (view->url().adjusted (QUrl::RemoveQuery).toString()))
+                {
+                    p =  group->value (view->url().adjusted (QUrl::RemoveQuery).toString()); //qobject_cast<WebPage*>(view->page());
+                    qDebug() << "Local: saving page" << p->url().toString();
+                    out << *p->history();
+                    file.commit();
+                    qDebug() << "Removing allocation" << p->history()->currentItem().url().adjusted (QUrl::RemoveQuery).toString();
+                    group->remove (p->history()->currentItem().url().adjusted (QUrl::RemoveQuery).toString());
+                    qDebug() << "Keys left in a group:" << group->keys();
+                    p->deleteLater();
+
+                }
+                else
+                {
+                        qDebug() << "Not in group (stray redirect?). Not deleting.";
+                        //p = qobject_cast<WebPage*>(view->page());
+                }
+
                 if (!group->isEmpty())
                 {
-                    //Fixme: take a certain value. last() may not be accurate.
-                    qDebug() << "Switching to page" << group->values().last()->url().toString();
-                    view->setPage (group->values().last());
+                    for (auto i=history.rbegin(); i!=history.rend(); ++i)
+                    {
+                        QString s = i->adjusted (QUrl::RemoveQuery).toString();
+                        if (group->contains (s))
+                        {
+                            qDebug() << "Switching to page" << i->toString();
+                            view->setPage (group->value(s));
+                            history.add (*i);
+                            break;
+                        }
+                    }
+                    if (!view->page())
+                    {
+                        qDebug() << "No previous tab in history, which should not happen!";
+                    }
                 }
                 else
                 {
@@ -290,10 +313,9 @@ void TabWidget::close_page (int index)
                     delete group;
                     view->deleteLater();
                     removeTab(index);
-
                 }
             }
-            emit update_session();
+            save_state();
         }
     }
     else // Not a web view! Settings and debug tabs fall into this category.
@@ -323,6 +345,8 @@ void TabWidget::close_tab (int index)
                 //qDebug() << "Saving page"  << p->url().toString();
                 out << *p->history();
                 p->deleteLater();
+
+                history.back();
             }
             file.commit();
 
@@ -334,6 +358,9 @@ void TabWidget::close_tab (int index)
             qDebug() << "Debug: host not grouped, OK if empty. Host:" << host;
         view->deleteLater();
         removeTab(index);
+        WebView* v = qobject_cast<WebView*>(widget (currentIndex ()));
+        history.add (v->page()->url());
+        qDebug() << "Switching to page" << history.current->toString();
 
         //setStyleSheet (QString ("QTabBar::tab { width: %1px; } ") .arg(size().width()/count()-1));
         //tabBar()->setStyleSheet (QString ("QTabBar::tab { height: %1px; width: %2px; }").arg (view->size().height()/count()-1).arg(tabBar()->minimumHeight()));
@@ -409,7 +436,7 @@ void TabWidget::set_url (const QUrl &url, bool background)
         // Query changed.
         if (p->history()->currentItem().url() != url)
         {
-            view->load(url);
+            view->setUrl(url);
         }
     }
     else
@@ -417,12 +444,17 @@ void TabWidget::set_url (const QUrl &url, bool background)
         qDebug() << "Allocating new page for url " << url.toString();
         WebPage* p = new WebPage (profile);
         group->insert (url.adjusted (QUrl::RemoveQuery).toString(), p);
+        qDebug()<<"Keys in group:"<<group->keys();
         view->setPage (p);
-        view->load (url);
-        emit update_session();
+        view->setUrl (url);
+        save_state();
     }
     if (!background)
+    {
         setCurrentWidget (view);
+        history.add (url);
+        //qDebug() << "History list:" << history;
+    }
 }
 
 void TabWidget::back()
@@ -500,6 +532,7 @@ void TabWidget::current_changed()
     if (view)
     {
         view->setFocus();
+        history.add (view->page()->url());
         hide();
         show();
         emit url_changed (view->url());
@@ -523,13 +556,13 @@ void TabWidget::save_state()
     for (i = tab_groups.begin(); i != tab_groups.end(); ++i)
     //foreach (TabGroup* group, tab_groups)
     {
-        qDebug() << "Saving group for host"  << i.key();
+        //qDebug() << "Saving group for host"  << i.key();
         TabGroup::const_iterator j;
         for (j = i.value()->begin(); j != i.value()->end(); ++j)
         //foreach (WebPage* p, *group)
         {
             WebPage* p = j.value();
-            //qDebug() << "Saving page"  << p->url().toString();
+            qDebug() << "Global: saving page"  << p->url().toString();
             out << *p->history();
         }
     }
@@ -582,6 +615,7 @@ void TabWidget::load_state()
 
         TabGroup* group = assign_tab_group (host);
         group->insert (url, p); // insert() replaces any possible dupes.
+        history.add (p->history()->currentItem().url());
     }
     file.close();
 
@@ -712,23 +746,42 @@ void TabWidget::wheelEvent (QWheelEvent *event)
                     if (group->values().first() == view->page())
                     {
                         if (currentIndex() != 0)
+                        {
                             setCurrentIndex (currentIndex()-1);
+                            //WebView* v = qobject_cast<WebView*>(widget (currentIndex()));
+                            //history.add (v->page()->url());
+                            //qDebug() << "History list:" << history;
+                        }
                     }
                     else
+                    {
                         view->setPage (group->values().at(c-1));
+                        history.add (view->page()->url());
+                        //qDebug() << "History list:" << history;
+                    }
                 }
                 else if (event->angleDelta().y() < 0)
                 {
                     if (group->values().last() == view->page())
                     {
                         if (currentIndex() != count()-1)
+                        {
                             setCurrentIndex (currentIndex()+1);
+                            //WebView* v = qobject_cast<WebView*>(widget (currentIndex()));
+                            //history.add (v->page()->url());
+                            //qDebug() << "History list:" << history;
+                        }
                     }
                     else
+                    {
                         view->setPage (group->values().at(c+1));
+                        history.add (view->page()->url());
+                        //qDebug() << "History list:" << history;
+                    }
                 }
             }
             else
+            // Likely an utility tab.
             {
                 if (event->angleDelta().y() > 0)
                 {
@@ -756,4 +809,34 @@ void TabWidget::cleanup()
             p->deleteLater();
         }
     }
+}
+
+WebPage* TabWidget::page_back(TabGroup* group)
+{
+    for (auto i=history.rbegin(); i!=history.rend(); ++i)
+    {
+        QString s = i->adjusted (QUrl::RemoveQuery).toString();
+        if (group->contains (s))
+        {
+            qDebug() << "Switching to page" << i->toString();
+            history.add (*i);
+            return (group->value(s));
+        }
+    }
+    return nullptr;
+}
+
+WebPage* TabWidget::page_forward(TabGroup* group)
+{
+    for (auto i=history.rbegin(); i!=history.rend(); ++i)
+    {
+        QString s = i->adjusted (QUrl::RemoveQuery).toString();
+        if (group->contains (s))
+        {
+            qDebug() << "Switching to page" << i->toString();
+            history.add (*i);
+            return (group->value(s));
+        }
+    }
+    return nullptr;
 }

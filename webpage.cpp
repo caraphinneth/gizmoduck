@@ -103,9 +103,28 @@ void WebPage::handleAuthenticationRequired (const QUrl &url, QAuthenticator *aut
 
 bool WebPage::acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
 {
-    //if (isMainFrame)
-      //  qDebug() << "Going to url" << url << "by navitype" << type;
-    if ((type == QWebEnginePage::NavigationTypeLinkClicked) && isMainFrame)
+    if (isMainFrame)
+        qDebug() << "Going to url" << url << "by navitype" << type;
+    //||(type == QWebEnginePage::NavigationTypeTyped)
+    if (((type == QWebEnginePage::NavigationTypeLinkClicked)) && isMainFrame)
+    {
+        WebView* v = qobject_cast<WebView*>(view());
+        if (v)
+        {
+            emit v->link_requested (url.toString());
+            return false;
+        }
+    }
+    else if ((type == QWebEnginePage::NavigationTypeRedirect) && (this->url().host() != url.host()) && isMainFrame)
+    {
+        WebView* v = qobject_cast<WebView*>(view());
+        if (v)
+        {
+            emit v->link_requested (url.toString());
+            return false;
+        }
+    }
+    else if ((type == QWebEnginePage::NavigationTypeTyped) && (this->url().host() != url.host()) && isMainFrame)
     {
         WebView* v = qobject_cast<WebView*>(view());
         if (v)

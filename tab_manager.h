@@ -20,6 +20,8 @@ public:
     QWebEngineProfile *profile;
     QStandardItemModel model;
 
+    History history;
+
     SettingsTab *settings_tab();
     DebugTab *debug_tab();
     DebugTab *debug_tab_present;
@@ -65,5 +67,6 @@ private:
     QHash <QString, WebView*> host_views;
 
     void wheelEvent (QWheelEvent *event);
-
+    WebPage* page_back(TabGroup* group);
+    WebPage* page_forward(TabGroup* group);
 };
