@@ -18,6 +18,12 @@ void friend_name_cb(Tox *tox, uint32_t friend_number, const uint8_t *name, size_
         emit g_tox_manager->friend_name_changed (QString((const char*)name), friend_number);
 }
 
+void friend_typing_cb (Tox* tox, uint32_t friend_number, bool is_typing, void *user_data)
+{
+    if (g_tox_manager!=nullptr)
+        emit g_tox_manager->friend_typing (is_typing, friend_number);
+}
+
 void self_connection_status_cb(Tox *tox, TOX_CONNECTION connection_status, void *user_data)
 {
     if (g_tox_manager!=nullptr)
@@ -63,7 +69,7 @@ void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, ui
             if (!old_file.open (QIODevice::ReadOnly))
             {
                 printf(" no old avatar found, accepting.\n");
-                 accept = true;
+                accept = true;
             }
             else
             {
@@ -73,7 +79,7 @@ void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, ui
 
                 tox_hash (reinterpret_cast<uint8_t*>(old_hash.data()), reinterpret_cast<uint8_t*>(pic.data()), pic.size());
 
-                accept = old_hash != new_hash;
+                accept = (old_hash != new_hash);
             }
 
             // Already have this avatar
@@ -115,7 +121,7 @@ void file_chunk_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_numb
         file->close();
         g_tox_manager->files_in_transfer.remove (key);
         emit g_tox_manager->download_finished (file->fileName(), friend_number);
-        file->deleteLater ();
+        file->deleteLater();
     }
     else
         file->write (reinterpret_cast<const char*>(data), length);
@@ -179,6 +185,8 @@ ToxManager::ToxManager (): QObject()
     tox_callback_friend_message (tox, friend_message_cb);
     tox_callback_friend_name (tox, friend_name_cb);
 
+    tox_callback_friend_typing (tox, friend_typing_cb);
+
     tox_callback_file_recv (tox, file_receive_cb);
     tox_callback_file_recv_chunk (tox, file_chunk_receive_cb);
 
@@ -229,11 +237,31 @@ void ToxManager::message (const QString &text, const long friend_number)
     emit message_sent (text, friend_number);
 }
 
+QList<ToxContact> ToxManager::contact_list()
+{
+    QList <struct ToxContact> result;
+    const size_t friend_list_length = tox_self_get_friend_list_size (tox);
+    QVector<uint32_t> friend_id_list (friend_list_length);
+    tox_self_get_friend_list (tox, friend_id_list.data());
+
+    for (size_t i : friend_id_list)
+    {
+        const size_t length = tox_friend_get_name_size (tox, i, 0);
+        QVector<uint8_t> buf (length);
+        tox_friend_get_name (tox, i, buf.data(), 0);
+        QString name = QString::fromUtf8 (QByteArray (reinterpret_cast<const char*>(buf.data()), length));
+        struct ToxContact contact = {i, name};
+        result.push_back (contact);
+        buf.clear();
+    }
+    return result;
+}
+
 ToxWidget::ToxWidget (QWidget *parent, long friend_number): GLWidget (parent)
 {
     friend_id = friend_number;
 
-    size_t length = tox_friend_get_name_size (g_tox_manager->tox, friend_id, 0);
+    const size_t length = tox_friend_get_name_size (g_tox_manager->tox, friend_id, 0);
     QVector<uint8_t> buf (length);
     tox_friend_get_name (g_tox_manager->tox, friend_id, buf.data(), 0);
 
@@ -242,16 +270,22 @@ ToxWidget::ToxWidget (QWidget *parent, long friend_number): GLWidget (parent)
     buf.clear();
 
     QLabel *label = new QLabel (tr("Chat with ") + friend_name, this);
+    QLabel *typing_label = new QLabel ("", this);
+    QFont font1 ("Roboto", 8);
+    typing_label->setFont (font1);
+    typing_label->setFixedHeight (16);
     MessageLog *chat_view = new MessageLog (this);
     // chat_view->setTextInteractionFlags(Qt::TextBrowserInteraction);
 
-    input_box = new QLineEdit (this);
+    input_box = new InputWidget (this);
+    typing = new QTimer (this);
     attach_button = new QPushButton (this);
     attach_button->setIcon (QIcon(":/icons/attachment"));
 
     connect (attach_button, &QPushButton::clicked, [this, chat_view]()
     {
-        FileDialog *dialog = new FileDialog (this, tr("Select File"), "", tr("All Files (*.*)"));
+        QScopedPointer <FileDialog> dialog;
+        dialog.reset (new FileDialog (this, tr("Select File"), "", tr("All Files (*.*)")));
         dialog->setAcceptMode (QFileDialog::AcceptOpen);
 
         //if (mode == QWebEnginePage::FileSelectOpen)
@@ -270,9 +304,32 @@ ToxWidget::ToxWidget (QWidget *parent, long friend_number): GLWidget (parent)
 
     });
 
+    connect (input_box, &InputWidget::paste_image, [this, chat_view] (const QPixmap& pixmap)
+    {
+        // akin to qTox but hopefully faster
+        QString filepath = appdata_path % QDir::separator() % QString ("qTox_Image_%1.jpg")
+                               .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH-mm-ss.zzz"));
+        QFile file (filepath);
+
+        if (file.open(QFile::ReadWrite))
+        {
+            pixmap.save(&file, "JPG");
+            file.close();
+            QFileInfo fi (file);
+            emit file_sent (fi.filePath(), friend_id);
+            chat_view->append (fi.filePath(), QPixmap (QStringLiteral (":/icons/tox_online")), QDateTime::currentDateTime(), true);
+        }
+        else
+        {
+            printf ("Failed to write to a temporary file!\n");
+        }
+
+    });
+
     QFormLayout* form = new QFormLayout (this);
     form->addRow (label);
     form->addRow (chat_view);
+    form->addRow (typing_label);
     form->addRow (attach_button, input_box);
     setLayout(form);
 
@@ -296,6 +353,13 @@ ToxWidget::ToxWidget (QWidget *parent, long friend_number): GLWidget (parent)
         printf (" found, loading.\n");
     }
 
+    connect (this, &ToxWidget::friend_typing, [this, typing_label](bool is_typing, const long friend_number)
+    {
+        if (is_typing)
+            typing_label->setText (friend_name + tr(" is typing..."));
+        else
+            typing_label->clear();
+    });
     connect (this, &ToxWidget::message_received, [this, chat_view] (const QString &text)
     {
         chat_view->append (text, friend_avatar, QDateTime::currentDateTime());
@@ -304,6 +368,17 @@ ToxWidget::ToxWidget (QWidget *parent, long friend_number): GLWidget (parent)
     connect (this, &ToxWidget::file_received, [this, chat_view] (const QString &filename)
     {
         chat_view->append (filename, friend_avatar, QDateTime::currentDateTime(), true);
+    });
+
+    connect (input_box, &QLineEdit::textEdited, [this]()
+    {
+        tox_self_set_typing (g_tox_manager->tox, friend_id, true, 0);
+        typing->start (2000);
+    });
+
+    connect (typing, &QTimer::timeout, [this]()
+    {
+        tox_self_set_typing (g_tox_manager->tox, friend_id, false, 0);
     });
 
     connect (input_box, &QLineEdit::returnPressed, [this, chat_view]()

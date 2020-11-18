@@ -1,9 +1,27 @@
 #pragma once
+#include <QWebEngineProfile>
 #include "webpage.h"
 
-struct TabGroup: public QHash <QString, WebPage*>
+struct TabGroup: public QHash<QString, QSharedPointer<WebPage>>
 {
 
+public:
+    QWebEngineProfile* profile;
+
+    QSharedPointer<WebPage> assign_page (QString key)
+    {
+        if (contains (key))
+        {
+            return value (key);
+        }
+        else
+        {
+            QSharedPointer<WebPage> p;
+            p.reset (new WebPage(profile));
+            insert (key, p);
+            return p;
+        }
+    }
 };
 
 struct TabGroups: public QHash <QString, TabGroup*>
@@ -18,29 +36,33 @@ public:
 
     History() : std::list<QUrl>()
     {
-        current = end();
+        current = begin();
     }
 
     void add (QUrl url)
     {
-        if (current!=end())
-            current = insert (std::next(current), url);
-        else
+        if (url.isEmpty())
+            return;
+        if (current == end())
         {
             push_back (url);
-            ++current;
+            current = begin();
         }
+        else
+            current = insert (std::next(current), url);
+
+        qDebug()<< "History now points at" << current->toString();
     }
     void forward()
     {
-        if (current!=end())
+        if (current!=std::prev(end()))
             ++current;
     }
     void back()
     {
         if (current!=begin())
             --current;
-        qDebug()<< "History now points at" << current->toString();
+        qDebug()<< "History now points at" << current->toString();       
     }
 
 };

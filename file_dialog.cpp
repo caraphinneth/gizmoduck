@@ -30,6 +30,7 @@ void FileDialog::OnCurrentChanged (const QString &path)
     QPixmap pixmap = QPixmap (path);
     if (pixmap.isNull())
     {
+        /*
         QMovie *movie = new QMovie (path);
         if (movie->isValid())
         {
@@ -40,8 +41,9 @@ void FileDialog::OnCurrentChanged (const QString &path)
 
         }
         else
-            preview->hide();
-        movie->deleteLater();
+        */
+        preview->hide();
+        //movie->deleteLater();
     }
     else
     {

@@ -9,44 +9,12 @@
 #include "webview.h"
 
 #include "QDebug"
-//#include <QTimer>
-//#include <QStackedLayout>
-//#include <QtGlobal>
-
-/*#if QT_VERSION < 0x051000
-bool WebView::eventFilter (QObject *object, QEvent *event)
-{
-    // It does not really fly. It's just so ugly Mother Earth rejects it.
-
-    if ((event->type() == QEvent::Wheel)&&(object==proxy))
-    {
-        bool wasAccepted = event->isAccepted();
-        event->setAccepted(false);
-
-        if (event->spontaneous())
-        {
-            QWheelEvent *mouse_event=static_cast<QWheelEvent*>(event);
-
-            QWheelEvent e (mouse_event->pos(), mouse_event->globalPos(), mouse_event->pixelDelta(), mouse_event->angleDelta() * QApplication::wheelScrollLines() / 10.0, 0,
-                           Qt::Horizontal, mouse_event->buttons(), mouse_event->modifiers(), mouse_event->phase(), mouse_event->source(), mouse_event->inverted());
-            QApplication::sendEvent (object, &e);
-            mouse_event->accept();
-        }
-        bool ret = event->isAccepted();
-        event->setAccepted (wasAccepted);
-        return ret;
-    }
-    //if ((event->type() == QEvent::Wheel)&&(object==this)) return true;
-    //const bool res = QWebEngineView::eventFilter(object, event);
-    return false;
-}
-#endif*/
 
 bool WebView::eventFilter(QObject *object, QEvent *event)
 {
     if (object->parent() == this && event->type() == QEvent::MouseMove)
     {
-        mouseMoveEvent (static_cast<QMouseEvent *>(event));
+        mouseMoveEvent (static_cast<QMouseEvent*>(event));
     }
 
     return false;
@@ -61,25 +29,6 @@ WebView::WebView (QWidget *parent): QWebEngineView (parent)
     {
         // QToolTip::showText (mapToGlobal (position), selectedText());
     });
-
-/*
-#if QT_VERSION < 0x051000
-
-    installEventFilter (this);
-    if (parentWidget()) {
-        parentWidget()->installEventFilter(this);
-    }
-    QStackedLayout *l = qobject_cast<QStackedLayout*>(layout());
-        connect(l, &QStackedLayout::currentChanged, this, [this]() {
-
-    QTimer::singleShot (0, this, [this]()
-    {
-        proxy = focusProxy();
-        proxy->installEventFilter (this);
-    });
-    });
-#endif
-*/
 }
 
 QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType type)
@@ -118,9 +67,10 @@ QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType type)
 
 void WebView::intercept_popup(const QUrl &url)
 {
-    if(WebView* view = qobject_cast<WebView*>(sender()))
+    if (WebView* view = qobject_cast<WebView*>(sender()))
     {
-        emit link_requested (url.toString());
+        emit link_requested (url.toString(), true);
+        disconnect (view, &WebView::urlChanged, this, nullptr);
         view->deleteLater();
     }
 }
@@ -141,7 +91,7 @@ void WebView::follow_link()
     if (!action)
       return;
 
-    emit link_requested (action->data().toString());
+    emit link_requested (action->data().toString(), false);
 }
 
 void WebView::contextMenuEvent (QContextMenuEvent *event)

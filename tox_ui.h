@@ -3,11 +3,18 @@
 #include <QHash>
 #include <QPair>
 #include <QTimer>
+#include "input_widget.h"
 #include "gl_widget.h"
 #include "tox_client.h"
 
 const QString appdata_path = QStandardPaths::writableLocation (QStandardPaths::AppDataLocation);
 const QString download_path = QStandardPaths::writableLocation (QStandardPaths::DownloadLocation);
+
+struct ToxContact
+{
+    size_t number;
+    QString name;
+};
 
 class ToxManager : public QObject
 {
@@ -26,6 +33,8 @@ public:
     QString id;
     QString self_online_status;
 
+    QList<struct ToxContact> contact_list();
+
     QHash <QPair <uint32_t, uint32_t>, QFile*> files_in_transfer;
 
 public slots:
@@ -41,6 +50,7 @@ signals:
     void friend_name_changed (const QString &name, const long friend_number);
     void self_connection_status_changed (const QString &status);
     void message_sent (const QString &message, const long friend_number);
+    void friend_typing (bool is_typing, const long friend_number);
 
     void download_finished (const QString &filename, const long friend_number);
 };
@@ -52,9 +62,11 @@ struct ToxWidget : public GLWidget
 public:
     explicit ToxWidget (QWidget *parent = nullptr, long friend_number = 0);
 
-    QLineEdit* input_box;
+    InputWidget* input_box;
     QPlainTextEdit* chat_view;
     QPushButton* attach_button;
+    QTimer* typing;
+    QLabel* typing_label;
 
     long friend_id;
     QString friend_name;
@@ -66,6 +78,6 @@ signals:
     void message_received (const QString &text);
     void message_sent (const QString &text, const long friend_number);
     void file_sent (const QString &filename, const long friend_number);
-
+    void friend_typing (bool is_typing, const long friend_number);
     void file_received (const QString &filename);
 };

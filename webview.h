@@ -33,7 +33,7 @@ signals:
    // void webActionEnabledChanged(QWebEnginePage::WebAction webAction, bool enabled);
     void icon_changed (const QIcon &icon);
     void search_requested (QString text);
-    void link_requested (QString url);
+    void link_requested (QString url, bool background);
 
 private:
     void search_selected();

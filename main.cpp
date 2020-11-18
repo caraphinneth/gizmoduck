@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute (Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setAttribute (Qt::AA_UseHighDpiPixmaps);
-    QCoreApplication::setAttribute (Qt::AA_ShareOpenGLContexts);
+    //QCoreApplication::setAttribute (Qt::AA_ShareOpenGLContexts);
 
     QCoreApplication::setApplicationName ("Gizmoduck");
    // QCoreApplication::setOrganizationName ("Clockwork Fairies");
@@ -69,8 +69,11 @@ int main(int argc, char *argv[])
     */
     settings.endGroup();
 
-    //arguments.append ("--proxy-pac-url=file:///home/daiyousei/build-Browser-mk2-Desktop-Release/proxy.pac");
-    arguments.append ("--enable-vulkan");
+    //arguments.append ("--proxy-pac-url=file:///home/daiyousei/proxy.pac");
+    //arguments.append ("--proxy-pac-url=http://miningbase.tk/hamster/static/proxy.pac");
+    arguments.append ("--use-vulkan");
+    arguments.append ("--webview-enable-vulkan");
+    //arguments.append ("--enable-features=Vulkan");
     arguments.append ("--allow-file-access-from-files");
 
     argc=arguments.count();

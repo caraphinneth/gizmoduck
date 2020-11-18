@@ -78,8 +78,12 @@ MainWindow::MainWindow()
     settings_button->setToolTip (tr("Settings"));
 
 #ifdef ENABLE_TOX
+    QMenu* contact_menu = new QMenu();
+
     tox_button = new NavButton (toolbar);
     tox_button->setIcon (QIcon (QStringLiteral (":/icons/tox_connecting")));
+    tox_button->setMenu (contact_menu);
+    tox_button->setEnabled (false);
     toolbar->addWidget (tox_button);
 #endif
 
@@ -215,15 +219,34 @@ MainWindow::MainWindow()
 
     connect (close_button, &NavButton::right_clicked, tab_manager, &TabWidget::restore_tab);
 
-    connect (tox_button, &NavButton::left_clicked, [this]()
+    connect (tox_button, &NavButton::left_clicked, [this, contact_menu]()
     {
-        printf ("Placeholder!\n");
+        QList <struct ToxContact> contacts = tox_manager->contact_list();
+        contact_menu->clear();
+        for (struct ToxContact contact : contacts)
+        {
+            QAction* action = new QAction (contact.name, this);
+            const size_t number = contact.number;
+            connect (action, &QAction::triggered, [this, number]()
+            {
+                chat ("", number);
+            });
+            contact_menu->addAction (action);
+        }
     });
 
 #ifdef ENABLE_TOX
     tox_manager = new ToxManager;
 
     connect (tox_manager, &ToxManager::friend_message_received, this, &MainWindow::chat);
+
+    connect (tox_manager, &ToxManager::friend_typing, [this](bool is_typing, const long friend_number)
+    {
+        if (active_chats.contains (friend_number))
+        {
+            emit active_chats.value (friend_number)->friend_typing (is_typing, friend_number);
+        }
+    });
 
     connect (tox_manager, &ToxManager::friend_name_changed, [this](const QString &name, const long friend_number)
     {
@@ -234,25 +257,57 @@ MainWindow::MainWindow()
             printf ("Changed friend name to %s\n", ba.constData());
         }
     });
-    connect (tox_manager, &ToxManager::self_connection_status_changed, [this](const QString &status)
+    connect (tox_manager, &ToxManager::self_connection_status_changed, [this, contact_menu](const QString &status)
     {
         if (status == "offline")
+        {
             tox_button->setIcon (QIcon (QStringLiteral (":/icons/tox_connecting")));
-        else if (status == "online (TCP)")
+            tox_button->setEnabled (false);
+        }
+
+        else if ((status == "online (TCP)")||(status == "online (UDP)"))
+        {
             tox_button->setIcon (QIcon (QStringLiteral (":/icons/tox_idle")));
-        else if (status == "online (UDP)")
-            tox_button->setIcon (QIcon (QStringLiteral (":/icons/tox_idle")));
+            tox_button->setEnabled (true);
+        }
         else
+        {
             tox_button->setIcon (QIcon (QStringLiteral (":/icons/tox_connecting")));
+            tox_button->setEnabled (false);
+        }
 
         tox_button->setToolTip ("Tox status: "+status);
     });
     connect (tox_manager, &ToxManager::download_finished, [this] (const QString &filename, const long friend_number)
     {
-        if (active_chats.contains (friend_number))
+        // Q&D: technical files should not be displayed.
+        if (!filename.contains (appdata_path))
+        {
+        if (!active_chats.contains (friend_number))
+        {
+            DockWidget *dock = new DockWidget(tr("Chat"), this);
+            dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea |  Qt::BottomDockWidgetArea);
+            addDockWidget(Qt::RightDockWidgetArea, dock);
+
+            connect (dock, &DockWidget::closed , [this, friend_number]()
+            {
+                //active_chats.remove (friend_number);
+            });
+
+            ToxWidget *chat_area = new ToxWidget (dock, friend_number);
+            connect (chat_area, &ToxWidget::message_sent, tox_manager, &ToxManager::message);
+            connect (chat_area, &ToxWidget::file_sent, tox_manager, &ToxManager::send_file);
+
+            dock->setWidget (chat_area);
+            active_chats.insert (friend_number, chat_area);
+        }
+
         {
             ToxWidget *chat_area = active_chats.value (friend_number);
+            DockWidget* dock = qobject_cast<DockWidget*>(chat_area->parentWidget());
+            dock->show();
             emit chat_area->file_received (filename);
+        }
         }
     });
 #endif
@@ -327,7 +382,7 @@ void MainWindow::chat(const QString &message, const long friend_number)
 
         connect (dock, &DockWidget::closed , [this, friend_number]()
         {
-            active_chats.remove (friend_number);
+            // active_chats.remove (friend_number);
         });
 
         ToxWidget *chat_area = new ToxWidget (dock, friend_number);
@@ -336,9 +391,13 @@ void MainWindow::chat(const QString &message, const long friend_number)
 
         dock->setWidget (chat_area);
         active_chats.insert (friend_number, chat_area);
-
     }
     ToxWidget *chat_area = active_chats.value (friend_number);
-    emit chat_area->message_received (message);
+    DockWidget* dock = qobject_cast<DockWidget*>(chat_area->parentWidget());
+    dock->show();
+    if (!message.isEmpty())
+    {
+        emit chat_area->message_received (message);
+    }
 }
 #endif

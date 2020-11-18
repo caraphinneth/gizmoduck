@@ -3,9 +3,11 @@ QT += widgets webenginewidgets sql
 CONFIG += c++14 exceptions_off
 CONFIG -= app_bundle
 
-QMAKE_CXXFLAGS+="-Og -march=native"
+QMAKE_CXXFLAGS+="-O2 -march=native"
+#-g -ggdb"
 #-ftree-vectorize -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block"
-#-flto=8" QMAKE_LFLAGS+="-flto"
+#-flto=8"
+#QMAKE_LFLAGS+="-g -ggdb"
 
 contains(USE_TOX, 1) {
     DEFINES += ENABLE_TOX
@@ -27,6 +29,7 @@ SOURCES += main.cpp \
     browser_mainwindow.cpp \
     dockwidget.cpp \
     fullscreen.cpp \
+    input_widget.cpp \
     message_log.cpp \
     tab_manager.cpp \
     webview.cpp \
@@ -44,6 +47,7 @@ HEADERS += \
     browser_mainwindow.h \
     dockwidget.h \
     fullscreen.h \
+    input_widget.h \
     message_log.h \
     tab_groups.h \
     tab_manager.h \

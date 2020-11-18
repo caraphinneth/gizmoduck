@@ -10,6 +10,7 @@
 
 WebPage::WebPage (QWebEngineProfile *profile, QWidget *parent): QWebEnginePage (profile, parent)
 {
+    old_url = url();
     connect(this, &QWebEnginePage::authenticationRequired, this, &WebPage::handleAuthenticationRequired);
 
     lifecycle = new QTimer (this);
@@ -17,7 +18,9 @@ WebPage::WebPage (QWebEngineProfile *profile, QWidget *parent): QWebEnginePage (
         if (recommendedState()==QWebEnginePage::LifecycleState::Active)
             //lifecycle->start (1);
             setLifecycleState (QWebEnginePage::LifecycleState::Active);
-        else if (!isVisible())
+        else if (!isVisible()&&
+                 (url().host()!="discord.com")&&
+                 (url().host()!="tripwire.eve-apps.com"))
         {
             if (recommendedState()==QWebEnginePage::LifecycleState::Frozen)
                 lifecycle->start (15*60*1000);
@@ -72,19 +75,22 @@ void WebPage::handleAuthenticationRequired (const QUrl &url, QAuthenticator *aut
     dialog.setModal (true);
     dialog.setWindowFlags (dialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
-    QLabel *auth_label = new QLabel (tr ("Enter username and password for \"%1\" at %2").arg (auth->realm()).arg(url.toString().toHtmlEscaped()));
+    QScopedPointer <QLabel> auth_label;
+    auth_label.reset (new QLabel (tr ("Enter username and password for \"%1\" at %2").arg (auth->realm()).arg(url.toString().toHtmlEscaped())));
     auth_label->setWordWrap (true);
 
-    QLineEdit *username = new QLineEdit (&dialog);
-    QLineEdit *password = new QLineEdit (&dialog);
+    QScopedPointer<QLineEdit> username;
+    username.reset (new QLineEdit (&dialog));
+    QScopedPointer<QLineEdit> password;
+    password.reset (new QLineEdit (&dialog));
 
     QVBoxLayout *layout = new QVBoxLayout;
-    layout->addWidget (auth_label);
-    layout->addWidget (username);
-    layout->addWidget (password);
+    layout->addWidget (auth_label.data());
+    layout->addWidget (username.data());
+    layout->addWidget (password.data());
     dialog.setLayout(layout);
 
-    connect (password, &QLineEdit::returnPressed, &dialog, &QDialog::accept);
+    connect (password.data(), &QLineEdit::returnPressed, &dialog, &QDialog::accept);
 
     if (dialog.exec() == QDialog::Accepted)
     {
@@ -95,35 +101,49 @@ void WebPage::handleAuthenticationRequired (const QUrl &url, QAuthenticator *aut
     {
         *auth = QAuthenticator();
     }
-    auth_label->deleteLater();
-    username->deleteLater ();
-    password->deleteLater ();
-
 }
 
 bool WebPage::acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
 {
     if (isMainFrame)
         qDebug() << "Going to url" << url << "by navitype" << type;
+    //else
+       // qDebug() << "NON_MAINFRAME request of url" << url << "by navitype" << type;
     //||(type == QWebEnginePage::NavigationTypeTyped)
     if (((type == QWebEnginePage::NavigationTypeLinkClicked)) && isMainFrame)
     {
         WebView* v = qobject_cast<WebView*>(view());
         if (v)
         {
-            emit v->link_requested (url.toString());
+            // emit v->loadFinished (false);
+            emit v->link_requested (url.toString(), false);
             return false;
         }
     }
-    else if ((type == QWebEnginePage::NavigationTypeRedirect) && (this->url().host() != url.host()) && isMainFrame)
+
+    /*else if (((type == QWebEnginePage::NavigationTypeRedirect) && isMainFrame))// && (this->url().host() != url.host()))
     {
         WebView* v = qobject_cast<WebView*>(view());
         if (v)
         {
+            qDebug() << "Intercepting" << url << "request by" << this->url().host();
             emit v->link_requested (url.toString());
             return false;
         }
-    }
+    }*/
+
+    /*
+    else if ((type == QWebEnginePage::NavigationTypeFormSubmitted) && isMainFrame)// && (this->url().host() != url.host()) && isMainFrame)
+    {
+        WebView* v = qobject_cast<WebView*>(view());
+        if (v)
+        {
+            qDebug() << "Intercepting" << url << "request by" << this->url().host();
+            emit v->link_requested (url.toString());
+            return false;
+        }
+    }*/
+    /*
     else if ((type == QWebEnginePage::NavigationTypeTyped) && (this->url().host() != url.host()) && isMainFrame)
     {
         WebView* v = qobject_cast<WebView*>(view());
@@ -132,7 +152,7 @@ bool WebPage::acceptNavigationRequest(const QUrl &url, NavigationType type, bool
             emit v->link_requested (url.toString());
             return false;
         }
-    }
+    }*/
     return true;
 }
 

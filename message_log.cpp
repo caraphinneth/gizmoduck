@@ -131,7 +131,8 @@ void Message::paint (QPainter *painter, const QStyleOptionViewItem &option, cons
 
     // Draw message text
 
-    QTextDocument* text = messageBox (opt, index);
+    QScopedPointer <QTextDocument> text;
+    text.reset (messageBox (opt, index));
     QRect messageRect (0, 0, text->size().width(), text->size().height());
     messageRect.moveTo (timeStampRect.left(), timeStampRect.bottom() + verticalSpacing);
 
@@ -143,7 +144,6 @@ void Message::paint (QPainter *painter, const QStyleOptionViewItem &option, cons
     //text.idealWidth(), textDoc.size().height()
     //painter->drawText(messageRect, Qt::TextWordWrap, opt.text);
 
-    text->deleteLater ();
     painter->restore();
 }
 
@@ -152,9 +152,9 @@ QSize Message::sizeHint (const QStyleOptionViewItem &option,  const QModelIndex 
     QStyleOptionViewItem opt (option);
     initStyleOption (&opt, index);
 
-    QTextDocument* text = messageBox (opt, index, true);
+    QScopedPointer <QTextDocument> text;
+    text.reset (messageBox (opt, index, true));
     int textHeight = timestampBox (opt, index).height() + verticalSpacing + text->size().height();
-    text->deleteLater();
     int iconHeight = iconSize.height();
     int h = textHeight > iconHeight ? textHeight : iconHeight;
 
@@ -197,7 +197,14 @@ QTextDocument* Message::messageBox (const QStyleOptionViewItem &option, const QM
 
         QImage img (opt.text);
         Qt::TransformationMode mode = fastmode ? Qt::FastTransformation : Qt::SmoothTransformation;
-        cursor.insertImage (img.scaledToWidth (good_width, mode));
+
+        if (img.isNull())
+        {
+            QString info_text = "File sent: "+opt.text;
+            cursor.insertText (info_text);
+        }
+        else
+            cursor.insertImage (img.scaledToWidth (good_width, mode));
     }
     else
     {
@@ -220,9 +227,9 @@ void Message::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &
     const QRect &contentRect (rect.adjusted(margins.left(), margins.top(), -margins.right(), -margins.bottom()));
     QRect timeStampRect(timestampBox(opt, index));
     timeStampRect.moveTo (margins.left() + iconSize.width() + horizontalSpacing, contentRect.top());
-    QTextDocument* text = messageBox (opt, index, true);
+    QScopedPointer <QTextDocument> text;
+    text.reset (messageBox (opt, index, true));
     QRect messageRect (0, 0, text->size().width(), text->size().height());
-    text->deleteLater ();
     messageRect.moveTo (timeStampRect.left(), timeStampRect.bottom() + verticalSpacing);
     editor->setGeometry (messageRect);
 }

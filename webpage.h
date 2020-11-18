@@ -9,6 +9,7 @@ struct WebPage : public QWebEnginePage
 public:
     WebPage (QWebEngineProfile *profile, QWidget *parent = nullptr);
     QTimer *lifecycle;
+    QUrl old_url;
 
 private slots:
     void handleAuthenticationRequired (const QUrl &url, QAuthenticator *auth);

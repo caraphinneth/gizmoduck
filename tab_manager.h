@@ -34,6 +34,7 @@ signals:
     void reload_filters();
 
     void update_session();
+    void debug_tabs_updated (TabGroups& groups);
 
 public slots:
     void set_url (const QUrl &url, bool background=false);
@@ -60,10 +61,10 @@ private slots:
 private:
     RequestFilter* request_filter;
     QScopedPointer<FullScreenWindow> fullscreen;
+    void install_page_signal_handler (QSharedPointer<WebPage> p);
 
     TabGroups tab_groups;
     TabGroup* assign_tab_group (QString host);
-
     QHash <QString, WebView*> host_views;
 
     void wheelEvent (QWheelEvent *event);

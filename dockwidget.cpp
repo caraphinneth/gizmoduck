@@ -1,3 +1,4 @@
+// This widget customizing is no longer required and may be removed.
 #include "dockwidget.h"
 
 DockWidget::DockWidget(const QString &title, QWidget *parent) : QDockWidget(title, parent)

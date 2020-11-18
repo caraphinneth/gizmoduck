@@ -257,7 +257,7 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo &info)
             url.contains ("/adv/")||
             url.contains ("/ads/")||
             url.contains ("/ptracking")||
-            url.contains ("/get_video_info")|| // This one's complicated... youtube uses this to deliver ads when first-party, but not remotely. Can break youtube gaming?
+            (url.contains ("/get_video_info")&&(source_host=="www.youtube.com"))|| // This one's complicated... youtube uses this to deliver ads when first-party, but not remotely. Can break youtube gaming?
             url.contains ("/cthru")||
             destination_host.startsWith ("ad.")||
             destination_host.startsWith ("ads.")||
