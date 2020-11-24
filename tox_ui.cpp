@@ -6,25 +6,65 @@ extern Tox_State g_tox_state;
 
 static ToxManager* g_tox_manager;
 
-void friend_message_cb(Tox *tox, uint32_t friend_number, TOX_MESSAGE_TYPE type, const uint8_t *message, size_t length, void *user_data)
+void friend_message_cb(Tox *tox, uint32_t friend_number, TOX_MESSAGE_TYPE type, const uint8_t *message, size_t length, __attribute__((unused)) void *user_data)
 {
     if (g_tox_manager!=nullptr)
         emit g_tox_manager->friend_message_received (QString((const char*)message), friend_number);
 }
 
-void friend_name_cb(Tox *tox, uint32_t friend_number, const uint8_t *name, size_t length, void *user_data)
+void friend_name_cb(Tox *tox, uint32_t friend_number, const uint8_t *name, size_t length, __attribute__((unused)) void *user_data)
 {
     if (g_tox_manager!=nullptr)
         emit g_tox_manager->friend_name_changed (QString((const char*)name), friend_number);
 }
 
-void friend_typing_cb (Tox* tox, uint32_t friend_number, bool is_typing, void *user_data)
+void friend_connection_status_cb (Tox *tox, uint32_t friend_number, TOX_CONNECTION connection_status, __attribute__((unused)) void *user_data)
+{
+    if (g_tox_manager!=nullptr)
+    {
+        QString status = "unknown";
+        switch (connection_status) {
+            case TOX_CONNECTION_NONE:
+            status = "offline";
+            break;
+            case TOX_CONNECTION_TCP:
+            status = "online (TCP)";
+            break;
+            case TOX_CONNECTION_UDP:
+            status = "online (UDP)";
+            break;
+        }
+        emit g_tox_manager->friend_connection_status_changed (status, friend_number);
+    }
+}
+
+void friend_status_cb(Tox *tox, uint32_t friend_number, TOX_USER_STATUS status, __attribute__((unused)) void *user_data)
+{
+    if (g_tox_manager!=nullptr)
+    {
+        QString _status = "unknown";
+        switch (status) {
+            case TOX_USER_STATUS_NONE:
+            _status = "online";
+            break;
+            case TOX_USER_STATUS_AWAY:
+            _status = "away";
+            break;
+            case TOX_USER_STATUS_BUSY:
+            _status = "busy";
+            break;
+        }
+        emit g_tox_manager->friend_status_changed (_status, friend_number);
+    }
+}
+
+void friend_typing_cb (Tox* tox, uint32_t friend_number, bool is_typing, __attribute__((unused)) void *user_data)
 {
     if (g_tox_manager!=nullptr)
         emit g_tox_manager->friend_typing (is_typing, friend_number);
 }
 
-void self_connection_status_cb(Tox *tox, TOX_CONNECTION connection_status, void *user_data)
+void self_connection_status_cb(Tox *tox, TOX_CONNECTION connection_status, __attribute__((unused)) void *user_data)
 {
     if (g_tox_manager!=nullptr)
     {
@@ -45,7 +85,7 @@ void self_connection_status_cb(Tox *tox, TOX_CONNECTION connection_status, void 
     // printf ("%s\n", g_tox_state.self_online_status);
 }
 
-void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, uint32_t kind, uint64_t file_size, const uint8_t* filename, size_t filename_length, void* user_data)
+void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, uint32_t kind, uint64_t file_size, const uint8_t* filename, size_t filename_length, __attribute__((unused)) void* user_data)
 {
     if (kind == TOX_FILE_KIND_AVATAR) {
         if (!file_size) {
@@ -108,7 +148,7 @@ void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, ui
     g_tox_manager->files_in_transfer.insert (qMakePair(friend_number, file_number), file);
 }
 
-void file_chunk_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, uint64_t position, const uint8_t* data, size_t length, void* user_data)
+void file_chunk_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, uint64_t position, const uint8_t* data, size_t length, __attribute__((unused)) void* user_data)
 {
     QPair <uint32_t, uint32_t> key (friend_number, file_number);
     QFile* file = g_tox_manager->files_in_transfer.value (key);
@@ -127,7 +167,7 @@ void file_chunk_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_numb
         file->write (reinterpret_cast<const char*>(data), length);
 }
 
-void file_chunk_send_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, uint64_t position, size_t length, void* user_data)
+void file_chunk_send_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, uint64_t position, size_t length, __attribute__((unused)) void* user_data)
 {
     QPair <uint32_t, uint32_t> key (friend_number, file_number);
     QFile* file = g_tox_manager->files_in_transfer.value (key);
@@ -180,8 +220,9 @@ ToxManager::ToxManager (): QObject()
 
     g_tox_manager = this;
 
-    tox_callback_self_connection_status(tox, self_connection_status_cb);
-
+    tox_callback_self_connection_status (tox, self_connection_status_cb);
+    tox_callback_friend_connection_status (tox, friend_connection_status_cb);
+    tox_callback_friend_status (tox, friend_status_cb);
     tox_callback_friend_message (tox, friend_message_cb);
     tox_callback_friend_name (tox, friend_name_cb);
 
@@ -246,13 +287,37 @@ QList<ToxContact> ToxManager::contact_list()
 
     for (size_t i : friend_id_list)
     {
-        const size_t length = tox_friend_get_name_size (tox, i, 0);
-        QVector<uint8_t> buf (length);
-        tox_friend_get_name (tox, i, buf.data(), 0);
-        QString name = QString::fromUtf8 (QByteArray (reinterpret_cast<const char*>(buf.data()), length));
-        struct ToxContact contact = {i, name};
+        QString status = "offline";
+        TOX_CONNECTION status1 = tox_friend_get_connection_status (tox, i, 0);
+        if (status1 != TOX_CONNECTION_NONE)
+        {
+            TOX_USER_STATUS status2 = tox_friend_get_status (tox, i, 0);
+            switch (status2) {
+                case TOX_USER_STATUS_NONE:
+                status = "online";
+                break;
+                case TOX_USER_STATUS_AWAY:
+                status = "away";
+                break;
+                case TOX_USER_STATUS_BUSY:
+                status = "busy";
+                break;
+            }
+        }
+
+        QString name = "(Not connected...)";
+        if (status != "offline")
+        {
+            const size_t length = tox_friend_get_name_size (tox, i, 0);
+            QVector<uint8_t> buf (length);
+            tox_friend_get_name (tox, i, buf.data(), 0);
+            name = QString::fromUtf8 (QByteArray (reinterpret_cast<const char*>(buf.data()), length));
+            buf.clear();
+        }
+
+        struct ToxContact contact = {i, name, status};
         result.push_back (contact);
-        buf.clear();
+
     }
     return result;
 }

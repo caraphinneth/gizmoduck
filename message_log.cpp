@@ -1,16 +1,17 @@
 // Adapted from Michael Scopchanov's example.
 
+#include <QDebug>
 #include <QDateTime>
 #include <QScrollBar>
 #include <QPainter>
 
 #include "message_log.h"
 
-MessageLog::MessageLog (QWidget *parent) : QListView(parent)
+MessageLog::MessageLog (QWidget* parent) : QListView (parent)
 {
     setVerticalScrollMode (QAbstractItemView::ScrollPerPixel);
 
-    auto *message = new Message(this);
+    auto* message = new Message(this);
 
     QPalette p(palette());
 
@@ -262,7 +263,7 @@ CachedModel::CachedModel (QObject *parent) : QStandardItemModel (parent), cache 
     db.setDatabaseName(":memory:");
     if (!db.open())
     {
-        // QMessageBox::critical(0, tr("Cannot open database"), tr("Unable to establish a database connection.\n"), QMessageBox::Cancel);
+        qDebug() << "Unable to create an sqlite connection!";
         return;
     }
 

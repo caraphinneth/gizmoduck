@@ -64,6 +64,7 @@ TabWidget::TabWidget (QWidget *parent): QTabWidget (parent)
 
     //profile->setHttpUserAgent ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Gizmoduck/0.1.1 Chrome/61.0.3163.140 Safari/537.36");
     profile->setHttpUserAgent ("Mozilla/5.0 (X11; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0");
+    //profile->setHttpUserAgent ("Googlebot/2.1 (+http://www.google.com/bot.html)");
     //profile->setHttpAcceptLanguage ("ru, en-gb, en-us;q=0.9, en;q=0.8|ru");
 
     // Set up download handler.
@@ -263,7 +264,7 @@ void TabWidget::close_page (int index)
             {
                 qDebug() << "Closing single-paged tab.";
                 close_tab(index);
-                emit debug_tabs_updated (tab_groups);
+                emit debug_tabs_updated();
             }
             else
             {
@@ -279,10 +280,8 @@ void TabWidget::close_page (int index)
                     file.commit();
                     qDebug() << "Removing allocation" << p->history()->currentItem().url().toString();//.adjusted (QUrl::RemoveQuery)
                     group->remove (p->history()->currentItem().url().toString());//.adjusted (QUrl::RemoveQuery)
-                    emit debug_tabs_updated (tab_groups);
-
+                    emit debug_tabs_updated();
                     p.clear();
-
                 }
                 else
                 {
@@ -358,12 +357,11 @@ void TabWidget::close_tab (int index)
         if (tab_groups.contains (host))
         {
             TabGroup* group = tab_groups.value (host);
-            //foreach (QSharedPointer<WebPage> p, *group)
             for (auto i = group->begin (); i!=group->end(); ++i)
             {
                 //qDebug() << "Saving page"  << p->url().toString();
                 out << *i.value()->history();
-                //p.clear();
+                i.value().clear();
 
                 history.back();
             }
@@ -407,14 +405,13 @@ void TabWidget::restore_tab()
 
             group = assign_tab_group (host);
             group->insert (url, p);
-            emit debug_tabs_updated (tab_groups);
+            emit debug_tabs_updated();
         }
 
         //WebView *view = create_tab();
         //host_views.insert (tab_groups.key (group), view);
 
         QStringList list;
-        //foreach (QSharedPointer<WebPage> p, *group)
         for (auto i = group->begin (); i!=group->end(); ++i)
         {
             QSharedPointer<WebPage> p = i.value();
@@ -451,14 +448,14 @@ void TabWidget::set_url (const QUrl &url, bool background)
     QSharedPointer<WebPage> p;
     if (!view->page()->url().isEmpty() && !background)
     {
-        qDebug() << "Setting page" <<url.toString () <<"page"<<view->page()->url ().toString ();
+        qDebug() << "Setting page" <<url.toString () <<"page"<<view->page()->url().toString ();
         view->page()->setUrl (url);
         history.add (url);
     }
     else
     {
         p = group->assign_page (key);
-        emit debug_tabs_updated (tab_groups);
+        emit debug_tabs_updated();
 
         view->setPage (p.data());
         p->setUrl (url);
@@ -482,8 +479,6 @@ void TabWidget::install_page_signal_handler (QSharedPointer<WebPage> p)
 {
     connect (p.data(), &WebPage::fullScreenRequested, this, &TabWidget::fullscreen_request, Qt::UniqueConnection);
 
-    // TODO: remove redirect source page?
-
     //disconnect (p.data(), &WebPage::urlChanged, this, nullptr);
     connect (p.data(), &WebPage::urlChanged, [this, p](QUrl new_url)
     {
@@ -494,7 +489,6 @@ void TabWidget::install_page_signal_handler (QSharedPointer<WebPage> p)
         QString key = p->old_url.toString();//.adjusted (QUrl::RemoveQuery)
         QString host = p->old_url.host();
 
-
         TabGroup* group = assign_tab_group (host);
         WebView* view = host_views.value (host);
 
@@ -504,7 +498,7 @@ void TabWidget::install_page_signal_handler (QSharedPointer<WebPage> p)
         if (final_host != host)
         {
             group->remove (key);
-            emit debug_tabs_updated (tab_groups);
+            emit debug_tabs_updated();
 
             if (group->isEmpty())
             {
@@ -537,11 +531,12 @@ void TabWidget::install_page_signal_handler (QSharedPointer<WebPage> p)
                 WebView* new_view = host_views.value (final_host);
 
                 new_group->insert (final_url, p);
-                emit debug_tabs_updated (tab_groups);
+                emit debug_tabs_updated();
 
                 history.add (p->url());
+                // Do not activate widgets mindlessly, since this affects session load, too.
                 //setCurrentWidget (new_view);
-
+                new_view->setPage (p.data());
             }
             // Creating a new group.
             else
@@ -551,7 +546,7 @@ void TabWidget::install_page_signal_handler (QSharedPointer<WebPage> p)
                 WebView* v = create_tab();
                 host_views.insert (final_host, v);
                 new_group->insert (final_url, p);
-                emit debug_tabs_updated (tab_groups);
+                emit debug_tabs_updated();
 
                 v->setPage (p.data());
                 history.add (p->url());
@@ -565,7 +560,7 @@ void TabWidget::install_page_signal_handler (QSharedPointer<WebPage> p)
 
             group->insert (final_url, p);
             group->remove (key);
-            emit debug_tabs_updated (tab_groups);
+            emit debug_tabs_updated();
 
             history.add (p->url());
         }
@@ -743,7 +738,7 @@ void TabWidget::load_state()
 
         TabGroup* group = assign_tab_group (host);
         group->insert (url, p); // insert() replaces any possible dupes.
-        emit debug_tabs_updated (tab_groups);
+        emit debug_tabs_updated();
 
         history.add (p->history()->currentItem().url());
         install_page_signal_handler (p);
@@ -816,7 +811,7 @@ DebugTab* TabWidget::debug_tab()
         }
     });
 
-    connect (this, &TabWidget::debug_tabs_updated, [this, view] (const TabGroups& groups)
+    connect (this, &TabWidget::debug_tabs_updated, [this, view]()
     {
         int index = indexOf (view);
         if (index != -1)
@@ -827,6 +822,8 @@ DebugTab* TabWidget::debug_tab()
 
     setTabIcon (currentIndex()+1, QIcon (QStringLiteral (":/icons/system")));
     setCurrentWidget (view);
+
+    emit debug_tabs_updated();
 
     return view;
 }
@@ -958,7 +955,7 @@ void TabWidget::cleanup()
     }
 }
 
-WebPage* TabWidget::page_back(TabGroup* group)
+WebPage* TabWidget::page_back (TabGroup* group)
 {
     for (auto i=history.rbegin(); i!=history.rend(); ++i)
     {

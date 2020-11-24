@@ -3,8 +3,9 @@
 
 DebugTab::DebugTab (QWidget *parent): GLWidget (parent)
 {
-    QLabel* label = new QLabel (tr("Debug messages:"), this);
+    QLabel* label1 = new QLabel (tr("Debug messages:"), this);
     MessageLog* debug_view = new MessageLog(this);
+    QLabel* label2 = new QLabel (tr("Tab groups:"), this);
     QTreeView* tab_tree = new QTreeView (this);
     QStandardItemModel* model = new QStandardItemModel (this);
     tab_tree->setModel(model);
@@ -12,8 +13,9 @@ DebugTab::DebugTab (QWidget *parent): GLWidget (parent)
     // debug_view->setMaximumBlockCount (1000);
 
     QVBoxLayout *layout = new QVBoxLayout (this);
-    layout->addWidget (label);
+    layout->addWidget (label1);
     layout->addWidget (debug_view);
+    layout->addWidget (label2);
     layout->addWidget (tab_tree);
     setLayout(layout);
 
@@ -25,7 +27,7 @@ DebugTab::DebugTab (QWidget *parent): GLWidget (parent)
         // if (atBottom) debug_view->verticalScrollBar()->setValue (debug_view->verticalScrollBar()->maximum());
     });
 
-    connect (this, &DebugTab::redraw_tabs, [this, model](const TabGroups& groups)
+    connect (this, &DebugTab::redraw_tabs, [this, model, tab_tree](const TabGroups& groups)
     {
         model->clear();
         for (auto i = groups.begin(); i != groups.end(); ++i)
@@ -39,6 +41,6 @@ DebugTab::DebugTab (QWidget *parent): GLWidget (parent)
                 item->appendRow (child);
             }
         }
-
+        tab_tree->expandAll();
     });
 }

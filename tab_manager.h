@@ -34,7 +34,7 @@ signals:
     void reload_filters();
 
     void update_session();
-    void debug_tabs_updated (TabGroups& groups);
+    void debug_tabs_updated();
 
 public slots:
     void set_url (const QUrl &url, bool background=false);

@@ -167,9 +167,9 @@ MainWindow::MainWindow()
 
         if (url.isValid()&&((url.host()=="localhost")||(!url.topLevelDomain().isEmpty())||(url.topLevelDomain()=="i2p")|| (url.scheme()=="chrome")  ))
         //if (url.isValid() && !url.scheme().isEmpty() && (!url.host().isEmpty() || !url.path().isEmpty() || url.hasQuery()))
-            tab_manager->set_url (url);
+            tab_manager->set_url (url, false);
         else
-            tab_manager->set_url (QUrl::fromUserInput ("https://duckduckgo.com/?q="+address_box->text()));
+            tab_manager->set_url (QUrl::fromUserInput ("https://duckduckgo.com/?q="+address_box->text()), false);
     });
 
     connect (tab_manager, &TabWidget::url_changed, [this](const QUrl &url)

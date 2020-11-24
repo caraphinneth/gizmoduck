@@ -14,6 +14,7 @@ struct ToxContact
 {
     size_t number;
     QString name;
+    QString status;
 };
 
 class ToxManager : public QObject
@@ -21,8 +22,8 @@ class ToxManager : public QObject
     Q_OBJECT
 
 private:
-    QTimer *timer;
-    QTimer *watchdog;
+    QTimer* timer;
+    QTimer* watchdog;
     int iteration_interval;
 
 public:
@@ -39,17 +40,19 @@ public:
 
 public slots:
     void iterate ();
-    void message (const QString &text, const long friend_number);
-    void echo (const QString &message, const long friend_number);
-    void send_file (const QString &filename, const long friend_number);
+    void message (const QString& text, const long friend_number);
+    void echo (const QString& message, const long friend_number);
+    void send_file (const QString& filename, const long friend_number);
 
 signals:
     void start();
     void stop();
-    void friend_message_received (const QString &message, const long friend_number);
-    void friend_name_changed (const QString &name, const long friend_number);
-    void self_connection_status_changed (const QString &status);
-    void message_sent (const QString &message, const long friend_number);
+    void friend_message_received (const QString& message, const long friend_number);
+    void friend_name_changed (const QString& name, const long friend_number);
+    void friend_status_changed (const QString& status, const long friend_number);
+    void friend_connection_status_changed (const QString& status, const long friend_number);
+    void self_connection_status_changed (const QString& status);
+    void message_sent (const QString& message, const long friend_number);
     void friend_typing (bool is_typing, const long friend_number);
 
     void download_finished (const QString &filename, const long friend_number);
@@ -60,7 +63,7 @@ struct ToxWidget : public GLWidget
     Q_OBJECT
 
 public:
-    explicit ToxWidget (QWidget *parent = nullptr, long friend_number = 0);
+    explicit ToxWidget (QWidget* parent = nullptr, long friend_number = 0);
 
     InputWidget* input_box;
     QPlainTextEdit* chat_view;
@@ -75,9 +78,9 @@ public:
 public slots:
 
 signals:
-    void message_received (const QString &text);
-    void message_sent (const QString &text, const long friend_number);
-    void file_sent (const QString &filename, const long friend_number);
+    void message_received (const QString& text);
+    void message_sent (const QString& text, const long friend_number);
+    void file_sent (const QString& filename, const long friend_number);
     void friend_typing (bool is_typing, const long friend_number);
-    void file_received (const QString &filename);
+    void file_received (const QString& filename);
 };
