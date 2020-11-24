@@ -1,11 +1,10 @@
 #pragma once
 #include <QWebEngineScript>
 
-struct UserScript : public QWebEngineScript
+struct UserScript: public QWebEngineScript
 {
 
 public:
     UserScript();
-    void load_from_file (QString filename);
-
+    void load_from_file (const QString& filename);
 };

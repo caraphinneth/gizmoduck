@@ -103,9 +103,9 @@ void friend_request_cb(Tox *tox, const uint8_t *public_key, const uint8_t *messa
     update_savedata_file(tox);
 }
 
-void start_tox(Tox *tox)
+void start_tox(Tox* tox)
 {
-    const char *name = "Daiyousei";
+    const char* name = "Daiyousei";
     asprintf (&g_tox_state.name, name);
     tox_self_set_name(tox, (const unsigned char*)name, strlen(name), 0);
 

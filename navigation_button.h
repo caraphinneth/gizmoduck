@@ -1,12 +1,12 @@
 #pragma once
 #include <QPushButton>
 
-struct NavButton : public QPushButton
+struct NavButton: public QPushButton
 {
     Q_OBJECT
 
 public:
-    NavButton (QWidget *parent = nullptr);
+    NavButton (QWidget* parent = nullptr);
 
 signals:
     void left_clicked();
@@ -15,8 +15,7 @@ signals:
 
 
 protected:
-     void mousePressEvent (QMouseEvent *event) override;
-
+     void mousePressEvent (QMouseEvent* event) override;
 };
 
 

@@ -8,7 +8,7 @@ struct TabGroup: public QHash<QString, QSharedPointer<WebPage>>
 public:
     QWebEngineProfile* profile;
 
-    QSharedPointer<WebPage> assign_page (QString key)
+    QSharedPointer<WebPage> assign_page (const QString& key)
     {
         if (contains (key))
         {
@@ -39,7 +39,7 @@ public:
         current = begin();
     }
 
-    void add (QUrl url)
+    void add (const QUrl& url)
     {
         if (url.isEmpty())
             return;

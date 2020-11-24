@@ -76,7 +76,7 @@ void WebView::intercept_popup(const QUrl &url)
 }
 void WebView::search_selected()
 {
-    QAction *action = qobject_cast<QAction *> (sender());
+    QAction *action = qobject_cast<QAction*> (sender());
 
     if (!action)
       return;

@@ -8,7 +8,7 @@ UserScript::UserScript(): QWebEngineScript()
     setWorldId (QWebEngineScript::ApplicationWorld);
 }
 
-void UserScript::load_from_file (QString filename)
+void UserScript::load_from_file (const QString& filename)
 {
     QFile file (filename);
     file.open (QIODevice::ReadOnly | QIODevice::Text);

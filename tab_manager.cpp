@@ -96,13 +96,19 @@ TabWidget::TabWidget (QWidget *parent): QTabWidget (parent)
     //setElideMode (Qt::ElideRight);
 
     connect (this, &QTabWidget::currentChanged, this, &TabWidget::current_changed);
-    connect (this, &TabWidget::update_session, this, &TabWidget::save_state);
     connect (this, &TabWidget::reload_filters, request_filter, &RequestFilter::ReloadLists);
 
     load_state();
 
     if (!count())
         create_tab ();
+
+    autosave = new QTimer (this);
+    connect (this, &TabWidget::update_session, this, [this]()
+    {
+        autosave->start (10000);
+    });
+    connect (autosave, &QTimer::timeout, this, &TabWidget::save_state);
 
     connect (request_filter, &RequestFilter::debug_message, this, &TabWidget::print_to_debug_tab);
 }
@@ -218,7 +224,7 @@ WebView *TabWidget::create_tab()
            else
                setTabIcon (index, view->icon());
            //print_to_debug_tab (view->iconUrl().toString());
-           //emit update_session();
+           emit update_session();
         }
     });
 
@@ -234,7 +240,7 @@ WebView *TabWidget::create_tab()
     });*/
 
     // Install a handler for the context menu action.
-    connect (view, &WebView::search_requested, [this] (QString text)
+    connect (view, &WebView::search_requested, [this] (const QString& text)
     {
          set_url (QUrl::fromUserInput ("https://duckduckgo.com/?q="+text));
     });
@@ -332,7 +338,7 @@ void TabWidget::close_page (int index)
                     removeTab(index);
                 }
             }
-            save_state();
+            emit update_session();
         }
     }
     else // Not a web view! Settings and debug tabs fall into this category.
@@ -424,6 +430,7 @@ void TabWidget::restore_tab()
 
         //view->setPage (group->values().last());
     }
+
     file.close();
     file.remove();
 }
@@ -472,6 +479,7 @@ void TabWidget::set_url (const QUrl &url, bool background)
     {
         p->setUrl (url);
     }*/
+
     setCurrentWidget (view);
 }
 
@@ -569,7 +577,6 @@ void TabWidget::install_page_signal_handler (QSharedPointer<WebPage> p)
             qDebug() << "Equal" << key <<"and"<< final_url;
         }
         p->old_url = new_url;
-
     });
 }
 
@@ -665,6 +672,7 @@ void TabWidget::current_changed()
 
 void TabWidget::save_state()
 {
+    autosave->stop();
     QSaveFile file ("session.dat");
     file.open (QIODevice::WriteOnly);
     QDataStream out (&file);
@@ -699,6 +707,7 @@ void TabWidget::save_state()
     }
     file2.commit();
 
+    qDebug() <<"Session saved.";
 }
 
 void TabWidget::load_state()
@@ -738,7 +747,6 @@ void TabWidget::load_state()
 
         TabGroup* group = assign_tab_group (host);
         group->insert (url, p); // insert() replaces any possible dupes.
-        emit debug_tabs_updated();
 
         history.add (p->history()->currentItem().url());
         install_page_signal_handler (p);
@@ -849,7 +857,7 @@ void TabWidget::fullscreen_request (QWebEngineFullScreenRequest request)
     }
 }
 
-TabGroup* TabWidget::assign_tab_group (QString host)
+TabGroup* TabWidget::assign_tab_group (const QString& host)
 {
     if (tab_groups.contains (host))
     {
@@ -865,13 +873,13 @@ TabGroup* TabWidget::assign_tab_group (QString host)
     }
 }
 
-void TabWidget::wheelEvent (QWheelEvent *event)
+void TabWidget::wheelEvent (QWheelEvent* event)
 {
-    if (!tabBar()->geometry ().contains(event->position().x(), event->position().y()))
+    if (!tabBar()->geometry().contains (event->position().x(), event->position().y()))
         QTabWidget::wheelEvent (event);
     else
     {
-        WebView *view = qobject_cast<WebView*>(widget (currentIndex()));
+        WebView* view = qobject_cast<WebView*>(widget (currentIndex()));
         if (view)
         {
             QString host = host_views.key (view);
@@ -924,27 +932,28 @@ void TabWidget::wheelEvent (QWheelEvent *event)
                 }
             }
             else
-            // Likely an utility tab.
-            {
-                if (event->angleDelta().y() > 0)
-                {
-                    if (currentIndex() != 0)
-                        setCurrentIndex (currentIndex()-1);
-                }
-                else if (event->angleDelta().y() < 0)
-                {
-                    if (currentIndex() != count()-1)
-                        setCurrentIndex (currentIndex()+1);
-                }
-            }
+                QTabWidget::wheelEvent (event);
         }
         else
-            QTabWidget::wheelEvent (event);
+        // Likely an utility tab.
+        {
+            if (event->angleDelta().y() > 0)
+            {
+                if (currentIndex() != 0)
+                    setCurrentIndex (currentIndex()-1);
+            }
+            else if (event->angleDelta().y() < 0)
+            {
+                if (currentIndex() != count()-1)
+                    setCurrentIndex (currentIndex()+1);
+            }
+        }
     }
 }
 
 void TabWidget::cleanup()
 {
+    save_state();
     for (auto i = tab_groups.begin(); i != tab_groups.end(); ++i)
     {
         TabGroup* group = i.value();

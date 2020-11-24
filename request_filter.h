@@ -27,7 +27,7 @@ struct whitelist_record
     QString specific;
 };
 
-struct RequestFilter : public QWebEngineUrlRequestInterceptor
+struct RequestFilter: public QWebEngineUrlRequestInterceptor
 {
     Q_OBJECT
 
@@ -43,10 +43,10 @@ public slots:
 
 private:
     std::unique_ptr<intelligent_resolver_data> intelligent_resolver;
-    void intelligent_resolver_data_update (QUrl url, QString domain, QWebEngineUrlRequestInfo::ResourceType type);
-    int levenshtein_distance (const QString &str1, const QString &str2) const;
+    void intelligent_resolver_data_update (const QUrl& url, const QString& domain, const QWebEngineUrlRequestInfo::ResourceType type);
+    int levenshtein_distance (const QString& str1, const QString& str2) const;
     void load_filters();
 
-    bool should_block (QWebEngineUrlRequestInfo &info);
+    bool should_block (QWebEngineUrlRequestInfo& info);
     QList <whitelist_record> whitelist;
 };

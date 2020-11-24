@@ -3,12 +3,12 @@
 #include "navigation_button.h"
 
 // Custom buttons reacting to various sorts of clicks differently.
-NavButton::NavButton (QWidget *parent): QPushButton (parent)
+NavButton::NavButton (QWidget* parent): QPushButton (parent)
 {
     setFlat (true);
 }
 
-void NavButton::mousePressEvent (QMouseEvent *event)
+void NavButton::mousePressEvent (QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton)
     {

@@ -3,7 +3,7 @@
 #include "gl_widget.h"
 #include "QWebEngineView"
 
-class FullScreenWindow : public GLWidget
+class FullScreenWindow: public GLWidget
 {
     Q_OBJECT
 

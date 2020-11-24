@@ -356,7 +356,7 @@ MainWindow::MainWindow()
 
 }
 
-TabWidget *MainWindow::tabWidget() const
+TabWidget* MainWindow::tabWidget() const
 {
     return tab_manager;
 }

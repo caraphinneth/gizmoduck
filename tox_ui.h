@@ -39,7 +39,7 @@ public:
     QHash <QPair <uint32_t, uint32_t>, QFile*> files_in_transfer;
 
 public slots:
-    void iterate ();
+    void iterate();
     void message (const QString& text, const long friend_number);
     void echo (const QString& message, const long friend_number);
     void send_file (const QString& filename, const long friend_number);
@@ -53,9 +53,9 @@ signals:
     void friend_connection_status_changed (const QString& status, const long friend_number);
     void self_connection_status_changed (const QString& status);
     void message_sent (const QString& message, const long friend_number);
-    void friend_typing (bool is_typing, const long friend_number);
+    void friend_typing (const bool is_typing, const long friend_number);
 
-    void download_finished (const QString &filename, const long friend_number);
+    void download_finished (const QString& filename, const long friend_number);
 };
 
 struct ToxWidget : public GLWidget
@@ -81,6 +81,6 @@ signals:
     void message_received (const QString& text);
     void message_sent (const QString& text, const long friend_number);
     void file_sent (const QString& filename, const long friend_number);
-    void friend_typing (bool is_typing, const long friend_number);
+    void friend_typing (const bool is_typing, const long friend_number);
     void file_received (const QString& filename);
 };

@@ -1,5 +1,5 @@
 QT += widgets webenginewidgets sql
-
+DEFINES += QT_SHAREDPOINTER_TRACK_POINTERS
 CONFIG += c++14 exceptions_off
 CONFIG -= app_bundle
 

@@ -538,7 +538,7 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo &info)
 }
 
 
-void RequestFilter::intelligent_resolver_data_update (QUrl url, QString domain, QWebEngineUrlRequestInfo::ResourceType type)
+void RequestFilter::intelligent_resolver_data_update (const QUrl& url, const QString& domain, const QWebEngineUrlRequestInfo::ResourceType type)
 {
     if (intelligent_resolver->contains (url))
     {
