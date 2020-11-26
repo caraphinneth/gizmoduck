@@ -1,7 +1,7 @@
 #pragma once
 #include "gl_widget.h"
 
-struct SettingsTab: public GLWidget
+struct SettingsTab: public QWidget
 {
     Q_OBJECT
 

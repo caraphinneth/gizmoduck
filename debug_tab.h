@@ -2,7 +2,7 @@
 #include "gl_widget.h"
 #include "tab_groups.h"
 
-struct DebugTab: public GLWidget
+struct DebugTab: public QWidget
 {
     Q_OBJECT
 

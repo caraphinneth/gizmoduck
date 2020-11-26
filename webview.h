@@ -12,8 +12,10 @@ public:
 
 protected:
     void contextMenuEvent (QContextMenuEvent* event) override; // Our own context menu.
-    void mouseMoveEvent (QMouseEvent* event) override;
     QWebEngineView* createWindow (QWebEnginePage::WebWindowType type) override; // Overload to handle links requiring new window.
+
+    // Experimental
+    void mouseMoveEvent (QMouseEvent* event) override;
     bool eventFilter (QObject* object, QEvent* event);
 
 signals:
@@ -24,7 +26,7 @@ signals:
 private:
     void search_selected();
     void follow_link();
-    void intercept_popup(const QUrl& url);
+    void intercept_popup (const QUrl& url);
 
     QPoint position;
 };

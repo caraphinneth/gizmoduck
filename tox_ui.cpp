@@ -322,7 +322,7 @@ QList<ToxContact> ToxManager::contact_list()
     return result;
 }
 
-ToxWidget::ToxWidget (QWidget* parent, long friend_number): GLWidget (parent)
+ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
 {
     friend_id = friend_number;
 
@@ -425,12 +425,12 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): GLWidget (parent)
         else
             typing_label->clear();
     });
-    connect (this, &ToxWidget::message_received, [this, chat_view] (const QString &text)
+    connect (this, &ToxWidget::message_received, [this, chat_view] (const QString& text)
     {
         chat_view->append (text, friend_avatar, QDateTime::currentDateTime());
     });
 
-    connect (this, &ToxWidget::file_received, [this, chat_view] (const QString &filename)
+    connect (this, &ToxWidget::file_received, [this, chat_view] (const QString& filename)
     {
         chat_view->append (filename, friend_avatar, QDateTime::currentDateTime(), true);
     });

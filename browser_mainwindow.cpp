@@ -11,11 +11,11 @@
 // On resize events, reapply the expanding tabs style sheet (disabled for now).
 class ResizeFilter : public QObject
 {
-    QTabWidget *target;
+    QTabWidget* target;
     public:
-    ResizeFilter (QTabWidget *target) : QObject(target), target(target) {}
+    ResizeFilter (QTabWidget* target) : QObject(target), target(target) {}
 
-    bool eventFilter (QObject, QEvent *event)
+    bool eventFilter (QObject, QEvent* event)
     {
         if (event->type() == QEvent::Resize)
         {
@@ -54,7 +54,7 @@ MainWindow::MainWindow()
 //    QNetworkProxyFactory factory;
 //    QNetworkProxyFactory::setApplicationProxyFactory (factory);
 
-    QToolBar *toolbar = new QToolBar (tr("Navigation"), this);
+    QToolBar* toolbar = new QToolBar (tr("Navigation"), this);
     toolbar->setContextMenuPolicy (Qt::CustomContextMenu);
     //toolbar->setMovable(false);
     //toolbar->toggleViewAction()->setEnabled(true);
@@ -96,9 +96,9 @@ MainWindow::MainWindow()
 
     addToolBar (toolbar);
 
-    //QWidget *central_widget = new QWidget (this);
-    GLWidget *central_widget = new GLWidget (this);
-    QVBoxLayout *layout = new QVBoxLayout;
+    QWidget *central_widget = new QWidget (this);
+    //GLWidget *central_widget = new GLWidget (this);
+    QVBoxLayout* layout = new QVBoxLayout;
     layout->setSpacing (0);
     layout->setMargin (0);
     addToolBarBreak();
@@ -278,7 +278,7 @@ MainWindow::MainWindow()
 
         tox_button->setToolTip ("Tox status: "+status);
     });
-    connect (tox_manager, &ToxManager::download_finished, [this] (const QString &filename, const long friend_number)
+    connect (tox_manager, &ToxManager::download_finished, [this] (const QString& filename, const long friend_number)
     {
         // Q&D: technical files should not be displayed.
         if (!filename.contains (appdata_path))
@@ -331,7 +331,7 @@ MainWindow::MainWindow()
     });
     this->addAction(toggle_search);
 
-    QAction *find_text = new QAction (search_bar);
+    QAction* find_text = new QAction (search_bar);
     find_text->setShortcut (Qt::Key_F3);
     connect (find_text, &QAction::triggered, [this, search_box]()
     {
@@ -346,7 +346,7 @@ MainWindow::MainWindow()
 
     connect (search_box, &QLineEdit::textChanged, [this, search_box]()
     {
-        WebView *view = qobject_cast<WebView*>(tab_manager->currentWidget());
+        WebView* view = qobject_cast<WebView*>(tab_manager->currentWidget());
         if (view)
         {
             view->findText (search_box->text());
@@ -392,7 +392,7 @@ void MainWindow::chat(const QString &message, const long friend_number)
         dock->setWidget (chat_area);
         active_chats.insert (friend_number, chat_area);
     }
-    ToxWidget *chat_area = active_chats.value (friend_number);
+    ToxWidget* chat_area = active_chats.value (friend_number);
     DockWidget* dock = qobject_cast<DockWidget*>(chat_area->parentWidget());
     dock->show();
     if (!message.isEmpty())

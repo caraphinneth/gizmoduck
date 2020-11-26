@@ -25,7 +25,7 @@ TabWidget::TabWidget (QWidget* parent): QTabWidget (parent)
     profile->settings()->setAttribute (QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     //profile->settings()->setAttribute (QWebEngineSettings::FocusOnNavigationEnabled, true);
     profile->settings()->setAttribute (QWebEngineSettings::WebRTCPublicInterfacesOnly, true);
-    profile->settings()->setAttribute (QWebEngineSettings::PlaybackRequiresUserGesture, true);
+    profile->settings()->setAttribute (QWebEngineSettings::PlaybackRequiresUserGesture, false);
     profile->settings()->setAttribute (QWebEngineSettings::DnsPrefetchEnabled, true);
     //profile->settings()->setUnknownUrlSchemePolicy (QWebEngineSettings::AllowAllUnknownUrlSchemes);
     profile->settings()->setAttribute (QWebEngineSettings::AllowRunningInsecureContent, true);
@@ -38,7 +38,6 @@ TabWidget::TabWidget (QWidget* parent): QTabWidget (parent)
     profile->setSpellCheckEnabled (false);
 
     // Remove Chromium orange outlines/ugly underlines
-
     UserScript custom_css;
     custom_css.load_from_file (":/scripts/custom_css");
     custom_css.setInjectionPoint (QWebEngineScript::DocumentReady);
@@ -50,7 +49,7 @@ TabWidget::TabWidget (QWidget* parent): QTabWidget (parent)
     QStringList all_scripts;
     QDir script_dir ("./scripts");
     QStringList script_files = script_dir.entryList (QDir::Files);
-    foreach (QString filename, script_files)
+    foreach (const QString& filename, script_files)
     {
         UserScript new_script;
         new_script.load_from_file ("./scripts/"+filename);
@@ -59,7 +58,7 @@ TabWidget::TabWidget (QWidget* parent): QTabWidget (parent)
         profile->scripts()->insert (new_script);
     }
 
-    RequestFilter *request_filter = new RequestFilter;
+    RequestFilter* request_filter = new RequestFilter;
     profile->setUrlRequestInterceptor (request_filter);
 
     //profile->setHttpUserAgent ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Gizmoduck/0.1.1 Chrome/61.0.3163.140 Safari/537.36");
@@ -115,9 +114,9 @@ TabWidget::TabWidget (QWidget* parent): QTabWidget (parent)
 
 
 // Create a new web tab, link its events to interface where needed.
-WebView *TabWidget::create_tab()
+WebView* TabWidget::create_tab()
 {
-    WebView *view = new WebView (this);
+    WebView* view = new WebView (this);
     view->setAttribute(Qt::WA_DontShowOnScreen);
     insertTab (currentIndex()+1, view, tr("Untitled"));
 
@@ -145,20 +144,20 @@ WebView *TabWidget::create_tab()
     closeBtn->hide();*/
 
     // Autoassign tab title.
-    connect (view, &QWebEngineView::titleChanged, [this, view] (const QString &title)
+    connect (view, &QWebEngineView::titleChanged, [this, view] (const QString& title)
     {
         int index = indexOf (view);
         // Work around the bug(?) with returning url sometimes on heavily updated titles (may cause flicker).
         if ((index != -1) && (!title.startsWith ("http")) && (title!="about:blank"))
         {
             setTabText (index, title);
-            QList<QStandardItem *> vl (model.findItems (view->url().toString()));
+            QList<QStandardItem*> vl (model.findItems (view->url().toString()));
             if (vl.isEmpty ())
             {
                 if (!view->url().toString().contains (title))
                 {
-                    QStandardItem *item1 = new QStandardItem (view->url().toString());
-                    QStandardItem *item2 = new QStandardItem (title);
+                    QStandardItem* item1 = new QStandardItem (view->url().toString());
+                    QStandardItem* item2 = new QStandardItem (title);
                     QList <QStandardItem*> list;
                     list.append (item1);
                     list.append (item2);
@@ -170,7 +169,7 @@ WebView *TabWidget::create_tab()
             }
             else
             {
-                QList<QStandardItem *> list = model.takeRow (vl.at(0)->row());
+                QList<QStandardItem*> list = model.takeRow (vl.at(0)->row());
                 //list.append (model.takeRow (vl.at(0)->row()));
                 model.insertRow (0, list);
                 list.clear();
@@ -182,7 +181,7 @@ WebView *TabWidget::create_tab()
     });
 
     // Better than linking at top level, since url may change with both navigation and tab switching.
-    connect (view, &QWebEngineView::urlChanged, [this, view] (const QUrl &url)
+    connect (view, &QWebEngineView::urlChanged, [this, view] (const QUrl& url)
     {
         int index = indexOf (view);
         if (index != -1)
@@ -194,7 +193,7 @@ WebView *TabWidget::create_tab()
     });
 
     // Set tab icon according to favicon.
-    connect (view, &QWebEngineView::iconChanged, [this, view] (const QIcon &icon)
+    connect (view, &QWebEngineView::iconChanged, [this, view] (const QIcon& icon)
     {
         int index = indexOf (view);
         if (index != -1)
@@ -245,7 +244,7 @@ WebView *TabWidget::create_tab()
          set_url (QUrl::fromUserInput ("https://duckduckgo.com/?q="+text));
     });
 
-    connect (view, &WebView::link_requested, [this] (const QString url, const bool background)
+    connect (view, &WebView::link_requested, [this] (const QString& url, const bool background)
     {
          set_url (QUrl::fromUserInput (url), background);
     });
@@ -286,10 +285,9 @@ void TabWidget::close_page (int index)
                     qDebug() << "Removing allocation" << p->history()->currentItem().url().toString();//.adjusted (QUrl::RemoveQuery)
                     group->remove (p->history()->currentItem().url().toString());//.adjusted (QUrl::RemoveQuery)
                     emit debug_tabs_updated();
-                    //disconnect (p.data(), &WebPage::fullScreenRequested, this, nullptr);
-                    //disconnect (p.data(), &WebPage::urlChanged, this, nullptr);
+                    disconnect (p, &WebPage::fullScreenRequested, this, nullptr);
+                    disconnect (p, &WebPage::urlChanged, this, nullptr);
                     p->deleteLater();
-
                 }
                 else
                 {
@@ -370,8 +368,8 @@ void TabWidget::close_tab (int index)
                 //qDebug() << "Saving page"  << p->url().toString();
                 out << *i.value()->history();
 
-                //disconnect (i.value().data(), &WebPage::fullScreenRequested, this, nullptr);
-                //disconnect (i.value().data(), &WebPage::urlChanged, this, nullptr);
+                disconnect (i.value(), &WebPage::fullScreenRequested, this, nullptr);
+                disconnect (i.value(), &WebPage::urlChanged, this, nullptr);
 
                 i.value()->deleteLater();
 
@@ -536,7 +534,7 @@ void TabWidget::install_page_signal_handler (WebPage* p)
                     if (new_group->value(final_url) != p)
                     {
                         qDebug() << "Deleting old page" << final_url;
-                        //new_group->value(final_url).clear();
+                        new_group->value(final_url)->deleteLater();
                     }
                 }
                 WebView* new_view = host_views.value (final_host);

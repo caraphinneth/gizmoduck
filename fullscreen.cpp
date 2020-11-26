@@ -1,6 +1,6 @@
 #include "fullscreen.h"
 
-FullScreenWindow::FullScreenWindow (QWebEngineView* _old_view, QWidget* parent): GLWidget (parent)
+FullScreenWindow::FullScreenWindow (QWebEngineView* _old_view, QWidget* parent): QWidget (parent)
     {
     view = new QWebEngineView(this);
     old_view = _old_view;

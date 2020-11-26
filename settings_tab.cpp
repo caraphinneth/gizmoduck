@@ -2,7 +2,7 @@
 
 #include "setting_tab.h"
 
-QString read_comment (QString filename)
+QString read_comment (const QString& filename)
 {
     QString ret;
     QFile file (filename);
@@ -22,13 +22,13 @@ QString read_comment (QString filename)
     return ret;
 }
 
-SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
+SettingsTab::SettingsTab (QWidget* parent): QWidget (parent)
 {
     QSettings settings;
 
-    QGroupBox *visual = new QGroupBox (tr("Interface"), this);
-    QLabel *scroll_speed_label = new QLabel (tr("Mouse wheel scroll speed:"), this);
-    QSpinBox *scroll_speed = new QSpinBox (this);
+    QGroupBox* visual = new QGroupBox (tr("Interface"), this);
+    QLabel* scroll_speed_label = new QLabel (tr("Mouse wheel scroll speed:"), this);
+    QSpinBox* scroll_speed = new QSpinBox (this);
 
     settings.beginGroup ("Interface");
 
@@ -51,10 +51,10 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
     interface_layout->addWidget (scroll_speed);
     visual->setLayout (interface_layout);
 
-    QGroupBox *mp = new QGroupBox (tr("Process model (applied on restart)"), this);
-    QRadioButton *site_per_process = new QRadioButton(tr("Isolated processes. Recommended for security."), this);
-    QRadioButton *process_per_site = new QRadioButton(tr("Process per site. This way, tabs of the same origin will share the same process. Recommended for memory conservation."), this);
-    QRadioButton *single_process = new QRadioButton(tr("Single process mode. This mode is not officially supported by Qt WebEngine and not recommended.\nNote that single process may still make use of several threads."), this);
+    QGroupBox* mp = new QGroupBox (tr("Process model (applied on restart)"), this);
+    QRadioButton* site_per_process = new QRadioButton(tr("Isolated processes. Recommended for security."), this);
+    QRadioButton* process_per_site = new QRadioButton(tr("Process per site. This way, tabs of the same origin will share the same process. Recommended for memory conservation."), this);
+    QRadioButton* single_process = new QRadioButton(tr("Single process mode. This mode is not officially supported by Qt WebEngine and not recommended.\nNote that single process may still make use of several threads."), this);
 
     settings.beginGroup ("ProcessModel");
 
@@ -103,7 +103,7 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
 
 
 
-    QVBoxLayout *mp_layout = new QVBoxLayout (this);
+    QVBoxLayout* mp_layout = new QVBoxLayout (this);
     mp_layout->addWidget (site_per_process);
     mp_layout->addWidget (process_per_site);
     mp_layout->addWidget (single_process);
@@ -113,11 +113,11 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
     QGroupBox *web = new QGroupBox (tr("Web settings (applied on restart)"));
 
     settings.beginGroup ("Web settings");
-    QCheckBox *tcp_fast_open = new QCheckBox (tr("Enable TCP Fast Open, this is generally safe and results in a faster response."), this);
+    QCheckBox* tcp_fast_open = new QCheckBox (tr("Enable TCP Fast Open, this is generally safe and results in a faster response."), this);
     if (settings.value ("tcp_fast_open", false).toBool())
         tcp_fast_open->setChecked(true);
 
-    QCheckBox *checker_imaging = new QCheckBox (tr("Enable Checker Imaging feature, which is supposed to improve loading speeds. Your mileage may vary."), this);
+    QCheckBox* checker_imaging = new QCheckBox (tr("Enable Checker Imaging feature, which is supposed to improve loading speeds. Your mileage may vary."), this);
     if (settings.value ("checker_imaging", false).toBool())
         checker_imaging->setChecked(true);
 
@@ -154,16 +154,16 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
         settings.endGroup();
     });
 
-    QVBoxLayout *web_layout = new QVBoxLayout (this);
+    QVBoxLayout* web_layout = new QVBoxLayout (this);
     web_layout->addWidget (tcp_fast_open);
     web_layout->addWidget (checker_imaging);
     web->setLayout (web_layout);
 
 
-    QGroupBox *rasterizer = new QGroupBox (tr("Rasterizing (applied on restart)"), this);
+    QGroupBox* rasterizer = new QGroupBox (tr("Rasterizing (applied on restart)"), this);
 
     settings.beginGroup ("Rasterizer");
-    QCheckBox *gpu_rasterizer = new QCheckBox (tr("Enable GPU rasterization of web pages. This is usually faster, but may also introduce delayed response.\nThere's no best answer here."), this);
+    QCheckBox* gpu_rasterizer = new QCheckBox (tr("Enable GPU rasterization of web pages. This is usually faster, but may also introduce delayed response.\nThere's no best answer here."), this);
     if (settings.value ("gpu_enabled", false).toBool())
         gpu_rasterizer->setChecked(true);
     /*
@@ -205,15 +205,15 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
     });
     */
 
-    QVBoxLayout *rasterizer_layout = new QVBoxLayout (this);
+    QVBoxLayout* rasterizer_layout = new QVBoxLayout (this);
     rasterizer_layout->addWidget (gpu_rasterizer);
     //rasterizer_layout->addWidget (zero_copy);
     rasterizer->setLayout (rasterizer_layout);
 
-    QGroupBox *experimental = new QGroupBox (tr("Expert settings (applied on restart)"), this);
+    QGroupBox* experimental = new QGroupBox (tr("Expert settings (applied on restart)"), this);
 
     settings.beginGroup ("Experimental");
-    QCheckBox *ignore_gpu_blacklist = new QCheckBox (tr("Force GPU acceleration. Note that in most cases web tabs will be accelerated anyway, but this may help with video decoding.\nMay as well have no real effect."), this);
+    QCheckBox* ignore_gpu_blacklist = new QCheckBox (tr("Force GPU acceleration. Note that in most cases web tabs will be accelerated anyway, but this may help with video decoding.\nMay as well have no real effect."), this);
     if (settings.value ("ignore_gpu_blacklist", false).toBool())
        ignore_gpu_blacklist->setChecked(true);
     /*
@@ -254,7 +254,7 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
     });
     */
 
-    QVBoxLayout *experimental_layout = new QVBoxLayout (this);
+    QVBoxLayout* experimental_layout = new QVBoxLayout (this);
     experimental_layout->addWidget (ignore_gpu_blacklist);
     //experimental_layout->addWidget (enable_gpu_buffers);
     experimental->setLayout (experimental_layout);
@@ -266,7 +266,7 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
     QStringList all_filters;
     QDir dir ("./whitelist");
     QStringList files = dir.entryList (QDir::Files);
-    foreach (QString filename, files)
+    foreach (const QString& filename, files)
     {
         all_filters.append (filename);
     }
@@ -276,7 +276,7 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
     qDebug() << enabled_filters;
     settings.endGroup();
 
-    foreach (QString filename, all_filters)
+    foreach (const QString& filename, all_filters)
     {
         QListWidgetItem* item = new QListWidgetItem (filename);
         item->setFlags (Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable);
@@ -288,7 +288,7 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
         filter_selector->addItem (item);
     }
 
-    connect (filter_selector, &QListWidget::itemClicked, [this, filter_selector, comment](QListWidgetItem *item)
+    connect (filter_selector, &QListWidget::itemClicked, [this, filter_selector, comment](QListWidgetItem* item)
     {
         QStringList list;
 
@@ -315,7 +315,7 @@ SettingsTab::SettingsTab (QWidget *parent): GLWidget (parent)
     filtering_layout->addWidget (comment);
     content_filters->setLayout (filtering_layout);
 
-    QVBoxLayout *layout = new QVBoxLayout (this);
+    QVBoxLayout* layout = new QVBoxLayout (this);
     layout->addWidget (visual);
     layout->addWidget (mp);
     layout->addWidget (web);

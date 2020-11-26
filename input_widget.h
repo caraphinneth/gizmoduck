@@ -1,6 +1,7 @@
+// Chat input widget, line edit extended with pixmap pasting ability.
+
 #pragma once
 #include <QLineEdit>
-
 
 class InputWidget: public QLineEdit
 {

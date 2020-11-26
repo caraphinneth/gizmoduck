@@ -9,7 +9,7 @@
 #include <QDebug>
 
 // Side tabs, polishing still needed.
-SideTabs::SideTabs (QWidget *parent, int w, int h): QTabBar (parent)
+SideTabs::SideTabs (QWidget* parent, int w, int h): QTabBar (parent)
 {
     setMinimumSize (h, w);
     setStyleSheet (QString ("QTabBar::tab { height: %1px; width: %2px; }").arg(h).arg(w)); // QTabBar::scroller {height:%1pix;width:%2pix;}

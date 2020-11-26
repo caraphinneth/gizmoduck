@@ -1,7 +1,7 @@
 #include "debug_tab.h"
 #include "message_log.h"
 
-DebugTab::DebugTab (QWidget* parent): GLWidget (parent)
+DebugTab::DebugTab (QWidget* parent): QWidget (parent)
 {
     QLabel* label1 = new QLabel (tr("Debug messages:"), this);
     MessageLog* debug_view = new MessageLog(this);

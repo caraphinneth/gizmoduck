@@ -1,3 +1,5 @@
+// File upload dialog, extended with image preview.
+
 #pragma once
 #include <QFileDialog>
 #include <QLabel>

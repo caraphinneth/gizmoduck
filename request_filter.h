@@ -19,8 +19,7 @@ struct intelligent_resolver_data: public QHash <QUrl, intelligent_resolver_class
 
 struct whitelist_record
 {
-    whitelist_record (QWebEngineUrlRequestInfo::ResourceType t, QString p, QString s) : type(t), pattern(p), specific(s) {}
-    // whitelist_record () {}
+    whitelist_record (QWebEngineUrlRequestInfo::ResourceType t, const QString& p, const QString& s) : type(t), pattern(p), specific(s) {}
 
     QWebEngineUrlRequestInfo::ResourceType type;
     QString pattern;

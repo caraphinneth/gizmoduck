@@ -7,7 +7,7 @@
 
 #include "message_log.h"
 
-MessageLog::MessageLog (QWidget* parent) : QListView (parent)
+MessageLog::MessageLog (QWidget* parent): QListView (parent)
 {
     setVerticalScrollMode (QAbstractItemView::ScrollPerPixel);
 
@@ -45,7 +45,7 @@ MessageLog::MessageLog (QWidget* parent) : QListView (parent)
 
 void MessageLog::append (const QString &text, const QPixmap &pixmap, const QDateTime &dateTime, bool file)
 {
-    auto *item = new QStandardItem (QIcon(pixmap), text);
+    auto* item = new QStandardItem (QIcon(pixmap), text);
 
     item->setData (dateTime.toString("yyyy-MM-dd HH:mm:ss"), Qt::UserRole);
 
@@ -61,7 +61,7 @@ void MessageLog::append (const QString &text, const QPixmap &pixmap, const QDate
 
     // setContentsMargins (QMargins (8, 8, 8, 8));
 
-    static_cast<QStandardItemModel *>(model())->appendRow(item);
+    static_cast<QStandardItemModel*>(model())->appendRow(item);
 
     if (atBottom)
         scrollToBottom();
@@ -69,10 +69,10 @@ void MessageLog::append (const QString &text, const QPixmap &pixmap, const QDate
 
 void MessageLog::clear()
 {
-    static_cast<QStandardItemModel *>(model())->clear();
+    static_cast<QStandardItemModel*>(model())->clear();
 }
 
-Message::Message (QObject *parent) : QStyledItemDelegate(parent)
+Message::Message (QObject* parent) : QStyledItemDelegate(parent)
 {
     iconSize = QSize (48, 48);
     margins = QMargins (0, 0, 0, 0);
@@ -80,13 +80,13 @@ Message::Message (QObject *parent) : QStyledItemDelegate(parent)
     verticalSpacing = 0;
 }
 
-void MessageLog::resizeEvent (QResizeEvent *event)
+void MessageLog::resizeEvent (QResizeEvent* event)
 {
     scheduleDelayedItemsLayout();
     QAbstractItemView::resizeEvent (event);
 }
 
-void Message::paint (QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void Message::paint (QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     QStyleOptionViewItem opt (option);
     initStyleOption (&opt, index);
@@ -148,7 +148,7 @@ void Message::paint (QPainter *painter, const QStyleOptionViewItem &option, cons
     painter->restore();
 }
 
-QSize Message::sizeHint (const QStyleOptionViewItem &option,  const QModelIndex &index) const
+QSize Message::sizeHint (const QStyleOptionViewItem& option,  const QModelIndex& index) const
 {
     QStyleOptionViewItem opt (option);
     initStyleOption (&opt, index);
@@ -163,9 +163,9 @@ QSize Message::sizeHint (const QStyleOptionViewItem &option,  const QModelIndex 
     return QSize (opt.rect.width(), margins.top() + h + margins.bottom() + 8);
 }
 
-QRect Message::timestampBox(const QStyleOptionViewItem &option,  const QModelIndex &index) const
+QRect Message::timestampBox(const QStyleOptionViewItem& option,  const QModelIndex& index) const
 {
-    QFont f(option.font);
+    QFont f (option.font);
 
     f.setPointSizeF(timestampFontPointSize(option.font));
 
@@ -177,7 +177,7 @@ qreal Message::timestampFontPointSize (const QFont &f) const
     return 0.85*f.pointSize();
 }
 
-QTextDocument* Message::messageBox (const QStyleOptionViewItem &option, const QModelIndex &index, bool fastmode) const
+QTextDocument* Message::messageBox (const QStyleOptionViewItem& option, const QModelIndex& index, bool fastmode) const
 {
     QStyleOptionViewItem opt (option);
     initStyleOption (&opt, index);
@@ -220,7 +220,7 @@ QWidget* Message::createEditor (QWidget* parent, const QStyleOptionViewItem& /*o
     return editor;
 }
 
-void Message::updateEditorGeometry (QWidget *editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
+void Message::updateEditorGeometry (QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     QStyleOptionViewItem opt (option);
     initStyleOption (&opt, index);
@@ -252,12 +252,12 @@ void Message::setEditorData (QWidget* editor, const QModelIndex& index) const
     ed->setWordWrap (true);
 }
 
-MessageEditor::MessageEditor (QWidget* parent) : QLabel (parent)
+MessageEditor::MessageEditor (QWidget* parent): QLabel (parent)
 {
 
 }
 
-CachedModel::CachedModel (QObject* parent) : QStandardItemModel (parent), cache (10)
+CachedModel::CachedModel (QObject* parent): QStandardItemModel (parent), cache (10)
 {
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName (":memory:");
@@ -269,15 +269,18 @@ CachedModel::CachedModel (QObject* parent) : QStandardItemModel (parent), cache 
 
     QSqlQuery query (db);
     query.exec ("create table test (id int primary key, time int not null, friend_id int, message varchar(200))");
+
     query.exec ("insert into test values (1, 1, 1, 'Test test test')");
+
     query.exec ("insert into test values (2, 2, 4, 'Should not see me!')");
 
-    query.exec ("select * from value where friend_id is 1");
+    query.exec ("select * from test where friend_id is 1");
     while (query.next())
     {
         QString country = query.value (3).toString();
         qDebug() << "Query result" <<country;
     }
+    db.close();
 }
 
 QVariant CachedModel::data (const QModelIndex& _index, int role) const

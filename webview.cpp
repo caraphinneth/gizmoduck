@@ -10,7 +10,7 @@
 
 #include "QDebug"
 
-bool WebView::eventFilter(QObject *object, QEvent *event)
+bool WebView::eventFilter(QObject* object, QEvent* event)
 {
     if (object->parent() == this && event->type() == QEvent::MouseMove)
     {
@@ -20,7 +20,7 @@ bool WebView::eventFilter(QObject *object, QEvent *event)
     return false;
 }
 
-WebView::WebView (QWidget *parent): QWebEngineView (parent)
+WebView::WebView (QWidget* parent): QWebEngineView (parent)
 {
     QApplication::instance()->installEventFilter(this);
     setMouseTracking (true);
@@ -86,7 +86,7 @@ void WebView::search_selected()
 
 void WebView::follow_link()
 {
-    QAction *action = qobject_cast<QAction *> (sender());
+    QAction *action = qobject_cast<QAction*> (sender());
 
     if (!action)
       return;
@@ -94,9 +94,9 @@ void WebView::follow_link()
     emit link_requested (action->data().toString(), false);
 }
 
-void WebView::contextMenuEvent (QContextMenuEvent *event)
+void WebView::contextMenuEvent (QContextMenuEvent* event)
 {
-    QMenu *menu = page()->createStandardContextMenu();
+    QMenu* menu = page()->createStandardContextMenu();
 
     if (!menu)
         return;
@@ -127,7 +127,7 @@ void WebView::contextMenuEvent (QContextMenuEvent *event)
         {
             QFontMetrics fontMetric (menu->font());
             const QString elidedText = fontMetric.elidedText (data_layer.selectedText(), Qt::ElideRight, 100);
-            QAction *action = new QAction (tr("Search \"")+elidedText+tr("\" on the web"), this);
+            QAction* action = new QAction (tr("Search \"")+elidedText+tr("\" on the web"), this);
             action->setData (data_layer.selectedText());
             connect (action, &QAction::triggered, this, &WebView::search_selected);
             menu->addAction (action);
@@ -135,7 +135,7 @@ void WebView::contextMenuEvent (QContextMenuEvent *event)
             QUrl url = QUrl::fromUserInput (data_layer.selectedText());
             if (url.isValid())
             {
-                QAction *action2 = new QAction (tr("Follow \"")+elidedText+"\"", this);
+                QAction* action2 = new QAction (tr("Follow \"")+elidedText+"\"", this);
                 action2->setData (data_layer.selectedText());
                 connect (action2, &QAction::triggered, this, &WebView::follow_link);
                 menu->addAction (action2);
@@ -145,7 +145,7 @@ void WebView::contextMenuEvent (QContextMenuEvent *event)
         }
     }
 
-    QAction *action3 = new QAction (tr("Translate Page"), this);
+    QAction* action3 = new QAction (tr("Translate Page"), this);
     action3->setData ("https://translate.google.com/translate?js=n&sl=auto&tl=en&u="+this->url().toString());
     connect (action3, &QAction::triggered, this, &WebView::follow_link);
     menu->addAction (action3);
@@ -155,7 +155,7 @@ void WebView::contextMenuEvent (QContextMenuEvent *event)
     menu->popup (event->globalPos());
 }
 
-void WebView::mouseMoveEvent (QMouseEvent *event)
+void WebView::mouseMoveEvent (QMouseEvent* event)
 {
     position = event->pos();
     // qDebug() << event->x() << event->y();

@@ -1,3 +1,5 @@
+// This widget customizing is no longer required and may be removed.
+
 #pragma once
 #include <QDockWidget>
 

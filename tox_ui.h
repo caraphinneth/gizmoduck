@@ -58,7 +58,7 @@ signals:
     void download_finished (const QString& filename, const long friend_number);
 };
 
-struct ToxWidget : public GLWidget
+struct ToxWidget : public QWidget
 {
     Q_OBJECT
 

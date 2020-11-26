@@ -1,3 +1,5 @@
+// Buttons with custom left/right click handling.
+
 #pragma once
 #include <QPushButton>
 

@@ -1,3 +1,5 @@
+// Message logging widget, an improved list view. Used for debug and chat logging.
+
 #pragma once
 
 #include <QListView>

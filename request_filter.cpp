@@ -164,7 +164,7 @@ void RequestFilter::load_filters()
     }
 }
 
-void RequestFilter::ReloadLists ()
+void RequestFilter::ReloadLists()
 {
     if (!whitelist.empty())
         whitelist.clear();
@@ -228,7 +228,7 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
     // If the destination has a special scheme.
     if (destination_host.isEmpty())
     {
-        debug_message ("Unable to decode host from URL ("+url+"), looking deeper...");
+        QString message = "Unable to decode host from URL ("+url+"), looking deeper... ";
         if
         (
                 url.startsWith ("data:")||
@@ -237,7 +237,7 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
         )
         {
                 return false;
-                debug_message ("This is an inline data/binary/file request, allowing for now.");
+                debug_message (message + "This is an inline data/binary/file request, allowing for now.");
         }
     }
 
@@ -258,7 +258,7 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
             url.contains ("/ads/")||
             url.contains ("/ptracking")||
             (url.contains ("/get_video_info")&&(source_host=="www.youtube.com"))|| // This one's complicated... youtube uses this to deliver ads when first-party, but not remotely. Can break youtube gaming?
-            url.contains ("/cthru")||
+            //url.contains ("/cthru")||
             destination_host.startsWith ("ad.")||
             destination_host.startsWith ("ads.")||
             destination_host.startsWith ("ads-")
@@ -280,7 +280,7 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
 
     // Global whitelist before the stats!
 
-    foreach (whitelist_record record, whitelist)
+    foreach (const whitelist_record& record, whitelist)
     {
         if ((record.type == QWebEngineUrlRequestInfo::ResourceTypeMainFrame)||(record.type == info.resourceType()))
                 if (match (info.requestUrl(), record.pattern))
@@ -391,8 +391,8 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
         }
         else
         {
-            debug_message (ResourceClass (info.resourceType ())+" requested from the inline, no thanks: "+url);
-            debug_message ("Source URL: "+info.firstPartyUrl().toString());
+            QString message =  ResourceClass (info.resourceType()) + " requested from the inline, no thanks: "+url;
+            debug_message (message + "<br/>Source URL: "+info.firstPartyUrl().toString());
             return true;
         }
     }
@@ -417,14 +417,13 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
         (info.firstPartyUrl ().scheme ()!="data")
     )
     {
-        debug_message ("Destination contains hostname, assuming same origin.");
-        debug_message ("URL: "+url+", source: "+info.firstPartyUrl ().toString ()+", TLD+1: "+TLD (source_host).first());
+        debug_message ("Destination contains hostname, assuming same origin.<br/>URL: "+url+", source: "+info.firstPartyUrl ().toString ()+", TLD+1: "+TLD (source_host).first());
         return false;
     }
 
     // Otherwise gather stats.
-    intelligent_resolver_class *group;
-    intelligent_resolver_record *record;
+    intelligent_resolver_class* group;
+    intelligent_resolver_record* record;
     intelligent_resolver_data_update (info.firstPartyUrl(), TLD (destination_host).join("."), info.resourceType());
     group = intelligent_resolver->value (info.firstPartyUrl());
     record = group->value (info.resourceType());
@@ -589,7 +588,7 @@ void RequestFilter::intelligent_resolver_data_update (const QUrl& url, const QSt
 }
 
 // From dooble by Alexis Megas
-int RequestFilter::levenshtein_distance (const QString &str1, const QString &str2) const
+int RequestFilter::levenshtein_distance (const QString& str1, const QString& str2) const
 {
     if (str1.isEmpty())
         return str2.length();
