@@ -8,7 +8,7 @@
 #include "webview.h"
 #include "file_dialog.h"
 
-WebPage::WebPage (QWebEngineProfile *profile, QWidget *parent): QWebEnginePage (profile, parent)
+WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (profile, parent)
 {
     old_url = url();
     connect(this, &QWebEnginePage::authenticationRequired, this, &WebPage::handleAuthenticationRequired);
@@ -18,13 +18,15 @@ WebPage::WebPage (QWebEngineProfile *profile, QWidget *parent): QWebEnginePage (
         if (recommendedState()==QWebEnginePage::LifecycleState::Active)
             //lifecycle->start (1);
             setLifecycleState (QWebEnginePage::LifecycleState::Active);
-        else if (!isVisible()&&
-                 (url().host()!="discord.com")&&
-                 (url().host()!="tripwire.eve-apps.com"))
+        else if (!isVisible())
         {
             if (recommendedState()==QWebEnginePage::LifecycleState::Frozen)
                 lifecycle->start (15*60*1000);
-            else if (recommendedState()==QWebEnginePage::LifecycleState::Discarded)
+            else if ((recommendedState()==QWebEnginePage::LifecycleState::Discarded)&&
+                     (url().host()!="discord.com")&&
+                     (url().host()!="tripwire.eve-apps.com")&&
+                     (url().host()!="colab.research.google.com")
+                     )
                 lifecycle->start (15*60*1000);
         }
     });
@@ -67,7 +69,7 @@ QStringList WebPage::chooseFiles (QWebEnginePage::FileSelectionMode mode, const 
     return list;
 }
 
-void WebPage::handleAuthenticationRequired (const QUrl &url, QAuthenticator *auth)
+void WebPage::handleAuthenticationRequired (const QUrl& url, QAuthenticator* auth)
 {
     QWidget *mainWindow = view()->window();
 
@@ -103,7 +105,7 @@ void WebPage::handleAuthenticationRequired (const QUrl &url, QAuthenticator *aut
     }
 }
 
-bool WebPage::acceptNavigationRequest(const QUrl &url, NavigationType type, bool isMainFrame)
+bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool isMainFrame)
 {
     if (isMainFrame)
         qDebug() << "Going to url" << url << "by navitype" << type;

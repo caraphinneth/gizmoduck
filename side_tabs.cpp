@@ -32,7 +32,7 @@ SideTabs::SideTabs (QWidget *parent, int w, int h): QTabBar (parent)
 
 }
 
-void SideTabs::paintEvent (QPaintEvent *)
+void SideTabs::paintEvent (QPaintEvent*)
 {
     QStylePainter painter (this);
     QStyleOptionTab option;
@@ -67,13 +67,13 @@ void SideTabs::paintEvent (QPaintEvent *)
     painter.end();
 }
 
-QSize SideTabs::tabSizeHint (int index)
+QSize SideTabs::tabSizeHint (int /*index*/)
 {
     return minimumSize();
 }
 
 
-void SideTabs::wheelEvent (QWheelEvent *event)
+void SideTabs::wheelEvent (QWheelEvent* event)
 {
     // Pass to TabWidget.
     event->ignore();

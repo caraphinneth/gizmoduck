@@ -172,7 +172,7 @@ MainWindow::MainWindow()
             tab_manager->set_url (QUrl::fromUserInput ("https://duckduckgo.com/?q="+address_box->text()), false);
     });
 
-    connect (tab_manager, &TabWidget::url_changed, [this](const QUrl &url)
+    connect (tab_manager, &TabWidget::url_changed, [this](const QUrl& url)
     {
         WebView *view = qobject_cast<WebView*>(tab_manager->widget (tab_manager->currentIndex()));
         if (view)
@@ -244,11 +244,11 @@ MainWindow::MainWindow()
     {
         if (active_chats.contains (friend_number))
         {
-            emit active_chats.value (friend_number)->friend_typing (is_typing, friend_number);
+            emit active_chats.value (friend_number)->friend_typing (is_typing);
         }
     });
 
-    connect (tox_manager, &ToxManager::friend_name_changed, [this](const QString &name, const long friend_number)
+    connect (tox_manager, &ToxManager::friend_name_changed, [this](const QString& name, const long friend_number)
     {
         if (active_chats.contains (friend_number))
         {
@@ -257,7 +257,7 @@ MainWindow::MainWindow()
             printf ("Changed friend name to %s\n", ba.constData());
         }
     });
-    connect (tox_manager, &ToxManager::self_connection_status_changed, [this, contact_menu](const QString &status)
+    connect (tox_manager, &ToxManager::self_connection_status_changed, [this, contact_menu](const QString& status)
     {
         if (status == "offline")
         {

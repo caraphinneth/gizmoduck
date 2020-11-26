@@ -15,7 +15,6 @@ struct TabWidget: public QTabWidget
     Q_OBJECT
 
 public:
-
     TabWidget (QWidget* parent = nullptr);
     QWebEngineProfile* profile;
     QStandardItemModel model;
@@ -26,7 +25,6 @@ public:
     DebugTab* debug_tab();
 
 signals:
-
     //void title_changed (const QString &title);
     void url_changed (const QUrl& url);
     void print_to_debug_tab (const QString& text);
@@ -61,13 +59,13 @@ private:
     QTimer* autosave;
     RequestFilter* request_filter;
     QScopedPointer<FullScreenWindow> fullscreen;
-    void install_page_signal_handler (QSharedPointer<WebPage> p);
+    void install_page_signal_handler (WebPage* p);
 
     TabGroups tab_groups;
     TabGroup* assign_tab_group (const QString& host);
     QHash <QString, WebView*> host_views;
 
     void wheelEvent (QWheelEvent* event);
-    WebPage* page_back(TabGroup* group);
-    WebPage* page_forward(TabGroup* group);
+    WebPage* page_back (TabGroup* group);
+    WebPage* page_forward (TabGroup* group);
 };

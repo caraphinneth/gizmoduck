@@ -7,7 +7,7 @@
 
 #include "QDebug"
 
-QList <whitelist_record> load_filter_from_file (QString filename, QWebEngineUrlRequestInfo::ResourceType type)
+QList <whitelist_record> load_filter_from_file (const QString& filename, QWebEngineUrlRequestInfo::ResourceType type)
 {
     QList <whitelist_record> ret;
     QFile file (filename);
@@ -25,31 +25,31 @@ QList <whitelist_record> load_filter_from_file (QString filename, QWebEngineUrlR
     return ret;
 }
 
-QStringList TLD (QString value)
+QStringList TLD (const QString& value)
 {
     QStringList list = value.split ('.');
     while (list.count() > 2) list.removeFirst();
     return list;
 }
 
-QStringList SLD (QString value)
+QStringList SLD (const QString& value)
 {
     QStringList list = value.split ('.');
     while (list.count() > 3) list.removeFirst();
     return list;
 }
 
-bool SameUpperDomain (QString v1, QString v2)
+bool SameUpperDomain (const QString& v1, const QString& v2)
 {
     return (TLD(v1) == TLD(v2));
 }
 
-bool SameSecondLevelDomain (QString v1, QString v2)
+bool SameSecondLevelDomain (const QString& v1, const QString& v2)
 {
     return (SLD(v1) == SLD(v2));
 }
 
-bool match (QUrl url, QString pattern)
+bool match (const QUrl& url, const QString& pattern)
 {
     int i = pattern.indexOf ('/'); // first slash, if any, otherwise assume it's a domain name
     if  (i == -1) // assuming it's a domain name
@@ -82,7 +82,7 @@ bool match (QUrl url, QString pattern)
     }
 }
 
-QString ResourceClass (QWebEngineUrlRequestInfo::ResourceType type)
+QString ResourceClass (const QWebEngineUrlRequestInfo::ResourceType type)
 {
     QString resource_type;
     switch (type)
@@ -113,7 +113,7 @@ QString ResourceClass (QWebEngineUrlRequestInfo::ResourceType type)
     return resource_type;
 }
 
-QWebEngineUrlRequestInfo::ResourceType ResourceClass (QString type)
+QWebEngineUrlRequestInfo::ResourceType ResourceClass (const QString& type)
 {
     if (type == "main frame") return QWebEngineUrlRequestInfo::ResourceTypeMainFrame;
     if (type == "subframe") return QWebEngineUrlRequestInfo::ResourceTypeSubFrame;
@@ -138,7 +138,7 @@ QWebEngineUrlRequestInfo::ResourceType ResourceClass (QString type)
     return QWebEngineUrlRequestInfo::ResourceTypeMainFrame;
 }
 
-RequestFilter::RequestFilter (QObject *parent): QWebEngineUrlRequestInterceptor (parent)
+RequestFilter::RequestFilter (QObject* parent): QWebEngineUrlRequestInterceptor (parent)
 {
     intelligent_resolver.reset (new intelligent_resolver_data());
     ReloadLists();
@@ -152,7 +152,7 @@ void RequestFilter::load_filters()
     qDebug() << enabled_filters;
     settings.endGroup();
 
-    foreach (QString filename, enabled_filters)
+    foreach (const QString& filename, enabled_filters)
     {
         QWebEngineUrlRequestInfo::ResourceType guess_type = QWebEngineUrlRequestInfo::ResourceTypeMainFrame;
         int i = filename.indexOf ("-");
@@ -171,7 +171,7 @@ void RequestFilter::ReloadLists ()
     load_filters ();
 }
 
-void RequestFilter::interceptRequest (QWebEngineUrlRequestInfo &info)
+void RequestFilter::interceptRequest (QWebEngineUrlRequestInfo& info)
 {
     // Intercepting the requested URL
     QString url = info.requestUrl().toString (QUrl::RemoveQuery);
@@ -190,7 +190,7 @@ void RequestFilter::interceptRequest (QWebEngineUrlRequestInfo &info)
     }
 }
 
-bool RequestFilter::should_block (QWebEngineUrlRequestInfo &info)
+bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
 {
     QString source_host = info.firstPartyUrl().host();
     QString destination_host = info.requestUrl().host();

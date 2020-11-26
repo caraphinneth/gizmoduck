@@ -6,19 +6,19 @@ extern Tox_State g_tox_state;
 
 static ToxManager* g_tox_manager;
 
-void friend_message_cb(Tox *tox, uint32_t friend_number, TOX_MESSAGE_TYPE type, const uint8_t *message, size_t length, __attribute__((unused)) void *user_data)
+void friend_message_cb(Tox* /*tox*/, uint32_t friend_number, TOX_MESSAGE_TYPE /*type*/, const uint8_t* message, size_t /*length*/, void* /*user_data*/)
 {
     if (g_tox_manager!=nullptr)
         emit g_tox_manager->friend_message_received (QString((const char*)message), friend_number);
 }
 
-void friend_name_cb(Tox *tox, uint32_t friend_number, const uint8_t *name, size_t length, __attribute__((unused)) void *user_data)
+void friend_name_cb(Tox* /*tox*/, uint32_t friend_number, const uint8_t* name, size_t /*length*/, void* /*user_data*/)
 {
     if (g_tox_manager!=nullptr)
         emit g_tox_manager->friend_name_changed (QString((const char*)name), friend_number);
 }
 
-void friend_connection_status_cb (Tox *tox, uint32_t friend_number, TOX_CONNECTION connection_status, __attribute__((unused)) void *user_data)
+void friend_connection_status_cb (Tox* /*tox*/, uint32_t friend_number, TOX_CONNECTION connection_status, void* /*user_data*/)
 {
     if (g_tox_manager!=nullptr)
     {
@@ -38,7 +38,7 @@ void friend_connection_status_cb (Tox *tox, uint32_t friend_number, TOX_CONNECTI
     }
 }
 
-void friend_status_cb(Tox *tox, uint32_t friend_number, TOX_USER_STATUS status, __attribute__((unused)) void *user_data)
+void friend_status_cb(Tox* /*tox*/, uint32_t friend_number, TOX_USER_STATUS status, void* /*user_data*/)
 {
     if (g_tox_manager!=nullptr)
     {
@@ -58,13 +58,13 @@ void friend_status_cb(Tox *tox, uint32_t friend_number, TOX_USER_STATUS status, 
     }
 }
 
-void friend_typing_cb (Tox* tox, uint32_t friend_number, bool is_typing, __attribute__((unused)) void *user_data)
+void friend_typing_cb (Tox* /*tox*/, uint32_t friend_number, bool is_typing, void* /*user_data*/)
 {
     if (g_tox_manager!=nullptr)
         emit g_tox_manager->friend_typing (is_typing, friend_number);
 }
 
-void self_connection_status_cb(Tox *tox, TOX_CONNECTION connection_status, __attribute__((unused)) void *user_data)
+void self_connection_status_cb (Tox* /*tox*/, TOX_CONNECTION connection_status, void* /*user_data*/)
 {
     if (g_tox_manager!=nullptr)
     {
@@ -85,7 +85,7 @@ void self_connection_status_cb(Tox *tox, TOX_CONNECTION connection_status, __att
     // printf ("%s\n", g_tox_state.self_online_status);
 }
 
-void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, uint32_t kind, uint64_t file_size, const uint8_t* filename, size_t filename_length, __attribute__((unused)) void* user_data)
+void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, uint32_t kind, uint64_t file_size, const uint8_t* filename, size_t /*filename_length*/, void* /*user_data*/)
 {
     if (kind == TOX_FILE_KIND_AVATAR) {
         if (!file_size) {
@@ -148,7 +148,7 @@ void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, ui
     g_tox_manager->files_in_transfer.insert (qMakePair(friend_number, file_number), file);
 }
 
-void file_chunk_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, uint64_t position, const uint8_t* data, size_t length, __attribute__((unused)) void* user_data)
+void file_chunk_receive_cb (Tox* /*tox*/, uint32_t friend_number, uint32_t file_number, uint64_t /*position*/, const uint8_t* data, size_t length, void* /*user_data*/)
 {
     QPair <uint32_t, uint32_t> key (friend_number, file_number);
     QFile* file = g_tox_manager->files_in_transfer.value (key);
@@ -233,7 +233,7 @@ ToxManager::ToxManager (): QObject()
 
     tox_callback_file_chunk_request (tox, file_chunk_send_cb);
 
-    connect (this, &ToxManager::self_connection_status_changed, [this](const QString &status)
+    connect (this, &ToxManager::self_connection_status_changed, [this](const QString& status)
     {
         if (status == "offline")
         {
@@ -322,7 +322,7 @@ QList<ToxContact> ToxManager::contact_list()
     return result;
 }
 
-ToxWidget::ToxWidget (QWidget *parent, long friend_number): GLWidget (parent)
+ToxWidget::ToxWidget (QWidget* parent, long friend_number): GLWidget (parent)
 {
     friend_id = friend_number;
 
@@ -418,7 +418,7 @@ ToxWidget::ToxWidget (QWidget *parent, long friend_number): GLWidget (parent)
         printf (" found, loading.\n");
     }
 
-    connect (this, &ToxWidget::friend_typing, [this, typing_label](bool is_typing, const long friend_number)
+    connect (this, &ToxWidget::friend_typing, [this, typing_label](bool is_typing)
     {
         if (is_typing)
             typing_label->setText (friend_name + tr(" is typing..."));

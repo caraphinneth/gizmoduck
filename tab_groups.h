@@ -2,13 +2,13 @@
 #include <QWebEngineProfile>
 #include "webpage.h"
 
-struct TabGroup: public QHash<QString, QSharedPointer<WebPage>>
+struct TabGroup: public QHash<QString, WebPage*>
 {
 
 public:
     QWebEngineProfile* profile;
 
-    QSharedPointer<WebPage> assign_page (const QString& key)
+    WebPage* assign_page (const QString& key)
     {
         if (contains (key))
         {
@@ -16,8 +16,7 @@ public:
         }
         else
         {
-            QSharedPointer<WebPage> p;
-            p.reset (new WebPage(profile));
+            WebPage* p (new WebPage (profile));
             insert (key, p);
             return p;
         }

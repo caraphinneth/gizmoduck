@@ -4,10 +4,10 @@
 #include "file_dialog.h"
 
 // Custom file dialog with image preview for uploads.
-FileDialog::FileDialog (QWidget *parent, const QString &caption, const QString &directory, const QString &filter) : QFileDialog (parent, caption, directory, filter)
+FileDialog::FileDialog (QWidget* parent, const QString& caption, const QString& directory, const QString& filter) : QFileDialog (parent, caption, directory, filter)
 {
     setObjectName ("PreviewFileDialog");
-    QVBoxLayout *box = new QVBoxLayout();
+    QVBoxLayout* box = new QVBoxLayout();
 
     preview = new QLabel (tr("Preview"), this);
     preview->setAlignment (Qt::AlignCenter);
@@ -19,13 +19,13 @@ FileDialog::FileDialog (QWidget *parent, const QString &caption, const QString &
     preview->hide();
     // add to QFileDialog layout
     {
-        QGridLayout *layout = (QGridLayout*)this->layout();
+        QGridLayout* layout = (QGridLayout*)this->layout();
         layout->addLayout (box, 1, 3, 3, 1);
     }
     connect (this, &QFileDialog::currentChanged, this, &FileDialog::OnCurrentChanged);
 }
 
-void FileDialog::OnCurrentChanged (const QString &path)
+void FileDialog::OnCurrentChanged (const QString& path)
 {
     QPixmap pixmap = QPixmap (path);
     if (pixmap.isNull())

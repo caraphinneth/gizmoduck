@@ -33,7 +33,7 @@ WebView::WebView (QWidget *parent): QWebEngineView (parent)
 
 QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType type)
 {
-    MainWindow *win = qobject_cast<MainWindow*>(window());
+    MainWindow* win = qobject_cast<MainWindow*>(window());
     if (!win)
         return nullptr;
 
@@ -65,7 +65,7 @@ QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType type)
     return view;
 }
 
-void WebView::intercept_popup(const QUrl &url)
+void WebView::intercept_popup (const QUrl& url)
 {
     if (WebView* view = qobject_cast<WebView*>(sender()))
     {
@@ -76,7 +76,7 @@ void WebView::intercept_popup(const QUrl &url)
 }
 void WebView::search_selected()
 {
-    QAction *action = qobject_cast<QAction*> (sender());
+    QAction* action = qobject_cast<QAction*> (sender());
 
     if (!action)
       return;

@@ -214,13 +214,13 @@ QTextDocument* Message::messageBox (const QStyleOptionViewItem &option, const QM
     return text;
 }
 
-QWidget* Message::createEditor (QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+QWidget* Message::createEditor (QWidget* parent, const QStyleOptionViewItem& /*option*/, const QModelIndex& /*index*/) const
 {
     MessageEditor* editor = new MessageEditor (parent);
     return editor;
 }
 
-void Message::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &option, const QModelIndex &index) const
+void Message::updateEditorGeometry (QWidget *editor, const QStyleOptionViewItem& option, const QModelIndex& index) const
 {
     QStyleOptionViewItem opt (option);
     initStyleOption (&opt, index);
@@ -235,46 +235,52 @@ void Message::updateEditorGeometry(QWidget *editor, const QStyleOptionViewItem &
     editor->setGeometry (messageRect);
 }
 
-void Message::setEditorData (QWidget *editor, const QModelIndex &index) const
+void Message::setEditorData (QWidget* editor, const QModelIndex& index) const
 {
     MessageEditor* ed = qobject_cast<MessageEditor *>(editor);
 
-    QPalette p(editor->palette());
+    QPalette p (editor->palette());
 
-    p.setBrush(QPalette::Highlight, QColor(Qt::darkBlue));
+    p.setBrush (QPalette::Highlight, QColor(Qt::darkBlue));
 
-    editor->setPalette(p);
-    editor->setFont(QFont("Roboto", 12));
-    ed->setTextFormat(Qt::MarkdownText);
+    editor->setPalette (p);
+    editor->setFont (QFont("Roboto", 12));
+    ed->setTextFormat (Qt::MarkdownText);
 
-    ed->setText (qvariant_cast<QString>(index.data()));
+    ed->setText (qvariant_cast<QString> (index.data()));
     ed->setTextInteractionFlags (Qt::TextBrowserInteraction);
     ed->setWordWrap (true);
 }
 
-MessageEditor::MessageEditor (QWidget *parent) : QLabel (parent)
+MessageEditor::MessageEditor (QWidget* parent) : QLabel (parent)
 {
 
 }
 
-CachedModel::CachedModel (QObject *parent) : QStandardItemModel (parent), cache (10)
+CachedModel::CachedModel (QObject* parent) : QStandardItemModel (parent), cache (10)
 {
     db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(":memory:");
+    db.setDatabaseName (":memory:");
     if (!db.open())
     {
         qDebug() << "Unable to create an sqlite connection!";
         return;
     }
 
-    QSqlQuery query;
-    query.exec("create table test (id int primary key, "
-                  "name varchar(20), message varchar(200), typeid int)");
-    query.exec("insert into test values(1, 'Alice', "
-               "'<qt>123 Main Street<br/>Market Town</qt>', 101)");
+    QSqlQuery query (db);
+    query.exec ("create table test (id int primary key, time int not null, friend_id int, message varchar(200))");
+    query.exec ("insert into test values (1, 1, 1, 'Test test test')");
+    query.exec ("insert into test values (2, 2, 4, 'Should not see me!')");
+
+    query.exec ("select * from value where friend_id is 1");
+    while (query.next())
+    {
+        QString country = query.value (3).toString();
+        qDebug() << "Query result" <<country;
+    }
 }
 
-QVariant CachedModel::data (const QModelIndex &_index, int role) const
+QVariant CachedModel::data (const QModelIndex& _index, int role) const
 {    
     const int lookAhead (2);
     const int halfLookAhead (lookAhead/2);

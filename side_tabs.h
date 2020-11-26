@@ -8,7 +8,7 @@ struct SideTabs: public QTabBar
 
 public:
     SideTabs (QWidget* parent = nullptr, int w=256, int h=40);
-    QSize tabSizeHint (int index);
+    QSize tabSizeHint (int);
 
 private:
     void paintEvent (QPaintEvent*);

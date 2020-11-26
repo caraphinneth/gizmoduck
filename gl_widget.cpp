@@ -1,7 +1,7 @@
 #include "gl_widget.h"
 
 // Basic GL widget to work around Qt weird rasterizing system.
-GLWidget::GLWidget (QWidget *parent): QOpenGLWidget (parent, Qt::Widget)
+GLWidget::GLWidget (QWidget* parent): QOpenGLWidget (parent, Qt::Widget)
 {
 
 }

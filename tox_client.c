@@ -1,30 +1,30 @@
 #define _GNU_SOURCE
 #include "tox_client.h"
 
-const char *savedata_filename = "savedata.tox";
-const char *savedata_tmp_filename = "savedata.tox.tmp";
+const char* savedata_filename = "savedata.tox";
+const char* savedata_tmp_filename = "savedata.tox.tmp";
 
 Tox_State g_tox_state;
 
-Tox *create_tox()
+Tox* create_tox()
 {
-    Tox *tox;
+    Tox* tox;
 
     struct Tox_Options options;
 
-    tox_options_default(&options);
+    tox_options_default (&options);
     options.ipv6_enabled = false;
     options.local_discovery_enabled = false;
 
     printf("Reading settings...\n");
 
-    FILE *f = fopen(savedata_filename, "rb");
+    FILE* f = fopen (savedata_filename, "rb");
     if (f) {
-        fseek(f, 0, SEEK_END);
-        long fsize = ftell(f);
-        fseek(f, 0, SEEK_SET);
+        fseek (f, 0, SEEK_END);
+        long fsize = ftell (f);
+        fseek (f, 0, SEEK_SET);
 
-        uint8_t *savedata = malloc(fsize);
+        uint8_t* savedata = malloc (fsize);
 
         fread(savedata, fsize, 1, f);
         fclose(f);
@@ -33,34 +33,36 @@ Tox *create_tox()
         options.savedata_data = savedata;
         options.savedata_length = fsize;
 
-        tox = tox_new(&options, 0);
+        tox = tox_new (&options, 0);
 
-        free(savedata);
-    } else {
-        tox = tox_new(&options, 0);
+        free (savedata);
+    }
+    else
+    {
+        tox = tox_new (&options, 0);
     }
 
-    printf("Creating instance...\n");
+    printf ("Creating instance...\n");
 
     return tox;
 }
 
-void update_savedata_file(const Tox *tox)
+void update_savedata_file (const Tox* tox)
 {
-    size_t size = tox_get_savedata_size(tox);
-    uint8_t *savedata = malloc(size);
-    tox_get_savedata(tox, savedata);
+    size_t size = tox_get_savedata_size (tox);
+    uint8_t* savedata = malloc (size);
+    tox_get_savedata (tox, savedata);
 
-    FILE *f = fopen(savedata_tmp_filename, "wb");
-    fwrite(savedata, size, 1, f);
-    fclose(f);
+    FILE* f = fopen (savedata_tmp_filename, "wb");
+    fwrite (savedata, size, 1, f);
+    fclose (f);
 
-    rename(savedata_tmp_filename, savedata_filename);
+    rename (savedata_tmp_filename, savedata_filename);
 
-    free(savedata);
+    free (savedata);
 }
 
-void bootstrap(Tox *tox)
+void bootstrap(Tox* tox)
 {
     DHT_node nodes[] =
     {
@@ -74,33 +76,34 @@ void bootstrap(Tox *tox)
         {"tox.kurnevsky.net",                  33445, "82EF82BA33445A1F91A7DB27189ECFC0C013E06E3DA71F588ED692BED625EC23"}
     };
 
-    for (size_t i = 0; i < sizeof(nodes)/sizeof(DHT_node); i ++) {
+    for (size_t i = 0; i < sizeof(nodes)/sizeof(DHT_node); ++i)
+    {
         unsigned char key_bin[TOX_PUBLIC_KEY_SIZE];
-        sodium_hex2bin(key_bin, sizeof(key_bin), nodes[i].key_hex, sizeof(nodes[i].key_hex)-1,
-                       0, 0, 0);
-        tox_bootstrap(tox, nodes[i].ip, nodes[i].port, key_bin, 0);
+        sodium_hex2bin (key_bin, sizeof (key_bin), nodes[i].key_hex, sizeof (nodes[i].key_hex)-1, 0, 0, 0);
+        tox_bootstrap (tox, nodes[i].ip, nodes[i].port, key_bin, 0);
     }
 }
 
-void get_tox_id(Tox *tox)
+void get_tox_id (Tox* tox)
 {
     uint8_t tox_id_bin[TOX_ADDRESS_SIZE];
-    tox_self_get_address(tox, tox_id_bin);
+    tox_self_get_address (tox, tox_id_bin);
 
     char tox_id_hex[TOX_ADDRESS_SIZE*2 + 1];
-    sodium_bin2hex(tox_id_hex, sizeof(tox_id_hex), tox_id_bin, sizeof(tox_id_bin));
+    sodium_bin2hex (tox_id_hex, sizeof (tox_id_hex), tox_id_bin, sizeof (tox_id_bin));
 
-    for (size_t i = 0; i < sizeof(tox_id_hex)-1; i ++) {
-        tox_id_hex[i] = toupper(tox_id_hex[i]);
+    for (size_t i = 0; i < sizeof(tox_id_hex)-1; ++i)
+    {
+        tox_id_hex[i] = toupper (tox_id_hex[i]);
     }
 
     asprintf (&g_tox_state.id, tox_id_hex);
 }
 
-void friend_request_cb(Tox *tox, const uint8_t *public_key, const uint8_t *message, size_t length, void *user_data)
+void friend_request_cb (Tox* tox, const uint8_t* public_key, const uint8_t* message, size_t length, void* user_data)
 {
-    tox_friend_add_norequest(tox, public_key, 0);
-    update_savedata_file(tox);
+    tox_friend_add_norequest (tox, public_key, 0);
+    update_savedata_file (tox);
 }
 
 void start_tox(Tox* tox)

@@ -1,11 +1,9 @@
 QT += widgets webenginewidgets sql
-DEFINES += QT_SHAREDPOINTER_TRACK_POINTERS
 CONFIG += c++14 exceptions_off
 CONFIG -= app_bundle
 
-QMAKE_CXXFLAGS+="-O2 -march=native"
+QMAKE_CXXFLAGS+="-O2 -march=native -ftree-vectorize -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block"
 #-g -ggdb"
-#-ftree-vectorize -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block"
 #-flto=8"
 #QMAKE_LFLAGS+="-g -ggdb"
 

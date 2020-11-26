@@ -81,6 +81,6 @@ signals:
     void message_received (const QString& text);
     void message_sent (const QString& text, const long friend_number);
     void file_sent (const QString& filename, const long friend_number);
-    void friend_typing (const bool is_typing, const long friend_number);
+    void friend_typing (const bool is_typing);
     void file_received (const QString& filename);
 };
