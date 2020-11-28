@@ -4,16 +4,19 @@
 #include <QDateTime>
 #include <QScrollBar>
 #include <QPainter>
-
+#include <QSqlQuery>
 #include "message_log.h"
 
-MessageLog::MessageLog (QWidget* parent): QListView (parent)
+#include <QHeaderView>
+#include <QTimer>
+
+MessageLog::MessageLog (QWidget* parent, const QString& _name): QTableView (parent)
 {
     setVerticalScrollMode (QAbstractItemView::ScrollPerPixel);
 
-    auto* message = new Message(this);
+    auto* message = new Message (this);
 
-    QPalette p(palette());
+    QPalette p (palette());
 
     p.setBrush(QPalette::WindowText, QColor("#303030"));
     //p.setBrush(QPalette::Base, QColor("#F0F1F2"));
@@ -38,30 +41,56 @@ MessageLog::MessageLog (QWidget* parent): QListView (parent)
     setVerticalScrollBarPolicy (Qt::ScrollBarAlwaysOn);
     setHorizontalScrollBarPolicy (Qt::ScrollBarAlwaysOff);
 
-    setModel (new CachedModel(this));
+    name = _name;
+    //setUniformItemSizes (true);
+
+    setShowGrid (false);
+    horizontalHeader()->setSectionResizeMode (QHeaderView::Stretch);
+    horizontalHeader()->setVisible(false);
+    //verticalHeader ()->setDefaultSectionSize(64);
+    verticalHeader()->setSectionResizeMode (QHeaderView::Fixed);
+    verticalHeader()->setVisible(false);
+    setSortingEnabled (false);
+
+    setModel (new CachedModel (this, name));
     setItemDelegate (message);
+
     setEditTriggers (QAbstractItemView::CurrentChanged | QAbstractItemView::SelectedClicked);
+
+    //qDebug()<<"Constructor model size:"<<model()->rowCount();
+    scrollToBottom ();
+
+    firstIndex = -1;
+    lastIndex = -1;
+
+    connect (static_cast<CachedModel*>(model()), &CachedModel::window_changed, [this](const int first, const int last)
+    {
+        const bool atBottom = verticalScrollBar()->value() == verticalScrollBar()->maximum();
+
+        for (int i = first; i<=last;++i)
+        {
+            resizeRowToContents(i);
+            //qDebug()<<"Resizing row"<<i;
+        }
+
+        firstIndex = first;
+        lastIndex = last;
+
+        if (atBottom)
+            QTimer::singleShot (1, this, &QTableView::scrollToBottom);
+
+    });
 }
 
-void MessageLog::append (const QString &text, const QPixmap &pixmap, const QDateTime &dateTime, bool file)
+void MessageLog::append (const QString& text, const QString& icon, const QDateTime& dateTime, bool file)
 {
-    auto* item = new QStandardItem (QIcon(pixmap), text);
-
-    item->setData (dateTime.toString("yyyy-MM-dd HH:mm:ss"), Qt::UserRole);
-
-    if (!file)
-        item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable);
-    else
-    {
-        item->setFlags(Qt::ItemIsEnabled | Qt::ItemIsSelectable);
-        item->setData (text, Qt::UserRole+1);
-    }
-
+    // setContentsMargins (QMargins (8, 8, 8, 8));
     const bool atBottom = verticalScrollBar()->value() == verticalScrollBar()->maximum();
 
-    // setContentsMargins (QMargins (8, 8, 8, 8));
+    static_cast<CachedModel*>(model())->append (text, icon, dateTime, file);
 
-    static_cast<QStandardItemModel*>(model())->appendRow(item);
+    resizeRowToContents (model()->rowCount()-1);
+    //qDebug()<<"SA: Resizing row"<<model()->rowCount()-1;
 
     if (atBottom)
         scrollToBottom();
@@ -69,7 +98,7 @@ void MessageLog::append (const QString &text, const QPixmap &pixmap, const QDate
 
 void MessageLog::clear()
 {
-    static_cast<QStandardItemModel*>(model())->clear();
+    //STUB
 }
 
 Message::Message (QObject* parent) : QStyledItemDelegate(parent)
@@ -82,7 +111,18 @@ Message::Message (QObject* parent) : QStyledItemDelegate(parent)
 
 void MessageLog::resizeEvent (QResizeEvent* event)
 {
-    scheduleDelayedItemsLayout();
+   // const bool atBottom = verticalScrollBar()->value() == verticalScrollBar()->maximum();
+
+    for (int i = firstIndex; i<=lastIndex;++i)
+    {
+        resizeRowToContents(i);
+        //qDebug()<<"Resizing row"<<i;
+    }
+
+    //if (atBottom)
+        //QTimer::singleShot (1, this, &QTableView::scrollToBottom);
+
+    //scheduleDelayedItemsLayout();
     QAbstractItemView::resizeEvent (event);
 }
 
@@ -257,61 +297,122 @@ MessageEditor::MessageEditor (QWidget* parent): QLabel (parent)
 
 }
 
-CachedModel::CachedModel (QObject* parent): QStandardItemModel (parent), cache (10)
+CachedModel::CachedModel (QObject* parent, const QString& _table): QAbstractListModel (parent), cache (50)
 {
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName (":memory:");
-    if (!db.open())
-    {
-        qDebug() << "Unable to create an sqlite connection!";
-        return;
-    }
+    row_count = 0;
+    table = _table;
 
+    QSqlDatabase db = QSqlDatabase::database();
     QSqlQuery query (db);
-    query.exec ("create table test (id int primary key, time int not null, friend_id int, message varchar(200))");
+    query.exec ("create table IF NOT EXISTS '"+table+"' (id INTEGER PRIMARY KEY AUTOINCREMENT, text varchar(200), pixmap varchar(50), datetime varchar(50), file bool)");
 
-    query.exec ("insert into test values (1, 1, 1, 'Test test test')");
-
-    query.exec ("insert into test values (2, 2, 4, 'Should not see me!')");
-
-    query.exec ("select * from test where friend_id is 1");
+    query.prepare ("SELECT MAX(id) FROM '"+table+"'");
+    query.exec();
     while (query.next())
     {
-        QString country = query.value (3).toString();
-        qDebug() << "Query result" <<country;
+        row_count =  query.value(0).toInt();
+        qDebug()<<"Row count read:"<<row_count;
     }
-    db.close();
+
+    beginInsertRows (QModelIndex(), 0, row_count-1);
+    endInsertRows();
 }
 
 QVariant CachedModel::data (const QModelIndex& _index, int role) const
 {    
-    const int lookAhead (2);
+    if (!_index.isValid())
+        return QVariant();
+    if (_index.row() >= rowCount()|| _index.row() < 0)
+        return QVariant();
+
+    //qDebug()<<"Cached range before:"<< cache.firstIndex()<<"-"<<cache.lastIndex();
+    int old_firstIndex = cache.firstIndex();
+    int old_lastIndex = cache.lastIndex();
+    const int lookAhead (10);
     const int halfLookAhead (lookAhead/2);
 
     int row = _index.row();
-
     if (row > cache.lastIndex()) {
         if (row - cache.lastIndex() > lookAhead)
-            cacheRows (row-halfLookAhead, qMin (rowCount(), row+halfLookAhead));
-        else while (row > cache.lastIndex())
-            cache.append (fetchRow (cache.lastIndex()+1));
+            cacheRows (row-halfLookAhead, qMin (rowCount()-1, row+halfLookAhead));
+        else
+        {
+            while (row > cache.lastIndex())
+                cache.append (fetchRow (cache.lastIndex()+1));
+        }
     } else if (row < cache.firstIndex()) {
         if (cache.firstIndex() - row > lookAhead)
             cacheRows (qMax (0, row-halfLookAhead), row+halfLookAhead);
-        else while (row < cache.firstIndex())
-            cache.prepend (fetchRow (cache.lastIndex()-1));
+        else
+        {
+            while (row < cache.firstIndex())
+                cache.prepend (fetchRow (cache.firstIndex()-1));
+        }
     }
+    //qDebug()<<"Cached range after:"<< cache.firstIndex()<<"-"<<cache.lastIndex();
 
-    return cache.at(row).value (role);
+    if ((cache.firstIndex()<old_firstIndex)||(cache.lastIndex()>old_lastIndex))
+        emit window_changed (cache.firstIndex(), cache.lastIndex());
+
+    return cache.at(row).value(role);
+}
+
+Qt::ItemFlags CachedModel::flags (const QModelIndex& index) const
+{
+    if (!data(index, Qt::UserRole+1).toBool())
+        return (Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable);
+    else
+    {
+        return (Qt::ItemIsEnabled | Qt::ItemIsSelectable);
+    }
+}
+
+int CachedModel::rowCount (const QModelIndex&) const
+{
+    return row_count;
 }
 
 void CachedModel::cacheRows (int from, int to) const
 {
     for (int i = from; i <= to; ++i)
-        cache.insert (i, itemData (index (i, 0)));
+        cache.insert (i, fetchRow (i));
 }
 
 QMap<int, QVariant> CachedModel::fetchRow (int position) const
 {
-    return itemData (index (position, 0));
+    QSqlDatabase db = QSqlDatabase::database();
+    QSqlQuery query (db);
+    query.prepare ("select * from '"+table+"' where id is :pos");
+    query.bindValue(":pos", position+1);
+    query.exec();
+
+    QMap<int, QVariant> result;
+    while (query.next())
+    {
+        result.insert (Qt::DisplayRole, query.value(1));
+        result.insert (Qt::DecorationRole, QIcon (query.value(2).toString()));
+        result.insert (Qt::UserRole, query.value(3).toDateTime().toString("yyyy-MM-dd HH:mm:ss"));
+        if (query.value(4).toBool())
+            result.insert (Qt::UserRole+1, query.value(1));
+    }
+    return result;
+}
+
+bool CachedModel::append (const QString& text, const QString& icon, const QDateTime& dateTime, bool file)
+{
+    QSqlDatabase db = QSqlDatabase::database();
+    QSqlQuery query (db);
+    query.prepare ("INSERT INTO '"+table+"' (text, pixmap, datetime, file) "
+                  "VALUES (:text, :pixmap, :datetime, :file)");
+    query.bindValue (":text", text);
+    query.bindValue (":pixmap", icon);
+    query.bindValue (":datetime", dateTime);
+    query.bindValue (":file", file);
+
+    beginInsertRows (QModelIndex(), rowCount()-1, rowCount()-1);
+    bool result = query.exec();
+    ++row_count;
+    endInsertRows();
+
+    return result;
 }

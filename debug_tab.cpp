@@ -4,7 +4,7 @@
 DebugTab::DebugTab (QWidget* parent): QWidget (parent)
 {
     QLabel* label1 = new QLabel (tr("Debug messages:"), this);
-    MessageLog* debug_view = new MessageLog(this);
+    MessageLog* debug_view = new MessageLog (this);
     QLabel* label2 = new QLabel (tr("Tab groups:"), this);
     QTreeView* tab_tree = new QTreeView (this);
     QStandardItemModel* model = new QStandardItemModel (this);
@@ -12,7 +12,7 @@ DebugTab::DebugTab (QWidget* parent): QWidget (parent)
 
     // debug_view->setMaximumBlockCount (1000);
 
-    QVBoxLayout *layout = new QVBoxLayout (this);
+    QVBoxLayout* layout = new QVBoxLayout (this);
     layout->addWidget (label1);
     layout->addWidget (debug_view);
     layout->addWidget (label2);
@@ -23,7 +23,7 @@ DebugTab::DebugTab (QWidget* parent): QWidget (parent)
     {
         //const bool atBottom = debug_view->verticalScrollBar()->value() == debug_view->verticalScrollBar()->maximum();
 
-        debug_view->append (text, QPixmap (QStringLiteral (":/icons/system")), QDateTime::currentDateTime());
+        debug_view->append (text, ":/icons/system", QDateTime::currentDateTime());
         // if (atBottom) debug_view->verticalScrollBar()->setValue (debug_view->verticalScrollBar()->maximum());
     });
 

@@ -334,12 +334,16 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
     friend_name =  QString::fromUtf8 (QByteArray (reinterpret_cast<const char*>(buf.data()), length));
     buf.clear();
 
-    QLabel *label = new QLabel (tr("Chat with ") + friend_name, this);
-    QLabel *typing_label = new QLabel ("", this);
+    QLabel* label = new QLabel (tr("Chat with ") + friend_name, this);
+    QLabel* typing_label = new QLabel ("", this);
     QFont font1 ("Roboto", 8);
     typing_label->setFont (font1);
     typing_label->setFixedHeight (16);
-    MessageLog *chat_view = new MessageLog (this);
+
+    uint8_t pubkey [TOX_PUBLIC_KEY_SIZE];
+    tox_friend_get_public_key (g_tox_manager->tox, friend_id, pubkey, nullptr);
+
+    MessageLog* chat_view = new MessageLog (this, QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()));
     // chat_view->setTextInteractionFlags(Qt::TextBrowserInteraction);
 
     input_box = new InputWidget (this);
@@ -362,7 +366,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
         {
              QString filename = dialog->selectedFiles().first();
              emit file_sent (filename, friend_id);
-             chat_view->append (filename, QPixmap (QStringLiteral (":/icons/tox_online")), QDateTime::currentDateTime(), true);
+             chat_view->append (filename, ":/icons/tox_online", QDateTime::currentDateTime(), true);
         }
 
         dialog->deleteLater();
@@ -382,7 +386,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
             file.close();
             QFileInfo fi (file);
             emit file_sent (fi.filePath(), friend_id);
-            chat_view->append (fi.filePath(), QPixmap (QStringLiteral (":/icons/tox_online")), QDateTime::currentDateTime(), true);
+            chat_view->append (fi.filePath(), ":/icons/tox_online", QDateTime::currentDateTime(), true);
         }
         else
         {
@@ -398,16 +402,17 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
     form->addRow (attach_button, input_box);
     setLayout(form);
 
-    uint8_t pubkey [TOX_PUBLIC_KEY_SIZE];
-    tox_friend_get_public_key (g_tox_manager->tox, friend_id, pubkey, nullptr);
 
-    QFile file (appdata_path % QDir::separator() % QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png");
+    QString friend_avatar_path = appdata_path % QDir::separator() % QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png";
+    QFile file (friend_avatar_path);
 
     printf ("Looking for %s...", QByteArray ((const char*)pubkey).toHex().toUpper().constData());
 
+
     if (!file.open (QIODevice::ReadOnly))
     {
-        friend_avatar.load (QStringLiteral (":/icons/tox_online"));
+        friend_avatar_path = ":/icons/tox_online";
+        friend_avatar.load (friend_avatar_path);
         printf (" not found, using default.\n");
     }
     else
@@ -418,6 +423,8 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
         printf (" found, loading.\n");
     }
 
+
+
     connect (this, &ToxWidget::friend_typing, [this, typing_label](bool is_typing)
     {
         if (is_typing)
@@ -425,14 +432,14 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
         else
             typing_label->clear();
     });
-    connect (this, &ToxWidget::message_received, [this, chat_view] (const QString& text)
+    connect (this, &ToxWidget::message_received, [this, chat_view, friend_avatar_path] (const QString& text)
     {
-        chat_view->append (text, friend_avatar, QDateTime::currentDateTime());
+        chat_view->append (text, friend_avatar_path, QDateTime::currentDateTime());
     });
 
-    connect (this, &ToxWidget::file_received, [this, chat_view] (const QString& filename)
+    connect (this, &ToxWidget::file_received, [this, chat_view, friend_avatar_path] (const QString& filename)
     {
-        chat_view->append (filename, friend_avatar, QDateTime::currentDateTime(), true);
+        chat_view->append (filename, friend_avatar_path, QDateTime::currentDateTime(), true);
     });
 
     connect (input_box, &QLineEdit::textEdited, [this]()
@@ -451,7 +458,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
         if (!input_box->text().isEmpty ())
         {
             emit message_sent (input_box->text(), friend_id);
-            chat_view->append (input_box->text(), QPixmap (QStringLiteral (":/icons/tox_online")), QDateTime::currentDateTime());
+            chat_view->append (input_box->text(), ":/icons/tox_online", QDateTime::currentDateTime());
             input_box->clear ();
         }
     });

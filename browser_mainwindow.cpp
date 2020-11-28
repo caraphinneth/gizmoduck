@@ -3,6 +3,7 @@
 #include <QToolBar>
 #include <QTabBar>
 #include <QVBoxLayout>
+#include <QSqlDatabase>
 
 #include "browser_mainwindow.h"
 #include "dockwidget.h"
@@ -353,7 +354,13 @@ MainWindow::MainWindow()
         }
     });
 
-
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName ("testing.db");
+    if (!db.open())
+    {
+        qDebug() << "Unable to create an sqlite connection!";
+        exit (EXIT_FAILURE);
+    }
 }
 
 TabWidget* MainWindow::tabWidget() const

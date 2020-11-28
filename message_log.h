@@ -9,22 +9,25 @@
 #include <QTextCursor>
 #include <QStandardItemModel>
 #include <QContiguousCache>
-#include <QSqlQuery>
+#include <QTableView>
 
-class MessageLog: public QListView
+
+class MessageLog: public QTableView
 {
     Q_OBJECT
 
 public:
-    explicit MessageLog (QWidget* parent = nullptr);
+    explicit MessageLog (QWidget* parent = nullptr, const QString& _name = "debug_log");
+    QString name;
 
 public slots:
-
-    void append (const QString& text, const QPixmap& pixmap, const QDateTime& dateTime, bool file = false);
+    void append (const QString& text, const QString& icon, const QDateTime& dateTime, bool file = false);
     void clear();
 
 private:
     void resizeEvent (QResizeEvent* event);
+    int firstIndex;
+    int lastIndex;
 };
 
 class Message: public QStyledItemDelegate
@@ -66,17 +69,24 @@ protected:
     //void paintEvent(QPaintEvent* event) override;
 };
 
-class CachedModel: public QStandardItemModel
+class CachedModel: public QAbstractListModel
 {
     Q_OBJECT
 
 public:
-    CachedModel (QObject* parent = nullptr);
+    CachedModel (QObject* parent = nullptr, const QString& _table = "debug_log");
     QVariant data (const QModelIndex&, int) const override;
+    Qt::ItemFlags flags (const QModelIndex& index) const override;
+    bool append (const QString& text, const QString& icon, const QDateTime& dateTime, bool file);
+    int rowCount (const QModelIndex &parent = QModelIndex()) const override;
+
+signals:
+    void window_changed (const int firstIndex, const int lastIndex) const;
 
 private:
+    QString table;
     void cacheRows (int, int) const;
     QMap<int, QVariant> fetchRow (int position) const;
     mutable QContiguousCache<QMap<int, QVariant>> cache;
-    QSqlDatabase db;
+    int row_count;
 };
