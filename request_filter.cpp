@@ -138,8 +138,9 @@ QWebEngineUrlRequestInfo::ResourceType ResourceClass (const QString& type)
     return QWebEngineUrlRequestInfo::ResourceTypeMainFrame;
 }
 
-RequestFilter::RequestFilter (QObject* parent): QWebEngineUrlRequestInterceptor (parent)
+RequestFilter::RequestFilter (QObject* parent, const QString& useragent): QWebEngineUrlRequestInterceptor (parent)
 {
+    user_agent = useragent;
     intelligent_resolver.reset (new intelligent_resolver_data());
     ReloadLists();
 }
@@ -178,6 +179,13 @@ void RequestFilter::interceptRequest (QWebEngineUrlRequestInfo& info)
 
     // Never track me you fucking cunt
     info.setHttpHeader("DNT", "1");
+
+    // Per-domain quirks
+    if (info.requestUrl().host()=="accounts.google.com")
+    {
+        QString edge_agent = user_agent + " Edg/87.0.664.47";
+        info.setHttpHeader ("User-Agent", edge_agent.toUtf8());
+    }
 
     if (!should_block (info))
     {

@@ -31,7 +31,7 @@ struct RequestFilter: public QWebEngineUrlRequestInterceptor
     Q_OBJECT
 
 public:
-    RequestFilter (QObject* parent = nullptr);
+    RequestFilter (QObject* parent = nullptr, const QString& useragent = "Googlebot/2.1 (+http://www.google.com/bot.html)");
     void interceptRequest (QWebEngineUrlRequestInfo& info);
 
 signals:
@@ -41,6 +41,7 @@ public slots:
     void ReloadLists();
 
 private:
+    QString user_agent;
     std::unique_ptr<intelligent_resolver_data> intelligent_resolver;
     void intelligent_resolver_data_update (const QUrl& url, const QString& domain, const QWebEngineUrlRequestInfo::ResourceType type);
     int levenshtein_distance (const QString& str1, const QString& str2) const;

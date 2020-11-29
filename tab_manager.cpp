@@ -58,13 +58,13 @@ TabWidget::TabWidget (QWidget* parent): QTabWidget (parent)
         profile->scripts()->insert (new_script);
     }
 
-    RequestFilter* request_filter = new RequestFilter;
-    profile->setUrlRequestInterceptor (request_filter);
 
     //profile->setHttpUserAgent ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Gizmoduck/0.1.1 Chrome/61.0.3163.140 Safari/537.36");
-    profile->setHttpUserAgent ("Mozilla/5.0 (X11; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0");
+   // profile->setHttpUserAgent ("Mozilla/5.0 (X11; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0");
     //profile->setHttpUserAgent ("Googlebot/2.1 (+http://www.google.com/bot.html)");
     //profile->setHttpAcceptLanguage ("ru, en-gb, en-us;q=0.9, en;q=0.8|ru");
+    RequestFilter* request_filter = new RequestFilter (nullptr, profile->httpUserAgent());
+    profile->setUrlRequestInterceptor (request_filter);
 
     // Set up download handler.
     // Should be moved to a separate widget later.
