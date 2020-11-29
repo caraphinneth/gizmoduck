@@ -70,7 +70,7 @@ TabWidget::TabWidget (QWidget* parent): QTabWidget (parent)
     // Should be moved to a separate widget later.
     connect (profile, &QWebEngineProfile::downloadRequested, this, &TabWidget::download);
 
-    SideTabs *tabBar = new SideTabs (this, 162, 40);
+    SideTabs* tabBar = new SideTabs (this, 162, 40);
     setTabBar (tabBar);
 
     //tabBar->setTabsClosable (true);
@@ -114,11 +114,14 @@ TabWidget::TabWidget (QWidget* parent): QTabWidget (parent)
 
 
 // Create a new web tab, link its events to interface where needed.
-WebView* TabWidget::create_tab()
+WebView* TabWidget::create_tab (bool at_end)
 {
     WebView* view = new WebView (this);
     view->setAttribute(Qt::WA_DontShowOnScreen);
-    insertTab (currentIndex()+1, view, tr("Untitled"));
+    if (!at_end)
+        insertTab (currentIndex()+1, view, tr("Untitled"));
+    else
+        addTab (view, tr("Untitled"));
 
     /*
     if (background)
@@ -363,15 +366,16 @@ void TabWidget::close_tab (int index)
         if (tab_groups.contains (host))
         {
             TabGroup* group = tab_groups.value (host);
-            for (auto i = group->begin (); i!=group->end(); ++i)
+            //for (auto i = group->begin (); i!=group->end(); ++i)
+            foreach (const QString& i, group->order)
             {
                 //qDebug() << "Saving page"  << p->url().toString();
-                out << *i.value()->history();
+                out << *group->value(i)->history();
 
-                disconnect (i.value(), &WebPage::fullScreenRequested, this, nullptr);
-                disconnect (i.value(), &WebPage::urlChanged, this, nullptr);
+                disconnect (group->value(i), &WebPage::fullScreenRequested, this, nullptr);
+                disconnect (group->value(i), &WebPage::urlChanged, this, nullptr);
 
-                i.value()->deleteLater();
+                group->value(i)->deleteLater();
 
                 history.back();
             }
@@ -414,16 +418,20 @@ void TabWidget::restore_tab()
 
             group = assign_tab_group (host);
             group->insert (url, p);
+
+            WebView* view = host_views.value (host);
+            view->setPage (p);
             emit debug_tabs_updated();
         }
 
         //WebView *view = create_tab();
         //host_views.insert (tab_groups.key (group), view);
-
+        /*
         QStringList list;
-        for (auto i = group->begin (); i!=group->end(); ++i)
+        //for (auto i = group->begin (); i!=group->end(); ++i)
+        foreach (const QString& i, group->order)
         {
-            WebPage* p = i.value();
+            WebPage* p = group->value(i);
             list.append (p->history()->currentItem().url().toString());
             set_url (p->history()->currentItem().url().toString());
         }
@@ -432,6 +440,7 @@ void TabWidget::restore_tab()
         //setCurrentWidget (view);
 
         //view->setPage (group->values().last());
+        */
     }
 
     file.close();
@@ -531,10 +540,10 @@ void TabWidget::install_page_signal_handler (WebPage* p)
                 // Can do better?
                 if (new_group->contains (final_url))
                 {
-                    if (new_group->value(final_url) != p)
+                    if (new_group->value (final_url) != p)
                     {
                         qDebug() << "Deleting old page" << final_url;
-                        new_group->value(final_url)->deleteLater();
+                        new_group->value (final_url)->deleteLater();
                     }
                 }
                 WebView* new_view = host_views.value (final_host);
@@ -563,12 +572,13 @@ void TabWidget::install_page_signal_handler (WebPage* p)
             }
         }
         // It's a same host, so probably JS engine being malefic.
-        else if (final_url!=key)
+        else if (final_url != key)
         {
             qDebug() << "Removing" << key <<",replacing with"<< final_url;
 
-            group->insert (final_url, p);
-            group->remove (key);
+            //group->insert (final_url, p);
+            //group->remove (key);
+            group->replace (key, final_url, p);
             emit debug_tabs_updated();
 
             history.add (p->url());
@@ -679,21 +689,29 @@ void TabWidget::save_state()
     QDataStream out (&file);
 
     // Use iterator if you need to access value()/values(), otherwise it makes en extra copy.
-    for (auto i = tab_groups.begin(); i != tab_groups.end(); ++i)
+    //for (auto i = tab_groups.begin(); i != tab_groups.end(); ++i)
+    //foreach (auto i, tab_groups.order)
+    for (int i=0; i<=count(); ++i)
     {
-        //qDebug() << "Saving group for host"  << i.key();
-        for (auto j = i.value()->begin(); j != i.value()->end(); ++j)
+        WebView* view = qobject_cast<WebView*>(widget (i));
+        if (view)
         {
-            WebPage* p = j.value();
+            qDebug() << "Saving group for host"  << host_views.key (view);
+            //for (auto j = tab_groups.value(host_views.key (view))->begin(); j != tab_groups.value(host_views.key (view))->end(); ++j)
+            TabGroup* group = tab_groups.value (host_views.key (view));
+            foreach (auto j, group->order)
+            {
+                WebPage* p = group->value(j);
 
-            if (p)
-            {
-                //qDebug() << "Global: saving page"  << p->url().toString();
-                out << *p->history();
-            }
-            else
-            {
-                qDebug() << "BUG: page is invalid.";
+                if (p)
+                {
+                    qDebug() << "Global: saving page"  << p->url().toString();
+                    out << *p->history();
+                }
+                else
+                {
+                    qDebug() << "BUG: page is invalid.";
+                }
             }
         }
     }
@@ -753,18 +771,21 @@ void TabWidget::load_state()
     }
     file.close();
 
-    for (auto i = tab_groups.begin(); i != tab_groups.end(); ++i)
+    //for (auto i = tab_groups.begin(); i != tab_groups.end(); ++i)
+    foreach (auto i, tab_groups.order)
     {
-        WebView* view = create_tab();
-        host_views.insert (i.key(), view);
+        WebView* view = create_tab (true);
+        host_views.insert (i, view);
 
-        qDebug() << "Creating view for host"  << i.key();
+        //qDebug() << "Creating view for host"  << i;
 
         emit view->iconChanged (QIcon (QStringLiteral (":/icons/freeze")));
-        auto last = i.value()->end();
-        --last;
-        WebPage* last_page = last.value();
-        view->setPage (last_page);
+        //auto last = tab_groups.value(i)->end();
+        TabGroup* group = tab_groups.value(i);
+        auto last = group->value (group->order.back());
+        //--last;
+        //WebPage* last_page = last.value();
+        view->setPage (last);
     }
 }
 
@@ -886,11 +907,12 @@ void TabWidget::wheelEvent (QWheelEvent* event)
             if (tab_groups.contains (host))
             {
                 TabGroup* group = tab_groups.value (host);
-                auto it = group->find (view->url().toString()); // Reaching for a page pointer here is a disaster, don't do that. .adjusted (QUrl::RemoveQuery)
+                //auto it = group->find (view->url().toString()); // Reaching for a page pointer here is a disaster, don't do that. .adjusted (QUrl::RemoveQuery)
+                auto it = std::find (group->order.begin(), group->order.end(), view->url().toString());
 
                 if (event->angleDelta().y() > 0)
                 {
-                    if (it == group->begin())
+                    if (it == group->order.begin())
                     {
                         if (currentIndex() > 0)
                         {
@@ -903,14 +925,14 @@ void TabWidget::wheelEvent (QWheelEvent* event)
                     else
                     {
                         --it;
-                        view->setPage (it.value());
+                        view->setPage (group->value (*it));
                         history.add (view->page()->url());
                         //qDebug() << "History list:" << history;
                     }
                 }
                 else if (event->angleDelta().y() < 0)
                 {
-                    auto last = group->end();
+                    auto last = group->order.end();
                     --last;
                     if (it == last)
                     {
@@ -925,7 +947,7 @@ void TabWidget::wheelEvent (QWheelEvent* event)
                     else
                     {
                         ++it;
-                        view->setPage (it.value());
+                        view->setPage (group->value (*it));
                         history.add (view->page()->url());
                         //qDebug() << "History list:" << history;
                     }

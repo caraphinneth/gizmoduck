@@ -37,7 +37,7 @@ public slots:
     void set_url (const QUrl& url, bool background=false);
     void close_page (int index);
     void close_tab (int index);
-    WebView* create_tab();
+    WebView* create_tab (bool at_end = false);
     void restore_tab();
     void back();
     void forward();
