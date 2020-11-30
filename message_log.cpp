@@ -304,7 +304,7 @@ CachedModel::CachedModel (QObject* parent, const QString& _table): QAbstractList
 
     QSqlDatabase db = QSqlDatabase::database();
     QSqlQuery query (db);
-    query.exec ("create table IF NOT EXISTS '"+table+"' (id INTEGER PRIMARY KEY AUTOINCREMENT, text varchar(200), pixmap varchar(50), datetime varchar(50), file bool)");
+    query.exec ("create table IF NOT EXISTS '"+table+"' (id INTEGER PRIMARY KEY AUTOINCREMENT, text TEXT, pixmap TEXT, datetime TEXT, file INTEGER)");
 
     query.prepare ("SELECT MAX(id) FROM '"+table+"'");
     query.exec();
@@ -314,8 +314,11 @@ CachedModel::CachedModel (QObject* parent, const QString& _table): QAbstractList
         qDebug()<<"Row count read:"<<row_count;
     }
 
-    beginInsertRows (QModelIndex(), 0, row_count-1);
-    endInsertRows();
+    if (row_count>0)
+    {
+        beginInsertRows (QModelIndex(), 0, row_count-1);
+        endInsertRows();
+    }
 }
 
 QVariant CachedModel::data (const QModelIndex& _index, int role) const
@@ -409,9 +412,9 @@ bool CachedModel::append (const QString& text, const QString& icon, const QDateT
     query.bindValue (":datetime", dateTime);
     query.bindValue (":file", file);
 
+    ++row_count;
     beginInsertRows (QModelIndex(), rowCount()-1, rowCount()-1);
     bool result = query.exec();
-    ++row_count;
     endInsertRows();
 
     return result;

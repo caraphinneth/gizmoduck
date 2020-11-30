@@ -3,10 +3,7 @@
 #include <QLineEdit>
 #include "tab_manager.h"
 #include "navigation_button.h"
-
-#ifdef ENABLE_TOX
-    #include "tox_ui.h"
-#endif
+#include "tox_ui.h"
 
 struct MainWindow: public QMainWindow
 {
@@ -19,10 +16,8 @@ public:
 protected:
     void closeEvent (QCloseEvent*) override;
 
-#ifdef ENABLE_TOX
 private slots:
     void chat (const QString& message, const long friend_number);
-#endif
 
 private:
 
@@ -38,9 +33,7 @@ private:
     NavButton* tox_button;
     NavButton* settings_button;
 
-#ifdef ENABLE_TOX
     QHash <uint32_t, ToxWidget*> active_chats;
-#endif
 
     void save_settings();
 };

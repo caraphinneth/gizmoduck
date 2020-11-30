@@ -100,7 +100,7 @@ TabWidget::TabWidget (QWidget* parent): QTabWidget (parent)
     load_state();
 
     if (!count())
-        create_tab ();
+        set_url(QUrl::fromUserInput("duckduckgo.com"));
 
     autosave = new QTimer (this);
     connect (this, &TabWidget::update_session, this, [this]()
@@ -356,9 +356,6 @@ void TabWidget::close_tab (int index)
     WebView* view = qobject_cast<WebView*>(widget (index));
     if (view)
     {
-        if (!count())
-            create_tab();
-
         QSaveFile file ("recently_closed.dat"); // For now only handles one...
         file.open (QIODevice::WriteOnly);
         QDataStream out (&file);
@@ -387,6 +384,8 @@ void TabWidget::close_tab (int index)
         }
         else
             qDebug() << "Debug: host not grouped, OK if empty. Host:" << host;
+        if (count()==1)
+            set_url (QUrl::fromUserInput("duckduckgo.com"), true);
         view->deleteLater();
         removeTab(index);
 
@@ -552,7 +551,7 @@ void TabWidget::install_page_signal_handler (WebPage* p)
                 emit debug_tabs_updated();
 
                 history.add (p->url());
-                // Do not activate widgets mindlessly, since this affects session load, too.
+                // FIXME: Do not activate widgets mindlessly, since this affects session load, too.
                 //setCurrentWidget (new_view);
                 new_view->setPage (p);
             }
@@ -668,7 +667,7 @@ void TabWidget::current_changed()
         view->setFocus();
         history.add (view->page()->url());
         // This reacts to dragging. Fix that.
-        qDebug() << "Switched to page" << history.current->toString();
+        //qDebug() << "Switched to page" << history.current->toString();
         hide();
         show();
         emit url_changed (view->url());

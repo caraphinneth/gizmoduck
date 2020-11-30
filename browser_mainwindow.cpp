@@ -78,7 +78,6 @@ MainWindow::MainWindow()
     settings_button->setIcon (QIcon (QStringLiteral (":/icons/system")));
     settings_button->setToolTip (tr("Settings"));
 
-#ifdef ENABLE_TOX
     QMenu* contact_menu = new QMenu();
 
     tox_button = new NavButton (toolbar);
@@ -86,7 +85,6 @@ MainWindow::MainWindow()
     tox_button->setMenu (contact_menu);
     tox_button->setEnabled (false);
     toolbar->addWidget (tox_button);
-#endif
 
     toolbar->addWidget (settings_button);
 
@@ -133,7 +131,7 @@ MainWindow::MainWindow()
     QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel(this);
     proxyModel->setSourceModel(&tab_manager->model);
     proxyModel->setSortCaseSensitivity(Qt::CaseInsensitive);
-    connect (&tab_manager->model, &QStandardItemModel::rowsInserted, [this, proxyModel]()
+    connect (&tab_manager->model, &QStandardItemModel::rowsInserted, [proxyModel]()
     {
         proxyModel->sort (0);
     });
@@ -236,7 +234,6 @@ MainWindow::MainWindow()
         }
     });
 
-#ifdef ENABLE_TOX
     tox_manager = new ToxManager;
 
     connect (tox_manager, &ToxManager::friend_message_received, this, &MainWindow::chat);
@@ -311,7 +308,6 @@ MainWindow::MainWindow()
         }
         }
     });
-#endif
 
     QAction *toggle_search = new QAction (this);
     toggle_search->setShortcut (Qt::Key_F | Qt::CTRL);
@@ -370,15 +366,12 @@ TabWidget* MainWindow::tabWidget() const
 
 void MainWindow::closeEvent (QCloseEvent*)
 {
-#ifdef ENABLE_TOX
     delete tox_manager;
-#endif
 
     tab_manager->cleanup();
     save_settings();
 }
 
-#ifdef ENABLE_TOX
 void MainWindow::chat(const QString &message, const long friend_number)
 {
     if (!active_chats.contains (friend_number))
@@ -407,4 +400,3 @@ void MainWindow::chat(const QString &message, const long friend_number)
         emit chat_area->message_received (message);
     }
 }
-#endif

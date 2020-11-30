@@ -11,7 +11,10 @@ int main(int argc, char *argv[])
     //QCoreApplication::setAttribute (Qt::AA_ShareOpenGLContexts);
 
     QCoreApplication::setApplicationName ("Gizmoduck");
-   // QCoreApplication::setOrganizationName ("Clockwork Fairies");
+    // Windows will fail to write settings without organization.
+#ifdef WIN32
+    QCoreApplication::setOrganizationName ("Clockwork Fairies");
+#endif
     //setWindowTitle( QCoreApplication::applicationName() );
 
     QStringList arguments;

@@ -1,3 +1,6 @@
+#ifdef WIN32
+    #include "asprintf.h"
+#endif
 #define _GNU_SOURCE
 #include "tox_client.h"
 
@@ -57,6 +60,8 @@ void update_savedata_file (const Tox* tox)
     fwrite (savedata, size, 1, f);
     fclose (f);
 
+    // Only required for windows.
+    remove (savedata_filename);
     rename (savedata_tmp_filename, savedata_filename);
 
     free (savedata);

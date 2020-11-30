@@ -2,16 +2,26 @@ QT += widgets webenginewidgets sql
 CONFIG += c++14 exceptions_off
 CONFIG -= app_bundle
 
-QMAKE_CXXFLAGS+="-O2 -march=native -ftree-vectorize -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block"
+win32:QMAKE_CXXFLAGS+="-O2"
+!win32 {
+    QMAKE_CXXFLAGS+="-march=native -ftree-vectorize -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block -Wall -Wextra -Wpedantic"
+}
+
 #-g -ggdb"
 #-flto=8"
 #QMAKE_LFLAGS+="-g -ggdb"
 
-contains(USE_TOX, 1) {
-    DEFINES += ENABLE_TOX
+!win32 {
     LIBS += -ltoxcore -lsodium
 }
-
+#Update those paths and supply pthreadVC2/libsodium/toxcore dlls if linking dynamically.
+win32 {
+    LIBS += c:/coding/pthreadVC2.lib
+    LIBS += c:/coding/libsodium.lib
+    LIBS += c:/coding/toxcore.lib
+    LIBS += "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.18362.0/um/x64/iphlpapi.Lib"
+    LIBS += "C:/Program Files (x86)/Windows Kits/10/Lib/10.0.18362.0/um/x64/ws2_32.Lib"
+}
 # The following define makes your compiler emit warnings if you use
 # any feature of Qt which as been marked deprecated (the exact warnings
 # depend on your compiler). Please consult the documentation of the
@@ -39,7 +49,14 @@ SOURCES += main.cpp \
     gl_widget.cpp \
     debug_tab.cpp \
     userscript.cpp \
-    request_filter.cpp 
+    request_filter.cpp \
+    tox_client.c \
+    tox_ui.cpp
+
+win32 {
+HEADERS += \
+    asprintf.h \
+}
 
 HEADERS += \
     browser_mainwindow.h \
@@ -58,17 +75,9 @@ HEADERS += \
     setting_tab.h \
     gl_widget.h \
     debug_tab.h \
-    userscript.h
-
-contains(USE_TOX, 1) {
-    SOURCES += \
-        tox_client.c \
-        tox_ui.cpp
-
-    HEADERS += \
+    userscript.h \
     tox_client.h \
     tox_ui.h
-}
 
 TRANSLATIONS = gizmoduck_ru.ts
 

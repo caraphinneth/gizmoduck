@@ -2,7 +2,7 @@
 #include "file_dialog.h"
 #include "message_log.h"
 
-extern Tox_State g_tox_state;
+extern "C" Tox_State g_tox_state;
 
 static ToxManager* g_tox_manager;
 
@@ -103,7 +103,7 @@ void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, ui
             uint8_t pubkey [TOX_PUBLIC_KEY_SIZE];
             tox_friend_get_public_key (tox, friend_number, pubkey, nullptr);
 
-            QFile old_file (appdata_path % QDir::separator() %  QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png");
+            QFile old_file (appdata_path +"/"+  QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png");
             bool accept = false;
 
             if (!old_file.open (QIODevice::ReadOnly))
@@ -133,7 +133,7 @@ void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, ui
             {
                 printf(" hash not matching, accepting.\n");
                 tox_file_control (tox, friend_number, file_number, TOX_FILE_CONTROL_RESUME, nullptr);
-                QFile* file = new QFile (appdata_path % QDir::separator() %  QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png");
+                QFile* file = new QFile (appdata_path +"/"+  QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png");
                 file->open (QIODevice::ReadWrite);
                 g_tox_manager->files_in_transfer.insert (qMakePair(friend_number, file_number), file);
                 return;
@@ -143,7 +143,7 @@ void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, ui
     }
 
     tox_file_control (tox, friend_number, file_number, TOX_FILE_CONTROL_RESUME, nullptr);
-    QFile* file = new QFile (download_path % QDir::separator() %  QString ((const char*)filename));
+    QFile* file = new QFile (download_path +"/"+  QString ((const char*)filename));
     file->open (QIODevice::ReadWrite);
     g_tox_manager->files_in_transfer.insert (qMakePair(friend_number, file_number), file);
 }
@@ -376,7 +376,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
     connect (input_box, &InputWidget::paste_image, [this, chat_view] (const QPixmap& pixmap)
     {
         // akin to qTox but hopefully faster
-        QString filepath = appdata_path % QDir::separator() % QString ("qTox_Image_%1.jpg")
+        QString filepath = appdata_path +"/"+ QString ("qTox_Image_%1.jpg")
                                .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH-mm-ss.zzz"));
         QFile file (filepath);
 
@@ -403,7 +403,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
     setLayout(form);
 
 
-    QString friend_avatar_path = appdata_path % QDir::separator() % QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png";
+    QString friend_avatar_path = appdata_path +"/"+ QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png";
     QFile file (friend_avatar_path);
 
     printf ("Looking for %s...", QByteArray ((const char*)pubkey).toHex().toUpper().constData());
@@ -432,12 +432,12 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
         else
             typing_label->clear();
     });
-    connect (this, &ToxWidget::message_received, [this, chat_view, friend_avatar_path] (const QString& text)
+    connect (this, &ToxWidget::message_received, [chat_view, friend_avatar_path] (const QString& text)
     {
         chat_view->append (text, friend_avatar_path, QDateTime::currentDateTime());
     });
 
-    connect (this, &ToxWidget::file_received, [this, chat_view, friend_avatar_path] (const QString& filename)
+    connect (this, &ToxWidget::file_received, [chat_view, friend_avatar_path] (const QString& filename)
     {
         chat_view->append (filename, friend_avatar_path, QDateTime::currentDateTime(), true);
     });
@@ -450,6 +450,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
 
     connect (typing, &QTimer::timeout, [this]()
     {
+        // FIXME: tox manager might be destroyed upon app cloure before timer runs out.
         tox_self_set_typing (g_tox_manager->tox, friend_id, false, 0);
     });
 
