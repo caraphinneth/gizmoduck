@@ -3,6 +3,7 @@
 #include <QStylePainter>
 #include <QStyleOptionTab>
 #include <QWheelEvent>
+#include <QIcon>
 
 #include "side_tabs.h"
 
@@ -12,7 +13,7 @@
 SideTabs::SideTabs (QWidget* parent, int w, int h): QTabBar (parent)
 {
     setMinimumSize (h, w);
-    setStyleSheet (QString ("QTabBar::tab { height: %1px; width: %2px; }").arg(h).arg(w)); // QTabBar::scroller {height:%1pix;width:%2pix;}
+    setStyleSheet (QString ("QTabBar::tab { height: %1px; width: %2px; }").arg(h).arg(w)); // QTabBar::scroller {height:%1pix;width:%2pix;} padding-bottom:0px;
     //setStyleSheet ("QTabBar::close-button { padding-left: 64px; }");
     loading_icon = new QMovie (":/icons/loading");
     loading_icon->start();
@@ -41,9 +42,9 @@ void SideTabs::paintEvent (QPaintEvent*)
     for (int i=0; i<count(); ++i)
     {
         initStyleOption (&option, i);
+        //option->icon = QIcon();
+        //option->text = QString();
         QRect rect = tabRect (i);
-        option.icon = QIcon();
-        option.text = QString();
 
         QRect text_rect = rect.adjusted( 26, 3, -5, -5);
         if (tabIcon(i).isNull())
@@ -75,6 +76,6 @@ QSize SideTabs::tabSizeHint (int /*index*/)
 
 void SideTabs::wheelEvent (QWheelEvent* event)
 {
-    // Pass to TabWidget.
+    // Fall through to TabWidget.
     event->ignore();
 }

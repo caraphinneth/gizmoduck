@@ -54,7 +54,8 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
 QStringList WebPage::chooseFiles (QWebEnginePage::FileSelectionMode mode, const QStringList&/*oldFiles*/, const QStringList&/*acceptedMimeTypes*/)
 {
     QStringList list;
-    FileDialog *dialog = new FileDialog (view(), tr("Select File"), "", tr("All Files (*.*)"));
+    QScopedPointer <FileDialog> dialog;
+    dialog. reset (new FileDialog (view(), tr("Select File"), "", tr("All Files (*.*)")));
     dialog->setAcceptMode (QFileDialog::AcceptOpen);
 
     if (mode == QWebEnginePage::FileSelectOpen)
@@ -65,7 +66,7 @@ QStringList WebPage::chooseFiles (QWebEnginePage::FileSelectionMode mode, const 
     if (dialog->exec())
         list = dialog->selectedFiles();
     else list << "";
-    dialog->deleteLater();
+    //dialog->deleteLater();
     return list;
 }
 

@@ -58,7 +58,7 @@ MessageLog::MessageLog (QWidget* parent, const QString& _name): QTableView (pare
     setEditTriggers (QAbstractItemView::CurrentChanged | QAbstractItemView::SelectedClicked);
 
     //qDebug()<<"Constructor model size:"<<model()->rowCount();
-    scrollToBottom ();
+    scrollToBottom();
 
     firstIndex = -1;
     lastIndex = -1;
@@ -80,6 +80,29 @@ MessageLog::MessageLog (QWidget* parent, const QString& _name): QTableView (pare
             QTimer::singleShot (1, this, &QTableView::scrollToBottom);
 
     });
+}
+
+void MessageLog::index_search (const QString& text)
+{
+    const bool atBottom = verticalScrollBar()->value() == verticalScrollBar()->maximum();
+    CachedModel* _model = static_cast<CachedModel*>(model());
+    search_index = _model->search (text);
+    if (atBottom)
+        QTimer::singleShot (1, this, &MessageLog::search_back);
+}
+
+void MessageLog::search_back()
+{
+    if (!search_index.isEmpty())
+    {
+        search_index.prepend (search_index.takeLast());
+        scrollTo (model()->index (search_index.back(), 0));
+        selectRow (search_index.back());
+        /*QTimer::singleShot (1, this, [this]()
+        {
+            scrollTo (model()->index (search_index.back()));
+        });*/
+    }
 }
 
 void MessageLog::append (const QString& text, const QString& icon, const QDateTime& dateTime, bool file)
@@ -397,6 +420,28 @@ QMap<int, QVariant> CachedModel::fetchRow (int position) const
         result.insert (Qt::UserRole, query.value(3).toDateTime().toString("yyyy-MM-dd HH:mm:ss"));
         if (query.value(4).toBool())
             result.insert (Qt::UserRole+1, query.value(1));
+    }
+    return result;
+}
+
+QList<int> CachedModel::search (const QString& text)
+{
+    if (text.length()<2)
+        return QList<int>();
+
+    QSqlDatabase db = QSqlDatabase::database();
+    QSqlQuery query (db);
+    query.prepare ("select * from '"+table+"' where text like :text");
+    query.bindValue (":text", "%"+text+"%");
+    query.exec();
+
+    QList<int> result;
+    while (query.next())
+    {
+        if (!query.value(4).toBool())
+        {
+            result.push_back (query.value(0).toInt()-1);
+        }
     }
     return result;
 }

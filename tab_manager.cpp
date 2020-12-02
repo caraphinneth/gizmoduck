@@ -76,7 +76,6 @@ TabWidget::TabWidget (QWidget* parent): QTabWidget (parent)
     //tabBar->setTabsClosable (true);
     tabBar->setSelectionBehaviorOnRemove (QTabBar::SelectPreviousTab);
     tabBar->setMovable (true);
-
     setTabPosition (East);
     tabBar->setContextMenuPolicy (Qt::CustomContextMenu);
     //setSizePolicy (QSizePolicy::MinimumExpanding, QSizePolicy::Ignored);

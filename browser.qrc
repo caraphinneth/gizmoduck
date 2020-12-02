@@ -21,6 +21,8 @@
         <file alias="attachment">res/icons/mail-attachment-symbolic.svg</file>
         <file alias="sleep">res/icons/preferences-desktop-screensaver-symbolic.svg</file>
         <file alias="freeze">res/icons/weather-snow-symbolic.svg</file>
+        <file alias="up">res/icons/go-up-symbolic.svg</file>
+        <file alias="down">res/icons/go-down-symbolic.svg</file>
     </qresource>
     <qresource prefix="/scripts">
         <file alias="custom_css">res/scripts/custom_css.js</file>

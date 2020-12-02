@@ -21,6 +21,8 @@ public:
     QString name;
 
 public slots:
+    void index_search (const QString& text);
+    void search_back();
     void append (const QString& text, const QString& icon, const QDateTime& dateTime, bool file = false);
     void clear();
 
@@ -28,6 +30,7 @@ private:
     void resizeEvent (QResizeEvent* event);
     int firstIndex;
     int lastIndex;
+    QList<int> search_index;
 };
 
 class Message: public QStyledItemDelegate
@@ -79,6 +82,7 @@ public:
     Qt::ItemFlags flags (const QModelIndex& index) const override;
     bool append (const QString& text, const QString& icon, const QDateTime& dateTime, bool file);
     int rowCount (const QModelIndex &parent = QModelIndex()) const override;
+    QList<int> search(const QString& text);
 
 signals:
     void window_changed (const int firstIndex, const int lastIndex) const;

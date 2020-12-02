@@ -335,10 +335,21 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
     buf.clear();
 
     QLabel* label = new QLabel (tr("Chat with ") + friend_name, this);
+
+    QLineEdit* search_box = new QLineEdit (this);
+
+    QPushButton* search_back = new QPushButton (this);
+    search_back->setIcon (QIcon (QStringLiteral (":/icons/up")));
+    search_back->setFlat (true);
+    QPushButton* search_forward = new QPushButton (this);
+    search_forward->setIcon (QIcon (QStringLiteral (":/icons/down")));
+    search_forward->setFlat (true);
+
     QLabel* typing_label = new QLabel ("", this);
     QFont font1 ("Roboto", 8);
     typing_label->setFont (font1);
     typing_label->setFixedHeight (16);
+
 
     uint8_t pubkey [TOX_PUBLIC_KEY_SIZE];
     tox_friend_get_public_key (g_tox_manager->tox, friend_id, pubkey, nullptr);
@@ -350,6 +361,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
     typing = new QTimer (this);
     attach_button = new QPushButton (this);
     attach_button->setIcon (QIcon(":/icons/attachment"));
+    attach_button->setFlat (true);
 
     connect (attach_button, &QPushButton::clicked, [this, chat_view]()
     {
@@ -369,7 +381,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
              chat_view->append (filename, ":/icons/tox_online", QDateTime::currentDateTime(), true);
         }
 
-        dialog->deleteLater();
+        //dialog->deleteLater();
 
     });
 
@@ -395,13 +407,21 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
 
     });
 
-    QFormLayout* form = new QFormLayout (this);
-    form->addRow (label);
-    form->addRow (chat_view);
-    form->addRow (typing_label);
-    form->addRow (attach_button, input_box);
-    setLayout(form);
+    connect (search_box, &QLineEdit::textChanged, chat_view, &MessageLog::index_search);
+    connect (search_back, &QPushButton::clicked, chat_view, &MessageLog::search_back);
 
+    QGridLayout* grid = new QGridLayout (this);
+    grid->addWidget (label, 0, 0);
+    grid->addWidget (search_box, 1, 0);
+    grid->addWidget (search_back, 1, 1);
+    grid->addWidget (search_forward, 1, 2);
+
+    grid->addWidget (chat_view, 2, 0, 1, -1);
+    grid->addWidget (typing_label, 3, 0);
+    grid->addWidget (input_box, 4, 0, 1, 2);
+    grid->addWidget (attach_button, 4, 2);
+
+    setLayout (grid);
 
     QString friend_avatar_path = appdata_path +"/"+ QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png";
     QFile file (friend_avatar_path);
@@ -450,8 +470,8 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
 
     connect (typing, &QTimer::timeout, [this]()
     {
-        // FIXME: tox manager might be destroyed upon app cloure before timer runs out.
-        tox_self_set_typing (g_tox_manager->tox, friend_id, false, 0);
+        if (g_tox_manager!=nullptr)
+            tox_self_set_typing (g_tox_manager->tox, friend_id, false, 0);
     });
 
     connect (input_box, &QLineEdit::returnPressed, [this, chat_view]()

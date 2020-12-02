@@ -112,7 +112,7 @@ MainWindow::MainWindow()
 
     search_bar = new QToolBar (central_widget);
     layout->addWidget (search_bar);
-    QLineEdit *search_box = new QLineEdit (search_bar);
+    QLineEdit* search_box = new QLineEdit (search_bar);
     search_bar->addWidget (search_box);
     search_bar->hide();
 
@@ -309,7 +309,7 @@ MainWindow::MainWindow()
         }
     });
 
-    QAction *toggle_search = new QAction (this);
+    QAction* toggle_search = new QAction (this);
     toggle_search->setShortcut (Qt::Key_F | Qt::CTRL);
     connect (toggle_search, &QAction::triggered, [this, search_box]()
     {
@@ -332,7 +332,7 @@ MainWindow::MainWindow()
     find_text->setShortcut (Qt::Key_F3);
     connect (find_text, &QAction::triggered, [this, search_box]()
     {
-        WebView *view = qobject_cast<WebView*>(tab_manager->currentWidget());
+        WebView* view = qobject_cast<WebView*>(tab_manager->currentWidget());
         if (view)
         {
             view->findText (search_box->text());
