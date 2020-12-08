@@ -1,81 +1,141 @@
-#include <QAbstractItemDelegate>
-#include <QPushButton>
-#include <QStylePainter>
-#include <QStyleOptionTab>
-#include <QWheelEvent>
-#include <QIcon>
-
+#include <QPainter>
+#include <QStandardItemModel>
 #include "side_tabs.h"
 
-#include <QDebug>
-
-// Side tabs, polishing still needed.
-SideTabs::SideTabs (QWidget* parent, int w, int h): QTabBar (parent)
+SideTabs::SideTabs (QWidget* parent, int w, int h): QListView (parent)
 {
-    setMinimumSize (h, w);
-    setStyleSheet (QString ("QTabBar::tab { height: %1px; width: %2px; }").arg(h).arg(w)); // QTabBar::scroller {height:%1pix;width:%2pix;} padding-bottom:0px;
-    //setStyleSheet ("QTabBar::close-button { padding-left: 64px; }");
+    setFixedWidth (w);
+
     loading_icon = new QMovie (":/icons/loading");
     loading_icon->start();
 
-    // Instead, you can just set a low fps icon. Not to mention this forced repaint is crude.
+    auto* tab = new TabHeader (this, w, h, loading_icon);
+
+    QPalette p (palette());
+
+    p.setBrush(QPalette::Base, QColor("#EFEFEF")); // background
+    p.setBrush(QPalette::Light, QColor("#c1c1c1")); // inactive tab
+    p.setBrush(QPalette::Mid, QColor("#616b71")); // borders
+    p.setBrush(QPalette::Highlight, QColor("#EFEFEF")); //active tab
+    p.setBrush(QPalette::Text, QColor("#616b71"));
+
+    setPalette (p);
+    setFont (QFont ("Roboto Condensed Medium", 10));
+
+    setWordWrap (true);
+    setVerticalScrollBarPolicy (Qt::ScrollBarAlwaysOff);
+    setHorizontalScrollBarPolicy (Qt::ScrollBarAlwaysOff);
+
+    setUniformItemSizes (true);
+    setDragEnabled (true);
+    setAcceptDrops (true);
+    setDragDropMode (QAbstractItemView::InternalMove);
+    setDropIndicatorShown (true);
+    setSelectionMode (QAbstractItemView::SingleSelection);
+    setSelectionBehavior (QAbstractItemView::SelectItems);
+    setDefaultDropAction (Qt::MoveAction);
+    setEditTriggers (NoEditTriggers);
+    setModel (new QStandardItemModel (this));
+
+    setItemDelegate (tab);
+
+    // FIXME: only update the animating tab
     connect (loading_icon, &QMovie::frameChanged, [this]()
     {
-        for (int i=0; i<count(); ++i)
-        {
-            if (tabIcon(i).isNull())
-            {
-                repaint();
-                break;
-            }
-        }
+        dataChanged (model()->index (0,1), model()->index (model()->rowCount()-1, 0), QVector<int>(Qt::DecorationRole));
     });
-
 }
 
-void SideTabs::paintEvent (QPaintEvent*)
+QWidget* SideTabs::widget (int index)
 {
-    QStylePainter painter (this);
-    QStyleOptionTab option;
-    QPixmap pic;
+    return reinterpret_cast<QWidget*>(model()->index (index,0).data (Qt::UserRole).value<quintptr>());
+}
 
-    for (int i=0; i<count(); ++i)
+// Don't look at me like that. QLayout and thus QStackedWidget, and thus QTabWidget do iteration to retrieve indexOf(). So do we.
+int SideTabs::indexOf (QWidget* widget)
+{
+    for (int i = 0; i < model()->rowCount(); ++i)
     {
-        initStyleOption (&option, i);
-        //option->icon = QIcon();
-        //option->text = QString();
-        QRect rect = tabRect (i);
-
-        QRect text_rect = rect.adjusted( 26, 3, -5, -5);
-        if (tabIcon(i).isNull())
-            pic = loading_icon->currentPixmap();
-        else
-            pic = tabIcon(i).pixmap (tabIcon(i).actualSize (QSize (16, 16)));
-        rect.setSize (QSize (16,16));
-        rect.adjust (5,10,5,10);
-        painter.drawControl (QStyle::CE_TabBarTabShape, option);
-        painter.drawPixmap (rect, pic);
-
-        QFontMetrics fontMetric (painter.font());
-        const QString elidedText = fontMetric.elidedText (tabText (i), Qt::ElideRight, text_rect.width()*2);
-        QTextOption t_option;
-        t_option.setWrapMode (QTextOption::WrapAtWordBoundaryOrAnywhere);
-        QFont condensed ("Roboto Condensed Medium", 10);
-        //condensed.setHintingPreference (QFont::PreferDefaultHinting);
-        painter.setFont (condensed);
-        painter.drawText (text_rect, elidedText, t_option);
+        QModelIndex index = model()->index (i, 0);
+        QWidget* w  = reinterpret_cast<QWidget*>(index.data (Qt::UserRole).value<quintptr>());
+        if (w == widget)
+        {
+            return i;
+        }
     }
-    painter.end();
+    return -1;
 }
 
-QSize SideTabs::tabSizeHint (int /*index*/)
+TabHeader::TabHeader (QObject* parent, int w, int h, QMovie* default_icon) : QStyledItemDelegate (parent)
 {
-    return minimumSize();
+    iconSize = QSize (16, 16);
+    margins = QMargins (0, 0, 0, 0);
+    horizontalSpacing = 0;
+    verticalSpacing = 0;
+    width = w;
+    height = h;
+    loading_icon = default_icon;
+}
+
+void TabHeader::paint (QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const
+{
+    QStyleOptionViewItem opt (option);
+    initStyleOption (&opt, index);
+
+    const QPalette &palette (opt.palette);
+    const QRect &rect (opt.rect);
+    const QRect &contentRect (rect.adjusted (margins.left(), margins.top(), -margins.right(), -margins.bottom()));
+    const bool lastIndex = (index.model()->rowCount() - 1) == index.row();
+    const bool hasIcon = !opt.icon.isNull();
+    const int bottomEdge = rect.bottom();
+
+    painter->save();
+    painter->setClipping(true);
+    painter->setClipRect(rect);
+    painter->setFont(opt.font);
+
+    // Draw background
+    painter->fillRect(rect, opt.state & QStyle::State_Selected ?
+                          palette.highlight().color() :
+                          palette.light().color());
+
+    // Draw bottom line
+    painter->setPen(lastIndex ? palette.dark().color()
+                              : palette.mid().color());
+    painter->drawLine(lastIndex ? rect.left() : margins.left(),
+                      bottomEdge, rect.right(), bottomEdge);
+
+    // Draw message icon
+    const QRect icon_rect = contentRect.adjusted (5, 10, 5, 10);
+    if (hasIcon)
+        painter->drawPixmap (icon_rect.left(), icon_rect.top(),  opt.icon.pixmap (iconSize));
+    else
+        painter->drawPixmap (icon_rect.left(), icon_rect.top(), loading_icon->currentPixmap());
+
+    // Draw message text
+    QRect text_rect = contentRect.adjusted( 26, 3, -5, -5);
+
+    //QFont condensed ("Roboto Condensed Medium", 10);
+    //painter->setFont (condensed);
+    painter->setPen (palette.windowText().color());
+    painter->setPen (palette.text().color());
+
+    QFontMetrics fontMetric (opt.font);
+    const QString elidedText = fontMetric.elidedText (opt.text, Qt::ElideRight, text_rect.width()*2);
+    QTextOption t_option;
+    t_option.setWrapMode (QTextOption::WrapAtWordBoundaryOrAnywhere);
+    //condensed.setHintingPreference (QFont::PreferDefaultHinting);
+    painter->drawText (text_rect, elidedText, t_option);
+    painter->restore();
+}
+
+QSize TabHeader::sizeHint (const QStyleOptionViewItem& /*option*/,  const QModelIndex& /*index*/) const
+{
+    return QSize (width, height);
 }
 
 
 void SideTabs::wheelEvent (QWheelEvent* event)
 {
-    // Fall through to TabWidget.
-    event->ignore();
+    emit temp_pass_wheel_event (event);
 }

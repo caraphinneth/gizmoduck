@@ -117,7 +117,7 @@ void start_tox(Tox* tox)
     asprintf (&g_tox_state.name, name);
     tox_self_set_name(tox, (const unsigned char*)name, strlen(name), 0);
 
-    const char *status_message = "Toxing on Gizmoduck";
+    const char* status_message = "Toxing on Gizmoduck";
     tox_self_set_status_message(tox, (const unsigned char*)status_message, strlen(status_message), 0);
 
     printf("Bootstrapping...\n");
@@ -135,8 +135,8 @@ void start_tox(Tox* tox)
     printf("Connecting...\n");
 }
 
-void stop_tox (Tox *tox)
+void stop_tox (Tox* tox)
 {
     tox_kill (tox);
-    printf("Exiting...\n");
+    printf ("Exiting...\n");
 }

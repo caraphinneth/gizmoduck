@@ -9,15 +9,19 @@
 #include "request_filter.h"
 #include "tab_groups.h"
 #include "tox_ui.h"
+#include "side_tabs.h"
 
-struct TabWidget: public QTabWidget
+struct TabWidget: public QStackedWidget
 {
     Q_OBJECT
 
 public:
     TabWidget (QWidget* parent = nullptr);
+
+    SideTabs* tabBar;
+
     QWebEngineProfile* profile;
-    QStandardItemModel model;
+    QStandardItemModel suggestions;
 
     History history;
 
@@ -52,7 +56,7 @@ public slots:
     void cleanup();
 
 private slots:
-    void current_changed();
+    void current_changed (int index);
     void fullscreen_request (QWebEngineFullScreenRequest request);
 
 private:
@@ -65,7 +69,10 @@ private:
     TabGroup* assign_tab_group (const QString& host);
     QHash <QString, WebView*> host_views;
 
-    void wheelEvent (QWheelEvent* event);
+    //void wheelEvent (QWheelEvent* event);
     WebPage* page_back (TabGroup* group);
     WebPage* page_forward (TabGroup* group);
+
+    void setTabIcon (int index, const QIcon& icon);
+    void setTabText (int index, const QString& text);
 };

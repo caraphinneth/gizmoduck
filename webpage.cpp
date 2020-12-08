@@ -18,15 +18,15 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
         if (recommendedState()==QWebEnginePage::LifecycleState::Active)
             //lifecycle->start (1);
             setLifecycleState (QWebEnginePage::LifecycleState::Active);
-        else if (!isVisible())
+        else if (!isVisible()&&
+                 (url().host()!="discord.com")&&
+                 (url().host()!="tripwire.eve-apps.com")&&
+                 (url().host()!="colab.research.google.com")
+                 )
         {
             if (recommendedState()==QWebEnginePage::LifecycleState::Frozen)
                 lifecycle->start (15*60*1000);
-            else if ((recommendedState()==QWebEnginePage::LifecycleState::Discarded)&&
-                     (url().host()!="discord.com")&&
-                     (url().host()!="tripwire.eve-apps.com")&&
-                     (url().host()!="colab.research.google.com")
-                     )
+            else if (recommendedState()==QWebEnginePage::LifecycleState::Discarded)
                 lifecycle->start (15*60*1000);
         }
     });

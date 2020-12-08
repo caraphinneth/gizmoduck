@@ -4,7 +4,7 @@ CONFIG -= app_bundle
 
 win32:QMAKE_CXXFLAGS+="-O2"
 !win32 {
-    QMAKE_CXXFLAGS+="-march=native -ftree-vectorize -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block -Wall -Wextra -Wpedantic"
+    QMAKE_CXXFLAGS+="-O2 -march=native -ftree-vectorize -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block -Wall -Wextra -Wpedantic"
 }
 
 #-g -ggdb"

@@ -97,7 +97,7 @@ MainWindow::MainWindow()
 
     QWidget *central_widget = new QWidget (this);
     //GLWidget *central_widget = new GLWidget (this);
-    QVBoxLayout* layout = new QVBoxLayout;
+    QHBoxLayout* layout = new QHBoxLayout;
     layout->setSpacing (0);
     layout->setMargin (0);
     addToolBarBreak();
@@ -107,6 +107,7 @@ MainWindow::MainWindow()
     //tab_manager->setCornerWidget(close_button, Qt::BottomLeftCorner);
     //installEventFilter (new ResizeFilter (tab_manager));
     layout->addWidget (tab_manager);
+    layout->addWidget (tab_manager->tabBar);
     central_widget->setLayout (layout);
     setCentralWidget (central_widget);
 
@@ -129,9 +130,9 @@ MainWindow::MainWindow()
 
     QCompleter *completer = new QCompleter (this);
     QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel(this);
-    proxyModel->setSourceModel(&tab_manager->model);
+    proxyModel->setSourceModel(&tab_manager->suggestions);
     proxyModel->setSortCaseSensitivity(Qt::CaseInsensitive);
-    connect (&tab_manager->model, &QStandardItemModel::rowsInserted, [proxyModel]()
+    connect (&tab_manager->suggestions, &QStandardItemModel::rowsInserted, [proxyModel]()
     {
         proxyModel->sort (0);
     });
@@ -192,7 +193,7 @@ MainWindow::MainWindow()
         }
     });
 
-    connect (tab_manager, &TabWidget::tabBarDoubleClicked, [this]()
+    connect (tab_manager->tabBar, &SideTabs::doubleClicked, [this]()
     {
         address_box->selectAll();
         address_box->setFocus();
@@ -213,7 +214,7 @@ MainWindow::MainWindow()
 
     connect (close_button, &NavButton::left_clicked, [this]()
     {
-        tab_manager->close_page (tab_manager->currentIndex());
+        tab_manager->close_page (tab_manager->tabBar->currentIndex().row());
     });
 
     connect (close_button, &NavButton::right_clicked, tab_manager, &TabWidget::restore_tab);
