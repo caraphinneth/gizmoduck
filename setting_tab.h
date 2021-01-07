@@ -1,5 +1,6 @@
 #pragma once
-#include "gl_widget.h"
+#include <QWidget>
+//#include "gl_widget.h"
 
 struct SettingsTab: public QWidget
 {
@@ -10,4 +11,7 @@ public:
 
 signals:
     void reload_filters();
+    void avatar_changed();
+    void name_update (const QString& name);
+    void status_update (const QString& status);
 };

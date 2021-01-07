@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication::setAttribute (Qt::AA_EnableHighDpiScaling);
     QCoreApplication::setAttribute (Qt::AA_UseHighDpiPixmaps);
-    QCoreApplication::setAttribute (Qt::AA_ShareOpenGLContexts);
+    //QCoreApplication::setAttribute (Qt::AA_ShareOpenGLContexts);
 
     QCoreApplication::setApplicationName ("Gizmoduck");
     // Windows will fail to write settings without organization.
@@ -74,35 +74,37 @@ int main(int argc, char *argv[])
 
     //arguments.append ("--proxy-pac-url=file:///home/daiyousei/proxy.pac");
     //arguments.append ("--proxy-pac-url=http://miningbase.tk/hamster/static/proxy.pac");
-    //arguments.append ("--use-vulkan");
+    //rguments.append ("--use-vulkan");
     //arguments.append ("--webview-enable-vulkan");
     //arguments.append ("--enable-features=Vulkan");
+    //arguments.append ("--enable-zero-copy");
     arguments.append ("--allow-file-access-from-files");
+    //arguments.append ("--enable-oop-rasterization");
+    arguments.append ("--use-gl=egl");
 
-    argc=arguments.count();
+    argc = arguments.count();
 
-    char **newargv = new char* [arguments.count()];
+    char** newargv = new char* [arguments.count()];
     for (int i=0; i<arguments.count(); ++i)
     {
         newargv[i] = new char[arguments[i].toLocal8Bit().size()+1]; // This dies fast so yeah...
-        strcpy(newargv[i], arguments[i].toLocal8Bit().data());
+        strcpy (newargv[i], arguments[i].toLocal8Bit().data());
     }
 
     QApplication app (argc, newargv);
     app.setWindowIcon (QIcon (QStringLiteral (":/icons/gizmoduck")));
 
     QTranslator qt_translator;
-    qt_translator.load("qt_" + QLocale::system().name(), QLibraryInfo::location (QLibraryInfo::TranslationsPath));
+    qt_translator.load ("qt_" + QLocale::system().name(), QLibraryInfo::location (QLibraryInfo::TranslationsPath));
     app.installTranslator (&qt_translator);
 
     QTranslator webengine_translator;
-    webengine_translator.load("qtwebengine_" + QLocale::system().name(), QLibraryInfo::location (QLibraryInfo::TranslationsPath));
+    webengine_translator.load ("qtwebengine_" + QLocale::system().name(), QLibraryInfo::location (QLibraryInfo::TranslationsPath));
     app.installTranslator (&webengine_translator);
 
     QTranslator browser_translator;
     browser_translator.load (":/locale/gizmoduck_" + QLocale::system().name());
     app.installTranslator (&browser_translator);
-
 
     MainWindow main_window;
     main_window.show();

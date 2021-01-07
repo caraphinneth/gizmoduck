@@ -7,14 +7,16 @@
 #include "gl_widget.h"
 #include "tox_client.h"
 
-const QString appdata_path = QStandardPaths::writableLocation (QStandardPaths::AppDataLocation);
+const QString appdata_path = QStandardPaths::writableLocation (QStandardPaths::AppDataLocation)+"/Gizmoduck";
 const QString download_path = QStandardPaths::writableLocation (QStandardPaths::DownloadLocation);
+
+const QString my_avatar = appdata_path +"/avatar.png";
 
 struct ToxContact
 {
-    size_t number;
     QString name;
-    QString status;
+    QString connection_status;
+    QString user_status;
 };
 
 class ToxManager : public QObject
@@ -34,7 +36,7 @@ public:
     QString id;
     QString self_online_status;
 
-    QList<struct ToxContact> contact_list();
+    QMap <quint32, ToxContact> contact_list;
 
     QHash <QPair <uint32_t, uint32_t>, QFile*> files_in_transfer;
 
@@ -43,6 +45,11 @@ public slots:
     void message (const QString& text, const long friend_number);
     void echo (const QString& message, const long friend_number);
     void send_file (const QString& filename, const long friend_number);
+    void send_avatar (const long friend_number);
+    void broadcast_avatar();
+    void add_friend (const QString& id);
+    void name_update (const QString& name);
+    void status_update (const QString& status);
 
 signals:
     void start();

@@ -15,7 +15,6 @@ signals:
     void mid_clicked();
     void right_clicked();
 
-
 protected:
      void mousePressEvent (QMouseEvent* event) override;
 };

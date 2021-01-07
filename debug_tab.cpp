@@ -1,3 +1,6 @@
+#include <QTreeView>
+#include <QVBoxLayout>
+
 #include "debug_tab.h"
 #include "message_log.h"
 
@@ -21,10 +24,7 @@ DebugTab::DebugTab (QWidget* parent): QWidget (parent)
 
     connect (this, &DebugTab::message_received, [this, debug_view] (const QString& text)
     {
-        //const bool atBottom = debug_view->verticalScrollBar()->value() == debug_view->verticalScrollBar()->maximum();
-
         debug_view->append (text, ":/icons/system", QDateTime::currentDateTime());
-        // if (atBottom) debug_view->verticalScrollBar()->setValue (debug_view->verticalScrollBar()->maximum());
     });
 
     connect (this, &DebugTab::redraw_tabs, [this, model, tab_tree](const TabGroups& groups)

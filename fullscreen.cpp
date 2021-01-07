@@ -1,3 +1,5 @@
+#include <QAction>
+
 #include "fullscreen.h"
 
 FullScreenWindow::FullScreenWindow (QWebEngineView* _old_view, QWidget* parent): QWidget (parent)

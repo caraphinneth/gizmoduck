@@ -1,14 +1,14 @@
 // Adapted from Michael Scopchanov's example.
 
-#include <QDebug>
 #include <QDateTime>
-#include <QScrollBar>
-#include <QPainter>
-#include <QSqlQuery>
-#include "message_log.h"
-
+#include <QDebug>
 #include <QHeaderView>
+#include <QPainter>
+#include <QScrollBar>
+#include <QSqlQuery>
 #include <QTimer>
+
+#include "message_log.h"
 
 MessageLog::MessageLog (QWidget* parent, const QString& _name): QTableView (parent)
 {

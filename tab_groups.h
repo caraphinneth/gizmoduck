@@ -1,5 +1,6 @@
 #pragma once
 #include <QWebEngineProfile>
+
 #include "webpage.h"
 
 struct TabGroup: public QHash<QString, WebPage*>
@@ -9,15 +10,19 @@ public:
     QWebEngineProfile* profile;
 
     std::list<QString> order;
-    void insert (const QString& key, WebPage* const &value)
+    void insert (const QString& key, WebPage* const &value, std::list<QString>::iterator position)
     {
         if (contains (key))
         {
             // preserve position for now
         }
-        else
+        else if (position == order.end())
         {
             order.push_back (key);
+        }
+        else
+        {
+            order.insert (position, key);
         }
 
         QHash::insert (key, value);
@@ -29,7 +34,7 @@ public:
         QHash::remove (key);
     }
 
-    void replace (const QString& old_key, const QString& new_key, WebPage* const &value)
+    void replace (const QString& old_key, const QString& new_key, WebPage* const value)
     {
         // URL of existing page changed, preserve position
         auto it = std::find (order.begin(), order.end(), old_key);
@@ -42,7 +47,7 @@ public:
         QHash::insert (new_key, value);
     }
 
-    WebPage* assign_page (const QString& key)
+    WebPage* assign_page (const QString& key, std::list<QString>::iterator position)
     {
         if (contains (key))
         {
@@ -51,7 +56,7 @@ public:
         else
         {
             WebPage* p (new WebPage (profile));
-            insert (key, p);
+            insert (key, p, position);
             return p;
         }
     }

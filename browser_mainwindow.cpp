@@ -1,31 +1,10 @@
 #include <QNetworkProxyFactory>
 #include <QSettings>
-#include <QToolBar>
-#include <QTabBar>
-#include <QVBoxLayout>
 #include <QSqlDatabase>
+#include <QToolBar>
 
 #include "browser_mainwindow.h"
-#include "dockwidget.h"
 #include "tab_manager.h"
-
-// On resize events, reapply the expanding tabs style sheet (disabled for now).
-class ResizeFilter : public QObject
-{
-    QTabWidget* target;
-    public:
-    ResizeFilter (QTabWidget* target) : QObject(target), target(target) {}
-
-    bool eventFilter (QObject, QEvent* event)
-    {
-        if (event->type() == QEvent::Resize)
-        {
-            // The width of each tab is the width of the tab widget / # of tabs.
-            target->setStyleSheet (QString ("QTabBar::tab { width: %1px; } ") .arg(target->size().width()/target->count()-1));
-        }
-        return false;
-    }
-};
 
 void MainWindow::save_settings()
 {
@@ -37,9 +16,10 @@ void MainWindow::save_settings()
     settings.endGroup();
 }
 
-
 MainWindow::MainWindow()
 {
+    QDir dir;
+    dir.mkpath (appdata_path);
     QSettings settings;
 
     settings.beginGroup ("MainWindow");
@@ -97,7 +77,7 @@ MainWindow::MainWindow()
 
     QWidget *central_widget = new QWidget (this);
     //GLWidget *central_widget = new GLWidget (this);
-    QHBoxLayout* layout = new QHBoxLayout;
+    QGridLayout* layout = new QGridLayout;
     layout->setSpacing (0);
     layout->setMargin (0);
     addToolBarBreak();
@@ -106,19 +86,18 @@ MainWindow::MainWindow()
 
     //tab_manager->setCornerWidget(close_button, Qt::BottomLeftCorner);
     //installEventFilter (new ResizeFilter (tab_manager));
-    layout->addWidget (tab_manager);
-    layout->addWidget (tab_manager->tabBar);
+    layout->addWidget (tab_manager, 0, 0);
+    layout->addWidget (tab_manager->tabBar, 0, 1);
     central_widget->setLayout (layout);
     setCentralWidget (central_widget);
 
     search_bar = new QToolBar (central_widget);
-    layout->addWidget (search_bar);
+    layout->addWidget (search_bar, 1, 0, 1, -1);
+    QLabel* search_label = new QLabel (tr("Find text: "), this);
     QLineEdit* search_box = new QLineEdit (search_bar);
+    search_bar->addWidget (search_label);
     search_bar->addWidget (search_box);
     search_bar->hide();
-
-    //addToolBar (search_bar);
-    addToolBarBreak();
 
     address_box->setClearButtonEnabled (true);
     //address_box->setFrame(false);
@@ -128,33 +107,33 @@ MainWindow::MainWindow()
     //palette.setColor (QPalette::Text,Qt::white);
     address_box->setPalette (palette);
 
-    QCompleter *completer = new QCompleter (this);
-    QSortFilterProxyModel *proxyModel = new QSortFilterProxyModel(this);
-    proxyModel->setSourceModel(&tab_manager->suggestions);
-    proxyModel->setSortCaseSensitivity(Qt::CaseInsensitive);
+    QCompleter* completer = new QCompleter (this);
+    QSortFilterProxyModel* proxyModel = new QSortFilterProxyModel (this);
+    proxyModel->setSourceModel (&tab_manager->suggestions);
+    proxyModel->setSortCaseSensitivity (Qt::CaseInsensitive);
     connect (&tab_manager->suggestions, &QStandardItemModel::rowsInserted, [proxyModel]()
     {
         proxyModel->sort (0);
     });
     completer->setModel (proxyModel);
-    // completer->setCompletionMode (QCompleter::UnfilteredPopupCompletion);
+    //completer->setCompletionMode (QCompleter::UnfilteredPopupCompletion);
     completer->setModelSorting (QCompleter::CaseInsensitivelySortedModel);
     completer->setFilterMode (Qt::MatchContains); //Qt::MatchRecursive
     completer->setCaseSensitivity (Qt::CaseInsensitive);
     completer->setMaxVisibleItems (10);
 
     // Adopt these as classes later.
-    QTableView *popup = new QTableView (address_box);
+    QTableView* popup = new QTableView (address_box);
     popup->setAlternatingRowColors (true);
     popup->setMouseTracking (true);
     popup->setShowGrid (false);
     popup->horizontalHeader()->setSectionResizeMode (QHeaderView::Stretch);
-    popup->horizontalHeader()->setVisible(false);
+    popup->horizontalHeader()->setVisible (false);
     popup->setSelectionBehavior (QAbstractItemView::SelectRows);
     popup->setSelectionMode (QAbstractItemView::SingleSelection);
     //popup->setVerticalScrollBarPolicy (Qt::ScrollBarAlwaysOff);
     //popup->verticalHeader()->setSectionResizeMode (QHeaderView::ResizeToContents);
-    popup->verticalHeader()->setVisible(false);
+    popup->verticalHeader()->setVisible (false);
     popup->setItemDelegateForColumn (0, new QStyledItemDelegate (completer));
     popup->setSortingEnabled (false);
 
@@ -174,7 +153,7 @@ MainWindow::MainWindow()
 
     connect (tab_manager, &TabWidget::url_changed, [this](const QUrl& url)
     {
-        WebView *view = qobject_cast<WebView*>(tab_manager->widget (tab_manager->currentIndex()));
+        WebView* view = qobject_cast<WebView*>(tab_manager->widget (tab_manager->currentIndex()));
         if (view)
         {
             address_box->setEnabled(true);
@@ -207,7 +186,11 @@ MainWindow::MainWindow()
 
     connect (refresh_button, &NavButton::left_clicked, tab_manager, &TabWidget::refresh);
     connect (refresh_button, &NavButton::right_clicked, tab_manager, &TabWidget::refresh_no_cache);
-    refresh_button->setShortcut(tr("F5"));
+
+    QAction* refresh = new QAction (this);
+    refresh->setShortcut (Qt::Key_F5);
+    connect (refresh, &QAction::triggered, tab_manager, &TabWidget::refresh);
+    this->addAction (refresh);
 
     connect (settings_button, &NavButton::left_clicked, tab_manager, &TabWidget::settings_tab);
     connect (settings_button, &NavButton::right_clicked, tab_manager, &TabWidget::debug_tab);
@@ -219,23 +202,66 @@ MainWindow::MainWindow()
 
     connect (close_button, &NavButton::right_clicked, tab_manager, &TabWidget::restore_tab);
 
+    tox_manager = new ToxManager;
+
+    load_contacts();
+
     connect (tox_button, &NavButton::left_clicked, [this, contact_menu]()
     {
-        QList <struct ToxContact> contacts = tox_manager->contact_list();
         contact_menu->clear();
-        for (struct ToxContact contact : contacts)
+        QMap<quint32, ToxContact>::const_iterator i = tox_manager->contact_list.constBegin();
+        while (i != tox_manager->contact_list.constEnd())
         {
-            QAction* action = new QAction (contact.name, this);
-            const size_t number = contact.number;
+            QString name = (i.value().name.isEmpty()) ? tr("[Connecting...]") : i.value().name;
+            //QString status = (i.value().status.isEmpty()) ? tr("offline") : i.value().status;
+            QString status;
+            if ((i.value().connection_status == "offline")||i.value().connection_status.isEmpty())
+            {
+                status = ":/icons/tox_offline";
+            }
+            else if ((i.value().user_status == "unknown")||i.value().user_status.isEmpty())
+            {
+                status = ":/icons/tox_connecting";
+            }
+            else if (i.value().user_status == "away")
+            {
+                status = ":/icons/tox_idle";
+            }
+            else if (i.value().user_status == "busy")
+            {
+                status = ":/icons/tox_busy";
+            }
+            else if (i.value().user_status == "online")
+            {
+                status = ":/icons/tox_online";
+            }
+
+            QAction* action = new QAction (QIcon (status), name, this);
+            const quint32 number = i.key();
             connect (action, &QAction::triggered, [this, number]()
             {
                 chat ("", number);
             });
             contact_menu->addAction (action);
+            ++i;
         }
+        const size_t friend_list_length = tox_self_get_friend_list_size (tox_manager->tox);
+        if (friend_list_length > tox_manager->contact_list.size())
+        {
+            QAction* action = new QAction (tr("Fetching contacts..."), this);
+            contact_menu->addAction (action);
+        }
+        QAction* action = new QAction (tr("Add contact..."), this);
+        connect (action, &QAction::triggered, [this]()
+        {
+            add_contact();
+        });
+        contact_menu->addAction (action);
     });
 
-    tox_manager = new ToxManager;
+    connect (tab_manager, &TabWidget::avatar_changed, tox_manager, &ToxManager::broadcast_avatar);
+    connect (tab_manager, &TabWidget::name_update, tox_manager, &ToxManager::name_update);
+    connect (tab_manager, &TabWidget::status_update, tox_manager, &ToxManager::status_update);
 
     connect (tox_manager, &ToxManager::friend_message_received, this, &MainWindow::chat);
 
@@ -249,6 +275,10 @@ MainWindow::MainWindow()
 
     connect (tox_manager, &ToxManager::friend_name_changed, [this](const QString& name, const long friend_number)
     {
+        ToxContact contact = tox_manager->contact_list.value (friend_number);
+        contact.name = name;
+        tox_manager->contact_list.insert (friend_number, contact);
+
         if (active_chats.contains (friend_number))
         {
             active_chats.value (friend_number)->friend_name = name;
@@ -256,6 +286,21 @@ MainWindow::MainWindow()
             printf ("Changed friend name to %s\n", ba.constData());
         }
     });
+
+    connect (tox_manager, &ToxManager::friend_connection_status_changed, [this](const QString& status, const long friend_number)
+    {
+        ToxContact contact = tox_manager->contact_list.value (friend_number);
+        contact.connection_status = status;
+        tox_manager->contact_list.insert (friend_number, contact);
+    });
+
+    connect (tox_manager, &ToxManager::friend_status_changed, [this](const QString& status, const long friend_number)
+    {
+        ToxContact contact = tox_manager->contact_list.value (friend_number);
+        contact.user_status = status;
+        tox_manager->contact_list.insert (friend_number, contact);
+    });
+
     connect (tox_manager, &ToxManager::self_connection_status_changed, [this, contact_menu](const QString& status)
     {
         if (status == "offline")
@@ -277,23 +322,20 @@ MainWindow::MainWindow()
 
         tox_button->setToolTip ("Tox status: "+status);
     });
+
     connect (tox_manager, &ToxManager::download_finished, [this] (const QString& filename, const long friend_number)
     {
         // Q&D: technical files should not be displayed.
         if (!filename.contains (appdata_path))
         {
+        // FIXME: duplicated code.
         if (!active_chats.contains (friend_number))
         {
-            DockWidget *dock = new DockWidget(tr("Chat"), this);
-            dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea |  Qt::BottomDockWidgetArea);
-            addDockWidget(Qt::RightDockWidgetArea, dock);
+            QDockWidget* dock = new QDockWidget (tr("Chat"), this);
+            dock->setAllowedAreas (Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea | Qt::BottomDockWidgetArea);
+            addDockWidget (Qt::RightDockWidgetArea, dock);
 
-            connect (dock, &DockWidget::closed , [this, friend_number]()
-            {
-                //active_chats.remove (friend_number);
-            });
-
-            ToxWidget *chat_area = new ToxWidget (dock, friend_number);
+            ToxWidget* chat_area = new ToxWidget (dock, friend_number);
             connect (chat_area, &ToxWidget::message_sent, tox_manager, &ToxManager::message);
             connect (chat_area, &ToxWidget::file_sent, tox_manager, &ToxManager::send_file);
 
@@ -302,8 +344,8 @@ MainWindow::MainWindow()
         }
 
         {
-            ToxWidget *chat_area = active_chats.value (friend_number);
-            DockWidget* dock = qobject_cast<DockWidget*>(chat_area->parentWidget());
+            ToxWidget* chat_area = active_chats.value (friend_number);
+            QDockWidget* dock = qobject_cast<QDockWidget*>(chat_area->parentWidget());
             dock->show();
             emit chat_area->file_received (filename);
         }
@@ -318,7 +360,7 @@ MainWindow::MainWindow()
 
         if (!search_bar->isVisible())
         {
-            WebView *view = qobject_cast<WebView*>(tab_manager->currentWidget());
+            WebView* view = qobject_cast<WebView*>(tab_manager->currentWidget());
             if (view)
             {
                 view->findText ("");
@@ -331,6 +373,7 @@ MainWindow::MainWindow()
 
     QAction* find_text = new QAction (search_bar);
     find_text->setShortcut (Qt::Key_F3);
+    find_text->setIcon (QIcon (QStringLiteral (":/icons/down")));
     connect (find_text, &QAction::triggered, [this, search_box]()
     {
         WebView* view = qobject_cast<WebView*>(tab_manager->currentWidget());
@@ -342,6 +385,21 @@ MainWindow::MainWindow()
     });
     search_bar->addAction (find_text);
 
+    QAction* reverse_find_text = new QAction (search_bar);
+    //reverse_find_text->setShortcut (Qt::Key_F3);
+    reverse_find_text->setIcon (QIcon (QStringLiteral (":/icons/up")));
+    connect (reverse_find_text, &QAction::triggered, [this, search_box]()
+    {
+        WebView* view = qobject_cast<WebView*>(tab_manager->currentWidget());
+        if (view)
+        {
+            view->findText (search_box->text(), QWebEnginePage::FindBackward);
+        }
+
+    });
+    search_bar->addAction (reverse_find_text);
+
+
     connect (search_box, &QLineEdit::textChanged, [this, search_box]()
     {
         WebView* view = qobject_cast<WebView*>(tab_manager->currentWidget());
@@ -351,7 +409,7 @@ MainWindow::MainWindow()
         }
     });
 
-    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    QSqlDatabase db = QSqlDatabase::addDatabase ("QSQLITE");
     db.setDatabaseName ("testing.db");
     if (!db.open())
     {
@@ -360,33 +418,30 @@ MainWindow::MainWindow()
     }
 }
 
+/*
 TabWidget* MainWindow::tabWidget() const
 {
     return tab_manager;
-}
+}*/
 
 void MainWindow::closeEvent (QCloseEvent*)
 {
+    save_contacts();
     delete tox_manager;
 
     tab_manager->cleanup();
     save_settings();
 }
 
-void MainWindow::chat(const QString &message, const long friend_number)
+void MainWindow::chat (const QString &message, const long friend_number)
 {
     if (!active_chats.contains (friend_number))
     {
-        DockWidget *dock = new DockWidget(tr("Chat"), this);
-        dock->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea |  Qt::BottomDockWidgetArea);
-        addDockWidget(Qt::RightDockWidgetArea, dock);
+        QDockWidget* dock = new QDockWidget (tr("Chat"), this);
+        dock->setAllowedAreas (Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea | Qt::BottomDockWidgetArea);
+        addDockWidget (Qt::RightDockWidgetArea, dock);
 
-        connect (dock, &DockWidget::closed , [this, friend_number]()
-        {
-            // active_chats.remove (friend_number);
-        });
-
-        ToxWidget *chat_area = new ToxWidget (dock, friend_number);
+        ToxWidget* chat_area = new ToxWidget (dock, friend_number);
         connect (chat_area, &ToxWidget::message_sent, tox_manager, &ToxManager::message);
         connect (chat_area, &ToxWidget::file_sent, tox_manager, &ToxManager::send_file);
 
@@ -394,10 +449,71 @@ void MainWindow::chat(const QString &message, const long friend_number)
         active_chats.insert (friend_number, chat_area);
     }
     ToxWidget* chat_area = active_chats.value (friend_number);
-    DockWidget* dock = qobject_cast<DockWidget*>(chat_area->parentWidget());
+    QDockWidget* dock = qobject_cast<QDockWidget*>(chat_area->parentWidget());
     dock->show();
     if (!message.isEmpty())
     {
         emit chat_area->message_received (message);
+    }
+}
+
+void MainWindow::save_contacts()
+{
+    QSaveFile file ("contacts.dat");
+    file.open (QIODevice::WriteOnly);
+    QDataStream out (&file);
+    QMap<quint32, ToxContact>::const_iterator i = tox_manager->contact_list.constBegin();
+    while (i != tox_manager->contact_list.constEnd())
+    {
+        out << i.key();
+        out << i.value().name;
+        ++i;
+    }
+    file.commit();
+}
+
+void MainWindow::load_contacts()
+{
+    QFile file ("contacts.dat");
+    file.open (QIODevice::ReadOnly);
+    QDataStream in (&file);
+    while (!in.atEnd())
+    {
+        quint32 number;
+        QString name;
+        in >> number;
+        in >> name;
+        ToxContact contact;
+        contact.name = name;
+        contact.connection_status = "offline";
+        contact.user_status = "unknown";
+
+        tox_manager->contact_list.insert (number, contact);
+    }
+    file.close();
+}
+
+void MainWindow::add_contact()
+{
+    QDialog dialog (this);
+    dialog.setModal (true);
+    dialog.setWindowFlags (dialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+
+    QScopedPointer <QLabel> label;
+    label.reset (new QLabel (tr ("Paste a full tox ID (NOT just public key) to add contact:")));
+
+    QScopedPointer<QLineEdit> pubkey;
+    pubkey.reset (new QLineEdit (&dialog));
+
+    QVBoxLayout* layout = new QVBoxLayout;
+    layout->addWidget (label.data());
+    layout->addWidget (pubkey.data());
+    dialog.setLayout (layout);
+
+    connect (pubkey.data(), &QLineEdit::returnPressed, &dialog, &QDialog::accept);
+
+    if (dialog.exec() == QDialog::Accepted)
+    {
+        emit tox_manager->add_friend (pubkey->text());
     }
 }

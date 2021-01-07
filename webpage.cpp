@@ -4,17 +4,18 @@
 #include <QTimer>
 #include <QVBoxLayout>
 
+#include "file_dialog.h"
 #include "webpage.h"
 #include "webview.h"
-#include "file_dialog.h"
 
 WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (profile, parent)
 {
     old_url = url();
-    connect(this, &QWebEnginePage::authenticationRequired, this, &WebPage::handleAuthenticationRequired);
+    connect(this, &WebPage::authenticationRequired, this, &WebPage::handleAuthenticationRequired);
 
     lifecycle = new QTimer (this);
-    connect(this, &QWebEnginePage::recommendedStateChanged, this, [this]() {
+    connect(this, &WebPage::recommendedStateChanged, [this]()
+    {
         if (recommendedState()==QWebEnginePage::LifecycleState::Active)
             //lifecycle->start (1);
             setLifecycleState (QWebEnginePage::LifecycleState::Active);
@@ -31,7 +32,7 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
         }
     });
 
-    connect (this, &QWebEnginePage::lifecycleStateChanged, [this](QWebEnginePage::LifecycleState state)
+    connect (this, &WebPage::lifecycleStateChanged, [this](QWebEnginePage::LifecycleState state)
     {
         if (state == QWebEnginePage::LifecycleState::Discarded)
             emit iconChanged (QIcon (QStringLiteral (":/icons/sleep")));
@@ -41,7 +42,8 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
             emit iconChanged (icon());
     });
 
-    connect(lifecycle, &QTimer::timeout, this, [this]() {
+    connect (lifecycle, &QTimer::timeout, [this]()
+    {
         if (lifecycleState() != recommendedState())
         {
             setLifecycleState (recommendedState());
@@ -72,7 +74,7 @@ QStringList WebPage::chooseFiles (QWebEnginePage::FileSelectionMode mode, const 
 
 void WebPage::handleAuthenticationRequired (const QUrl& url, QAuthenticator* auth)
 {
-    QWidget *mainWindow = view()->window();
+    QWidget* mainWindow = view()->window();
 
     QDialog dialog (mainWindow);
     dialog.setModal (true);
@@ -87,7 +89,7 @@ void WebPage::handleAuthenticationRequired (const QUrl& url, QAuthenticator* aut
     QScopedPointer<QLineEdit> password;
     password.reset (new QLineEdit (&dialog));
 
-    QVBoxLayout *layout = new QVBoxLayout;
+    QVBoxLayout* layout = new QVBoxLayout;
     layout->addWidget (auth_label.data());
     layout->addWidget (username.data());
     layout->addWidget (password.data());

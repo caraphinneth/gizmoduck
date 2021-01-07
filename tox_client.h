@@ -24,6 +24,7 @@ typedef struct Tox_State
 {
     char* id;
     char* name;
+    char* status;
 } Tox_State;
 
 Tox* create_tox();
@@ -31,6 +32,7 @@ void start_tox (Tox* tox);
 void stop_tox (Tox* tox);
 
 void bootstrap (Tox* tox);
+void update_savedata_file (const Tox* tox);
 
 #ifdef __cplusplus
 }

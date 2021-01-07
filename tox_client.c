@@ -29,7 +29,7 @@ Tox* create_tox()
 
         uint8_t* savedata = malloc (fsize);
 
-        fread(savedata, fsize, 1, f);
+        fread (savedata, fsize, 1, f);
         fclose(f);
 
         options.savedata_type = TOX_SAVEDATA_TYPE_TOX_SAVE;
@@ -108,31 +108,31 @@ void get_tox_id (Tox* tox)
 void friend_request_cb (Tox* tox, const uint8_t* public_key, const uint8_t* message, size_t length, void* user_data)
 {
     tox_friend_add_norequest (tox, public_key, 0);
+    printf ("Accepted friend request from %s\n", public_key);
     update_savedata_file (tox);
 }
 
-void start_tox(Tox* tox)
+void start_tox (Tox* tox)
 {
-    const char* name = "Daiyousei";
+    /*
+    const char* name = "Duck";
     asprintf (&g_tox_state.name, name);
-    tox_self_set_name(tox, (const unsigned char*)name, strlen(name), 0);
+    tox_self_set_name (tox, (const unsigned char*)name, strlen (name), 0);
 
     const char* status_message = "Toxing on Gizmoduck";
-    tox_self_set_status_message(tox, (const unsigned char*)status_message, strlen(status_message), 0);
+    asprintf (&g_tox_state.status, status_message);
+    tox_self_set_status_message (tox, (const unsigned char*)status_message, strlen (status_message), 0);
+*/
+    printf ("Bootstrapping...\n");
 
-    printf("Bootstrapping...\n");
+    bootstrap (tox);
+    get_tox_id (tox);
 
-    bootstrap(tox);
-    get_tox_id(tox);
+    tox_callback_friend_request (tox, friend_request_cb);
 
-    printf ("Tox id: %s\n", g_tox_state.id);
-    printf ("Tox name: %s\n", g_tox_state.name);
+    update_savedata_file (tox);
 
-    tox_callback_friend_request(tox, friend_request_cb);
-
-    update_savedata_file(tox);
-
-    printf("Connecting...\n");
+    printf ("Connecting...\n");
 }
 
 void stop_tox (Tox* tox)

@@ -33,7 +33,9 @@ signals:
     void url_changed (const QUrl& url);
     void print_to_debug_tab (const QString& text);
     void reload_filters();
-
+    void avatar_changed();
+    void name_update (const QString& name);
+    void status_update (const QString& status);
     void update_session();
     void debug_tabs_updated();
 

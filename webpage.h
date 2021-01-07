@@ -1,5 +1,6 @@
 #pragma once
 #include <QWebEnginePage>
+
 #include "file_dialog.h"
 
 struct WebPage : public QWebEnginePage
@@ -16,5 +17,5 @@ private slots:
 
 protected:
     QStringList chooseFiles (QWebEnginePage::FileSelectionMode mode, const QStringList& oldFiles, const QStringList& acceptedMimeTypes) override; // Overload to implement non-useless file dialog.
-    bool acceptNavigationRequest(const QUrl& url, NavigationType type, bool isMainFrame);
+    bool acceptNavigationRequest (const QUrl& url, NavigationType type, bool isMainFrame);
 };

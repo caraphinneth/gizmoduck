@@ -6,6 +6,12 @@ extern "C" Tox_State g_tox_state;
 
 static ToxManager* g_tox_manager;
 
+//It does not really fly. It's just so ugly Earth repels it.
+QString pubkey2string (const uint8_t* pubkey)
+{
+    return QString (QByteArray ((const char*)pubkey).left (TOX_PUBLIC_KEY_SIZE).toHex().toUpper());
+}
+
 void friend_message_cb(Tox* /*tox*/, uint32_t friend_number, TOX_MESSAGE_TYPE /*type*/, const uint8_t* message, size_t /*length*/, void* /*user_data*/)
 {
     if (g_tox_manager!=nullptr)
@@ -87,34 +93,38 @@ void self_connection_status_cb (Tox* /*tox*/, TOX_CONNECTION connection_status, 
 
 void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, uint32_t kind, uint64_t file_size, const uint8_t* filename, size_t /*filename_length*/, void* /*user_data*/)
 {
-    if (kind == TOX_FILE_KIND_AVATAR) {
-        if (!file_size) {
-            printf("Received avatar clear request, stub...\n");
+    // Avatars are the special case.
+    if (kind == TOX_FILE_KIND_AVATAR)
+    {
+        if (!file_size)
+        {
+            qDebug() << "Received avatar clear request, stub...";
             tox_file_control (tox, friend_number, file_number, TOX_FILE_CONTROL_CANCEL, nullptr);
-            // emit core->friendAvatarRemoved(core->getFriendPublicKey(friendId));
             return;
-        } else {
-            printf("Receiving avatar update...");
+        }
+        else
+        {
+            qDebug() << "Receiving avatar update...";
 
             uint8_t new_hash [TOX_FILE_ID_LENGTH];
             tox_file_get_file_id (tox, friend_number, file_number, new_hash, nullptr);
-            // QByteArray avatarBytes {static_cast<const char*>(static_cast<const void*>(avatarHash)), TOX_HASH_LENGTH}; // Borrowed from QTox, but it's just WTF.
+            // QByteArray avatarBytes {static_cast<const char*>(static_cast<const void*>(avatarHash)), TOX_HASH_LENGTH}; // from QTox, but it's just WTF.
 
             uint8_t pubkey [TOX_PUBLIC_KEY_SIZE];
             tox_friend_get_public_key (tox, friend_number, pubkey, nullptr);
 
-            QFile old_file (appdata_path +"/"+  QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png");
+            QFile old_file (appdata_path +"/"+  pubkey2string (pubkey) + ".png");
             bool accept = false;
 
             if (!old_file.open (QIODevice::ReadOnly))
             {
-                printf(" no old avatar found, accepting.\n");
+                qDebug() << "No old avatar found, accepting.";
                 accept = true;
             }
             else
             {
                 QByteArray pic = old_file.readAll();
-                old_file.close ();
+                old_file.close();
                 QByteArray old_hash (TOX_HASH_LENGTH, 0);
 
                 tox_hash (reinterpret_cast<uint8_t*>(old_hash.data()), reinterpret_cast<uint8_t*>(pic.data()), pic.size());
@@ -122,20 +132,20 @@ void file_receive_cb (Tox* tox, uint32_t friend_number, uint32_t file_number, ui
                 accept = (old_hash != new_hash);
             }
 
-            // Already have this avatar
+            // Already have this avatar.
             if (!accept)
             {
-                printf(" already cached, dropping.\n");
+                qDebug() << "Avatar already cached, dropping.";
                 tox_file_control (tox, friend_number, file_number, TOX_FILE_CONTROL_CANCEL, nullptr);
                 return;
             }
             else
             {
-                printf(" hash not matching, accepting.\n");
+                qDebug() << "Hash not matching, accepting.";
                 tox_file_control (tox, friend_number, file_number, TOX_FILE_CONTROL_RESUME, nullptr);
-                QFile* file = new QFile (appdata_path +"/"+  QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png");
+                QFile* file = new QFile (appdata_path +"/"+  pubkey2string (pubkey) + ".png");
                 file->open (QIODevice::ReadWrite);
-                g_tox_manager->files_in_transfer.insert (qMakePair(friend_number, file_number), file);
+                g_tox_manager->files_in_transfer.insert (qMakePair (friend_number, file_number), file);
                 return;
             }
             return;
@@ -198,19 +208,55 @@ void ToxManager::iterate ()
 void ToxManager::echo (const QString &message, const long friend_number)
 {
     QByteArray ba = message.toUtf8();
-    // printf ("Attempting to send %s\n", ba.constData());
     tox_friend_send_message(tox, friend_number, TOX_MESSAGE_TYPE_NORMAL, reinterpret_cast<const uint8_t*>(ba.constData()), ba.size(), 0);
 }
 
 void ToxManager::send_file (const QString &filename, const long friend_number)
 {
-    QByteArray ba = QFileInfo(filename).fileName().toUtf8();
+    QByteArray ba = QFileInfo (filename).fileName().toUtf8();
     QFile* file = new QFile (filename);
     file->open (QIODevice::ReadOnly);
     uint32_t file_number = tox_file_send (tox, friend_number, TOX_FILE_KIND_DATA, file->size(), nullptr, reinterpret_cast<const uint8_t*>(ba.constData()), ba.size(), 0);
     files_in_transfer.insert (qMakePair (friend_number, file_number), file);
 }
 
+void ToxManager::send_avatar (const long friend_number)
+{
+    QByteArray ba = QFileInfo (appdata_path +"/avatar.png").fileName().toUtf8();
+    QFile* file = new QFile (appdata_path +"/avatar.png");
+    if (!file->open (QIODevice::ReadOnly))
+    {
+        file->deleteLater();
+        return;
+    }
+    uint32_t file_number = tox_file_send (tox, friend_number, TOX_FILE_KIND_AVATAR, file->size(), nullptr, reinterpret_cast<const uint8_t*>(ba.constData()), ba.size(), 0);
+    files_in_transfer.insert (qMakePair (friend_number, file_number), file);
+}
+
+void ToxManager::broadcast_avatar()
+{
+    const size_t friend_list_length = tox_self_get_friend_list_size (tox);
+    QVector<uint32_t> friend_id_list (friend_list_length);
+    tox_self_get_friend_list (tox, friend_id_list.data());
+
+    foreach (size_t i, friend_id_list)
+    {
+        if (tox_friend_get_connection_status (tox, i, nullptr) != TOX_CONNECTION_NONE)
+                send_avatar (i);
+    }
+}
+
+void ToxManager::name_update (const QString& name)
+{
+    QByteArray ba = name.toUtf8();
+    tox_self_set_name (tox, reinterpret_cast<const uint8_t*>(ba.constData()), ba.size(), 0);
+}
+
+void ToxManager::status_update (const QString& status)
+{
+    QByteArray ba = status.toUtf8();
+    tox_self_set_status_message (tox, reinterpret_cast<const uint8_t*>(ba.constData()), ba.size(), 0);
+}
 
 ToxManager::ToxManager (): QObject()
 {
@@ -246,6 +292,12 @@ ToxManager::ToxManager (): QObject()
         // printf("Status changed to: %s!\n", g_tox_state.self_online_status);
     });
 
+    connect (this, &ToxManager::friend_connection_status_changed, [this](const QString& status, const long friend_number)
+    {
+        if (status.startsWith ("online"))
+            send_avatar (friend_number);
+    });
+
     watchdog = new QTimer (this);
     connect(watchdog, &QTimer::timeout, this, [this]() {
         printf("Tox connection gone cold, reconnecting...\n");
@@ -273,11 +325,21 @@ ToxManager::~ToxManager ()
     g_tox_manager = nullptr;
 }
 
+void ToxManager::add_friend (const QString& id)
+{
+    QString message = tr("Friend request.");
+    QByteArray ba = message.toUtf8();
+    QByteArray pk = QByteArray::fromHex (id.toLatin1());
+
+    tox_friend_add (tox, reinterpret_cast<const uint8_t*>(pk.constData()), reinterpret_cast<const uint8_t*>(ba.constData()), ba.size(), nullptr);
+    update_savedata_file (tox);
+}
+
 void ToxManager::message (const QString &text, const long friend_number)
 {
     emit message_sent (text, friend_number);
 }
-
+/*
 QList<ToxContact> ToxManager::contact_list()
 {
     QList <struct ToxContact> result;
@@ -320,7 +382,7 @@ QList<ToxContact> ToxManager::contact_list()
 
     }
     return result;
-}
+}*/
 
 ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
 {
@@ -354,7 +416,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
     uint8_t pubkey [TOX_PUBLIC_KEY_SIZE];
     tox_friend_get_public_key (g_tox_manager->tox, friend_id, pubkey, nullptr);
 
-    MessageLog* chat_view = new MessageLog (this, QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()));
+    MessageLog* chat_view = new MessageLog (this, pubkey2string (pubkey));
     // chat_view->setTextInteractionFlags(Qt::TextBrowserInteraction);
 
     input_box = new InputWidget (this);
@@ -378,7 +440,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
         {
              QString filename = dialog->selectedFiles().first();
              emit file_sent (filename, friend_id);
-             chat_view->append (filename, ":/icons/tox_online", QDateTime::currentDateTime(), true);
+             chat_view->append (filename, my_avatar, QDateTime::currentDateTime(), true);
         }
 
         //dialog->deleteLater();
@@ -387,7 +449,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
 
     connect (input_box, &InputWidget::paste_image, [this, chat_view] (const QPixmap& pixmap)
     {
-        // akin to qTox but hopefully faster
+        // Akin to qTox but hopefully faster.
         QString filepath = appdata_path +"/"+ QString ("qTox_Image_%1.jpg")
                                .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd HH-mm-ss.zzz"));
         QFile file (filepath);
@@ -398,7 +460,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
             file.close();
             QFileInfo fi (file);
             emit file_sent (fi.filePath(), friend_id);
-            chat_view->append (fi.filePath(), ":/icons/tox_online", QDateTime::currentDateTime(), true);
+            chat_view->append (fi.filePath(), my_avatar, QDateTime::currentDateTime(), true);
         }
         else
         {
@@ -423,11 +485,10 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
 
     setLayout (grid);
 
-    QString friend_avatar_path = appdata_path +"/"+ QString (QByteArray ((const char*)pubkey).left(TOX_PUBLIC_KEY_SIZE).toHex().toUpper()) + ".png";
+    QString friend_avatar_path = appdata_path +"/"+ pubkey2string (pubkey) + ".png";
     QFile file (friend_avatar_path);
 
     printf ("Looking for %s...", QByteArray ((const char*)pubkey).toHex().toUpper().constData());
-
 
     if (!file.open (QIODevice::ReadOnly))
     {
@@ -442,7 +503,6 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
         friend_avatar.loadFromData (pic);
         printf (" found, loading.\n");
     }
-
 
 
     connect (this, &ToxWidget::friend_typing, [this, typing_label](bool is_typing)
@@ -479,7 +539,7 @@ ToxWidget::ToxWidget (QWidget* parent, long friend_number): QWidget (parent)
         if (!input_box->text().isEmpty ())
         {
             emit message_sent (input_box->text(), friend_id);
-            chat_view->append (input_box->text(), ":/icons/tox_online", QDateTime::currentDateTime());
+            chat_view->append (input_box->text(), my_avatar, QDateTime::currentDateTime());
             input_box->clear ();
         }
     });

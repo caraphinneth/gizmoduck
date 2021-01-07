@@ -1,4 +1,4 @@
-#include "QMouseEvent"
+#include <QMouseEvent>
 
 #include "navigation_button.h"
 
@@ -23,5 +23,5 @@ void NavButton::mousePressEvent (QMouseEvent* event)
         emit right_clicked();
     }
 
-    QPushButton::mousePressEvent(event);
+    QPushButton::mousePressEvent (event);
 }

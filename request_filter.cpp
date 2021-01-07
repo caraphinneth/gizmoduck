@@ -1,11 +1,9 @@
-#include "QDir"
-#include "QHostAddress"
-#include "QRegularExpression"
-#include "QSettings"
+#include <QDir>
+#include <QHostAddress>
+#include <QRegularExpression>
+#include <QSettings>
 
 #include "request_filter.h"
-
-#include "QDebug"
 
 QList <whitelist_record> load_filter_from_file (const QString& filename, QWebEngineUrlRequestInfo::ResourceType type)
 {

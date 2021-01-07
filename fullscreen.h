@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gl_widget.h"
+//#include "gl_widget.h"
 #include "QWebEngineView"
 
 class FullScreenWindow: public QWidget

@@ -8,9 +8,7 @@
 #include "tab_manager.h"
 #include "webview.h"
 
-#include "QDebug"
-
-bool WebView::eventFilter(QObject* object, QEvent* event)
+bool WebView::eventFilter (QObject* object, QEvent* event)
 {
     if (object->parent() == this && event->type() == QEvent::MouseMove)
     {

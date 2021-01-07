@@ -1,5 +1,6 @@
 #include <QPainter>
 #include <QStandardItemModel>
+
 #include "side_tabs.h"
 
 SideTabs::SideTabs (QWidget* parent, int w, int h): QListView (parent)
@@ -115,8 +116,6 @@ void TabHeader::paint (QPainter* painter, const QStyleOptionViewItem& option, co
     // Draw message text
     QRect text_rect = contentRect.adjusted( 26, 3, -5, -5);
 
-    //QFont condensed ("Roboto Condensed Medium", 10);
-    //painter->setFont (condensed);
     painter->setPen (palette.windowText().color());
     painter->setPen (palette.text().color());
 
@@ -133,7 +132,6 @@ QSize TabHeader::sizeHint (const QStyleOptionViewItem& /*option*/,  const QModel
 {
     return QSize (width, height);
 }
-
 
 void SideTabs::wheelEvent (QWheelEvent* event)
 {

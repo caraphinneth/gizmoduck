@@ -1,8 +1,9 @@
 #pragma once
-#include <QMainWindow>
 #include <QLineEdit>
-#include "tab_manager.h"
+#include <QMainWindow>
+
 #include "navigation_button.h"
+#include "tab_manager.h"
 #include "tox_ui.h"
 
 struct MainWindow: public QMainWindow
@@ -11,12 +12,13 @@ struct MainWindow: public QMainWindow
 
 public:
     MainWindow();
-    TabWidget* tabWidget() const; // Returns tab_manager, needed for handling new window commands from webviews.
+    //TabWidget* tabWidget() const; // Returns tab_manager for handling new window commands from webviews. Bad.
 
 protected:
     void closeEvent (QCloseEvent*) override;
 
 private slots:
+    // Handle incoming and outgoing chat messages, creating widgets as needed.
     void chat (const QString& message, const long friend_number);
 
 private:
@@ -36,4 +38,7 @@ private:
     QHash <uint32_t, ToxWidget*> active_chats;
 
     void save_settings();
+    void save_contacts();
+    void load_contacts();
+    void add_contact();
 };

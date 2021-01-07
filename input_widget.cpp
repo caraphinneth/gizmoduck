@@ -1,4 +1,4 @@
-// Custom line edit, intercepting image pasting.
+// Custom line or text edit, intercepting image pasting.
 
 #include <QApplication>
 #include <QClipboard>
@@ -8,10 +8,10 @@
 
 InputWidget::InputWidget (QWidget* parent) : QLineEdit (parent)
 {
-
+    setAcceptDrops (true);
 }
 
-// ported from qTox, but it needs improvement
+// Like qTox.
 bool InputWidget::check_for_image()
 {
     const QClipboard* const clipboard = QApplication::clipboard();
@@ -19,13 +19,6 @@ bool InputWidget::check_for_image()
     {
         return false;
     }
-
-    /*const QMimeData* const mimeData = clipboard->mimeData();
-    if (!mimeData || !mimeData->hasImage())
-    {
-        return false;
-    }
-    */
 
     const QPixmap pixmap (clipboard->pixmap());
     if (pixmap.isNull())

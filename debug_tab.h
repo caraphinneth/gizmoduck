@@ -1,5 +1,5 @@
 #pragma once
-#include "gl_widget.h"
+//#include "gl_widget.h"
 #include "tab_groups.h"
 
 struct DebugTab: public QWidget

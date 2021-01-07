@@ -35,7 +35,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp \
     browser_mainwindow.cpp \
-    dockwidget.cpp \
     fullscreen.cpp \
     input_widget.cpp \
     message_log.cpp \
@@ -60,7 +59,6 @@ HEADERS += \
 
 HEADERS += \
     browser_mainwindow.h \
-    dockwidget.h \
     fullscreen.h \
     input_widget.h \
     message_log.h \
