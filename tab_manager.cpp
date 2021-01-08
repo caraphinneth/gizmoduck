@@ -472,7 +472,7 @@ void TabWidget::restore_tab()
             install_page_signal_handler (p);
 
             group = assign_tab_group (host);
-            auto it = std::prev (group->order.end());
+            auto it = group->order.end();
             group->insert (url, p, it);
 
             WebView* view = host_views.value (host);
@@ -530,7 +530,8 @@ void TabWidget::set_url (const QUrl& url, bool background)
     else
     {
         auto it = std::find (group->order.begin(), group->order.end(), view->url().toString());
-        ++it;
+        if (it != group->order.end())
+            ++it;
 
         p = group->assign_page (key, it);
         emit debug_tabs_updated();
@@ -618,7 +619,7 @@ void TabWidget::install_page_signal_handler (WebPage* p)
                 }
                 WebView* new_view = host_views.value (final_host);
 
-                auto it = std::prev (new_group->order.end());
+                auto it = new_group->order.end();
                 new_group->insert (final_url, p, it);
                 emit debug_tabs_updated();
 
@@ -634,7 +635,7 @@ void TabWidget::install_page_signal_handler (WebPage* p)
 
                 WebView* v = create_tab();
                 host_views.insert (final_host, v);
-                auto it = std::prev (new_group->order.end());
+                auto it = new_group->order.end();
                 new_group->insert (final_url, p, it);
                 emit debug_tabs_updated();
 
@@ -840,7 +841,7 @@ void TabWidget::load_state()
         qDebug() << "Loading page:" << url;
 
         TabGroup* group = assign_tab_group (host);
-        auto it = std::prev (group->order.end());
+        auto it = group->order.end();
         group->insert (url, p, it); // insert() replaces any possible dupes.
 
         history.add (p->history()->currentItem().url());
