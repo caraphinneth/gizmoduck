@@ -250,12 +250,14 @@ void ToxManager::name_update (const QString& name)
 {
     QByteArray ba = name.toUtf8();
     tox_self_set_name (tox, reinterpret_cast<const uint8_t*>(ba.constData()), ba.size(), 0);
+    update_savedata_file (tox);
 }
 
 void ToxManager::status_update (const QString& status)
 {
     QByteArray ba = status.toUtf8();
     tox_self_set_status_message (tox, reinterpret_cast<const uint8_t*>(ba.constData()), ba.size(), 0);
+    update_savedata_file (tox);
 }
 
 ToxManager::ToxManager (): QObject()

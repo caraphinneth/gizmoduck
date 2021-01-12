@@ -214,8 +214,13 @@ WebView* TabWidget::create_tab (bool at_end)
     if (!at_end)
     {
         insertWidget (currentIndex()+1, view);
-        int row = tabBar->selectionModel()->selectedIndexes().first().row();
-        model->insertRow (row+1, item);
+        if (!tabBar->selectionModel()->selectedIndexes().isEmpty())
+        {
+            int row = tabBar->selectionModel()->selectedIndexes().first().row();
+            model->insertRow (row+1, item);
+        }
+        else
+            model->appendRow (item);
     }
     else
     {
