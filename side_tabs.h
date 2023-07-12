@@ -3,6 +3,8 @@
 #include <QMovie>
 #include <QStyledItemDelegate>
 
+#include <webview.h>
+
 struct SideTabs: public QListView
 {
     Q_OBJECT

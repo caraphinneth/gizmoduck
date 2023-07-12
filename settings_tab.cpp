@@ -1,3 +1,12 @@
+#include <QApplication>
+#include <QCheckBox>
+#include <QGroupBox>
+#include <QListWidget>
+#include <QRadioButton>
+#include <QSettings>
+#include <QSpinBox>
+#include <QVBoxLayout>
+
 #include "file_dialog.h"
 #include "setting_tab.h"
 #include "tox_ui.h"
@@ -113,7 +122,7 @@ SettingsTab::SettingsTab (QWidget* parent): QWidget (parent)
 
     settings.endGroup();
 
-    connect (scroll_speed, QOverload<int>::of (&QSpinBox::valueChanged), [this] (int value)
+    connect (scroll_speed, QOverload<int>::of (&QSpinBox::valueChanged), [] (int value)
     {
         QSettings settings;
         settings.beginGroup ("Interface");
@@ -143,7 +152,7 @@ SettingsTab::SettingsTab (QWidget* parent): QWidget (parent)
     }
     settings.endGroup();
 
-    connect (site_per_process, &QRadioButton::toggled, [this](bool checked)
+    connect (site_per_process, &QRadioButton::toggled, [](bool checked)
     {
         if (checked)
         {
@@ -155,7 +164,7 @@ SettingsTab::SettingsTab (QWidget* parent): QWidget (parent)
     });
 
 
-    connect (process_per_site, &QRadioButton::toggled, [this](bool checked)
+    connect (process_per_site, &QRadioButton::toggled, [](bool checked)
     {
         if (checked)
         {
@@ -166,7 +175,7 @@ SettingsTab::SettingsTab (QWidget* parent): QWidget (parent)
         }
     });
 
-    connect (single_process, &QRadioButton::toggled, [this](bool checked)
+    connect (single_process, &QRadioButton::toggled, [](bool checked)
     {
         if (checked)
         {
@@ -198,7 +207,7 @@ SettingsTab::SettingsTab (QWidget* parent): QWidget (parent)
     settings.endGroup();
 
 
-    connect (tcp_fast_open, &QCheckBox::toggled, [this](bool checked)
+    connect (tcp_fast_open, &QCheckBox::toggled, [](bool checked)
     {
         QSettings settings;
         settings.beginGroup ("Web settings");
@@ -213,7 +222,7 @@ SettingsTab::SettingsTab (QWidget* parent): QWidget (parent)
         settings.endGroup();
     });
 
-    connect (checker_imaging, &QCheckBox::toggled, [this](bool checked)
+    connect (checker_imaging, &QCheckBox::toggled, [](bool checked)
     {
         QSettings settings;
         settings.beginGroup ("Web settings");
@@ -248,7 +257,7 @@ SettingsTab::SettingsTab (QWidget* parent): QWidget (parent)
 
     settings.endGroup();
 
-    connect (gpu_rasterizer, &QCheckBox::toggled, [this](bool checked)
+    connect (gpu_rasterizer, &QCheckBox::toggled, [](bool checked)
     {
         QSettings settings;
         settings.beginGroup ("Rasterizer");
@@ -297,7 +306,7 @@ SettingsTab::SettingsTab (QWidget* parent): QWidget (parent)
     */
     settings.endGroup();
 
-    connect (ignore_gpu_blacklist, &QCheckBox::toggled, [this](bool checked)
+    connect (ignore_gpu_blacklist, &QCheckBox::toggled, [](bool checked)
     {
         QSettings settings;
         settings.beginGroup ("Experimental");

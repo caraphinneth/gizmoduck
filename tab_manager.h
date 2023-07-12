@@ -1,4 +1,6 @@
 #pragma once
+#include <QStackedWidget>
+#include <QStandardItemModel>
 #include <QTabWidget>
 #include <QWebEngineHistory>
 #include <QWebEngineFullScreenRequest>
@@ -54,7 +56,7 @@ public slots:
 
     void save_state();
     void load_state();
-    void download (QWebEngineDownloadItem* download);
+    void download (QWebEngineDownloadRequest* download);
     void cleanup();
 
 private slots:
@@ -65,11 +67,14 @@ private:
     QTimer* autosave;
     RequestFilter* request_filter;
     QScopedPointer<FullScreenWindow> fullscreen;
-    void install_page_signal_handler (WebPage* p);
+    void install_page_signal_handler (QSharedPointer<WebPage> p);
 
     TabGroups tab_groups;
     TabGroup* assign_tab_group (const QString& host);
     QHash <QString, WebView*> host_views;
+    WebView* assign_host_view (const QString& host);
+
+    WebView* current_view();
 
     //void wheelEvent (QWheelEvent* event);
     WebPage* page_back (TabGroup* group);

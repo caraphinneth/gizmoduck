@@ -1,4 +1,5 @@
 #pragma once
+#include <QHash>
 #include <QWebEngineUrlRequestInterceptor>
 #include <memory>
 

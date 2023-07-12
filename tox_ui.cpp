@@ -1,3 +1,6 @@
+#include <QGridLayout>
+#include <QPushButton>
+
 #include "tox_ui.h"
 #include "file_dialog.h"
 #include "message_log.h"

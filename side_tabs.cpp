@@ -21,6 +21,7 @@ SideTabs::SideTabs (QWidget* parent, int w, int h): QListView (parent)
     p.setBrush(QPalette::Text, QColor("#616b71"));
 
     setPalette (p);
+    //setFont (QFont ("Noto Sans Display ExtraCondensed ExtraBold", 10));
     setFont (QFont ("Roboto Condensed Medium", 10));
 
     setWordWrap (true);
@@ -49,7 +50,7 @@ SideTabs::SideTabs (QWidget* parent, int w, int h): QListView (parent)
 
 QWidget* SideTabs::widget (int index)
 {
-    return reinterpret_cast<QWidget*>(model()->index (index,0).data (Qt::UserRole).value<quintptr>());
+    return reinterpret_cast<QWidget*>(model()->index (index, 0).data (Qt::UserRole).value<quintptr>());
 }
 
 // Don't look at me like that. QLayout and thus QStackedWidget, and thus QTabWidget do iteration to retrieve indexOf(). So do we.
@@ -83,9 +84,9 @@ void TabHeader::paint (QPainter* painter, const QStyleOptionViewItem& option, co
     QStyleOptionViewItem opt (option);
     initStyleOption (&opt, index);
 
-    const QPalette &palette (opt.palette);
-    const QRect &rect (opt.rect);
-    const QRect &contentRect (rect.adjusted (margins.left(), margins.top(), -margins.right(), -margins.bottom()));
+    const QPalette& palette (opt.palette);
+    const QRect& rect (opt.rect);
+    const QRect& contentRect (rect.adjusted (margins.left(), margins.top(), -margins.right(), -margins.bottom()));
     const bool lastIndex = (index.model()->rowCount() - 1) == index.row();
     const bool hasIcon = !opt.icon.isNull();
     const int bottomEdge = rect.bottom();
@@ -120,10 +121,16 @@ void TabHeader::paint (QPainter* painter, const QStyleOptionViewItem& option, co
     painter->setPen (palette.text().color());
 
     QFontMetrics fontMetric (opt.font);
-    const QString elidedText = fontMetric.elidedText (opt.text, Qt::ElideRight, text_rect.width()*2);
+    int width = text_rect.width() * 2;
+    QRegularExpression ex ("\\p{Hiragana}+|\\p{Katakana}+|\\p{Han}+", QRegularExpression::UseUnicodePropertiesOption);
+    if (ex.match(opt.text).hasMatch())
+        width = text_rect.width();
+
+    const QString elidedText = fontMetric.elidedText (opt.text, Qt::ElideRight, width);
     QTextOption t_option;
     t_option.setWrapMode (QTextOption::WrapAtWordBoundaryOrAnywhere);
     //condensed.setHintingPreference (QFont::PreferDefaultHinting);
+
     painter->drawText (text_rect, elidedText, t_option);
     painter->restore();
 }

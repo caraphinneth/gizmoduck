@@ -1,3 +1,4 @@
+#include <QChar>
 #include <QDir>
 #include <QHostAddress>
 #include <QRegularExpression>
@@ -181,7 +182,7 @@ void RequestFilter::interceptRequest (QWebEngineUrlRequestInfo& info)
     // Per-domain quirks
     if (info.requestUrl().host()=="accounts.google.com")
     {
-        QString edge_agent = user_agent + " Edg/87.0.664.47";
+        QString edge_agent = user_agent + " Mozilla/5.0 ({os_info}; rv:90.0) Gecko/20100101 Firefox/90.0";
         info.setHttpHeader ("User-Agent", edge_agent.toUtf8());
     }
 
@@ -208,15 +209,17 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
         return false;
     }
     // Always block certain request types.
-    /*else if
+    /*
+    else if
     (
             //(info.resourceType()==(QWebEngineUrlRequestInfo::ResourceTypePrefetch))||
-            //(info.resourceType()==(QWebEngineUrlRequestInfo::ResourceTypePing))
+            (info.resourceType()==(QWebEngineUrlRequestInfo::ResourceTypePing))
     )
     {
         return true;
         debug_message ("Requested " + ResourceClass (info.resourceType ())+" "+url+" blocked.");
-    }*/
+    }
+    */
 
     // Always allow certain request types.
     if
@@ -232,6 +235,13 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
     }
 
     // If the destination has a special scheme.
+    if (url.startsWith ("chrome-extension:"))
+    {
+            return false;
+            debug_message ("This is an extension request, allowing for now.");
+    }
+
+
     if (destination_host.isEmpty())
     {
         QString message = "Unable to decode host from URL ("+url+"), looking deeper... ";
@@ -291,7 +301,7 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
         if ((record.type == QWebEngineUrlRequestInfo::ResourceTypeMainFrame)||(record.type == info.resourceType()))
                 if (match (info.requestUrl(), record.pattern))
                 {
-                    debug_message ("New filter: " + ResourceClass (info.resourceType ())+" from " + destination_host + " requested by " + source_host + " whitelisted, precise URL: "+url);
+                    // debug_message ("New filter: " + ResourceClass (info.resourceType ())+" from " + destination_host + " requested by " + source_host + " whitelisted, precise URL: "+url);
                     return false;
                 }
     }
@@ -349,7 +359,7 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
     )
 
     {
-        debug_message ("A " + ResourceClass (info.resourceType ())+" from " + destination_host + " requested by " + source_host + " whitelisted, precise URL: "+url);
+        // debug_message ("A " + ResourceClass (info.resourceType ())+" from " + destination_host + " requested by " + source_host + " whitelisted, precise URL: "+url);
         return false;
     }
 
@@ -375,7 +385,7 @@ bool RequestFilter::should_block (QWebEngineUrlRequestInfo& info)
             source_host.contains("google.") // Allow google image search to fetch fullsize images.
         )
         {
-                debug_message ("Favorable pattern: image " + destination_host + " requested by " + source_host + " whitelisted, precise URL: "+url);
+                // debug_message ("Favorable pattern: image " + destination_host + " requested by " + source_host + " whitelisted, precise URL: "+url);
                 return false;
         }
     }
@@ -601,8 +611,8 @@ int RequestFilter::levenshtein_distance (const QString& str1, const QString& str
     else if (str2.isEmpty())
         return str1.length();
 
-    QChar str1_c = 0;
-    QChar str2_c = 0;
+    QChar str1_c = QChar(0);
+    QChar str2_c = QChar(0);
     QVector<QVector<int> > matrix (str1.length() + 1, QVector<int> (str2.length() + 1));
     int cost = 0;
 

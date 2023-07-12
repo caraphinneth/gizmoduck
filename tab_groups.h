@@ -3,26 +3,28 @@
 
 #include "webpage.h"
 
-struct TabGroup: public QHash<QString, WebPage*>
+struct TabGroup: public QHash<QString, QSharedPointer<WebPage>>
 {
 
 public:
     QWebEngineProfile* profile;
 
-    std::list<QString> order;
-    void insert (const QString& key, WebPage* const &value, std::list<QString>::iterator position)
+    QStringList order;
+    // Insert at position or replace the value for an existing key, keeping position.
+    void insert (const QString& key,QSharedPointer<WebPage> const &value, int position = -1)
     {
         if (contains (key))
         {
             // preserve position for now
         }
-        else if (position == order.end())
+        // insert at end
+        else if (position == -1)
         {
             order.push_back (key);
         }
         else
         {
-            order.insert (position, key);
+            order.insert (position+1, key);
         }
 
         QHash::insert (key, value);
@@ -30,24 +32,19 @@ public:
 
     void remove (const QString& key)
     {
-        order.remove (key);
+        order.removeOne (key);
         QHash::remove (key);
     }
 
-    void replace (const QString& old_key, const QString& new_key, WebPage* const value)
+    void replace (const QString& old_key, const QString& new_key, QSharedPointer<WebPage> const value)
     {
         // URL of existing page changed, preserve position
-        auto it = std::find (order.begin(), order.end(), old_key);
-        if (it!=order.end())
-        {
-            order.insert (std::next(it), new_key);
-            order.erase (it);
-        }
+        order.replace (order.indexOf (old_key), new_key);
         QHash::remove (old_key);
         QHash::insert (new_key, value);
     }
 
-    WebPage* assign_page (const QString& key, std::list<QString>::iterator position)
+    QSharedPointer<WebPage> assign_page (const QString& key, int position)
     {
         if (contains (key))
         {
@@ -55,7 +52,7 @@ public:
         }
         else
         {
-            WebPage* p (new WebPage (profile));
+            QSharedPointer<WebPage> p  (new WebPage (profile));
             insert (key, p, position);
             return p;
         }
@@ -65,16 +62,16 @@ public:
 struct TabGroups: public QHash <QString, TabGroup*>
 {
 public:
-    std::list<QString> order;
+    QStringList order;
     void insert (const QString& key, TabGroup* const &value)
     {
         QHash::insert (key, value);
-        order.remove (key);
+        order.removeOne (key);
         order.push_back (key);
     }
     void remove (const QString& key)
     {
-        order.remove (key);
+        order.removeOne (key);
         QHash::remove (key);
     }
 };

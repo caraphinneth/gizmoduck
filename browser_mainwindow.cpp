@@ -1,6 +1,16 @@
+#include <QApplication>
+#include <QCompleter>
+#include <QDockWidget>
+#include <QGridLayout>
+#include <QHeaderView>
+#include <QHostInfo>
+#include <QMenu>
 #include <QNetworkProxyFactory>
+#include <QSaveFile>
 #include <QSettings>
+#include <QSortFilterProxyModel>
 #include <QSqlDatabase>
+#include <QTableView>
 #include <QToolBar>
 
 #include "browser_mainwindow.h"
@@ -58,7 +68,7 @@ MainWindow::MainWindow()
     settings_button->setIcon (QIcon (QStringLiteral (":/icons/system")));
     settings_button->setToolTip (tr("Settings"));
 
-    QMenu* contact_menu = new QMenu();
+    contact_menu = new QMenu();
 
     tox_button = new NavButton (toolbar);
     tox_button->setIcon (QIcon (QStringLiteral (":/icons/tox_connecting")));
@@ -79,7 +89,8 @@ MainWindow::MainWindow()
     //GLWidget *central_widget = new GLWidget (this);
     QGridLayout* layout = new QGridLayout;
     layout->setSpacing (0);
-    layout->setMargin (0);
+    // layout->setMargin (0);
+    layout->setContentsMargins(0, 0, 0, 0);
     addToolBarBreak();
 
     tab_manager = new TabWidget (this);
@@ -94,7 +105,7 @@ MainWindow::MainWindow()
     search_bar = new QToolBar (central_widget);
     layout->addWidget (search_bar, 1, 0, 1, -1);
     QLabel* search_label = new QLabel (tr("Find text: "), this);
-    QLineEdit* search_box = new QLineEdit (search_bar);
+    search_box = new QLineEdit (search_bar);
     search_bar->addWidget (search_label);
     search_bar->addWidget (search_box);
     search_bar->hide();
@@ -143,12 +154,18 @@ MainWindow::MainWindow()
     connect (address_box, &QLineEdit::returnPressed, [this]()
     {
         QUrl url = QUrl::fromUserInput (address_box->text());
-
-        if (url.isValid()&&((url.host()=="localhost")||(!url.topLevelDomain().isEmpty())||(url.topLevelDomain()=="i2p")|| (url.scheme()=="chrome")  ))
-        //if (url.isValid() && !url.scheme().isEmpty() && (!url.host().isEmpty() || !url.path().isEmpty() || url.hasQuery()))
-            tab_manager->set_url (url, false);
-        else
-            tab_manager->set_url (QUrl::fromUserInput ("https://duckduckgo.com/?q="+address_box->text()), false);
+        QString host = url.host();
+        QHostInfo::lookupHost(host, [this, url](const QHostInfo& hostInfo)
+        {
+            if ((hostInfo.error() == QHostInfo::NoError) || (url.scheme()=="chrome"))
+            {
+                tab_manager->set_url (url, false);
+            }
+            else
+            {
+                tab_manager->set_url (QUrl::fromUserInput ("https://duckduckgo.com/?q="+address_box->text()), false);
+            }
+        });
     });
 
     connect (tab_manager, &TabWidget::url_changed, [this](const QUrl& url)
@@ -206,7 +223,7 @@ MainWindow::MainWindow()
 
     load_contacts();
 
-    connect (tox_button, &NavButton::left_clicked, [this, contact_menu]()
+    connect (tox_button, &NavButton::left_clicked, [this]()
     {
         contact_menu->clear();
         QMap<quint32, ToxContact>::const_iterator i = tox_manager->contact_list.constBegin();
@@ -301,7 +318,7 @@ MainWindow::MainWindow()
         tox_manager->contact_list.insert (friend_number, contact);
     });
 
-    connect (tox_manager, &ToxManager::self_connection_status_changed, [this, contact_menu](const QString& status)
+    connect (tox_manager, &ToxManager::self_connection_status_changed, [this](const QString& status)
     {
         if (status == "offline")
         {
@@ -354,7 +371,7 @@ MainWindow::MainWindow()
 
     QAction* toggle_search = new QAction (this);
     toggle_search->setShortcut (Qt::Key_F | Qt::CTRL);
-    connect (toggle_search, &QAction::triggered, [this, search_box]()
+    connect (toggle_search, &QAction::triggered, [this]()
     {
         search_bar->setVisible (!search_bar->isVisible());
 
@@ -374,7 +391,7 @@ MainWindow::MainWindow()
     QAction* find_text = new QAction (search_bar);
     find_text->setShortcut (Qt::Key_F3);
     find_text->setIcon (QIcon (QStringLiteral (":/icons/down")));
-    connect (find_text, &QAction::triggered, [this, search_box]()
+    connect (find_text, &QAction::triggered, [this]()
     {
         WebView* view = qobject_cast<WebView*>(tab_manager->currentWidget());
         if (view)
@@ -388,7 +405,7 @@ MainWindow::MainWindow()
     QAction* reverse_find_text = new QAction (search_bar);
     //reverse_find_text->setShortcut (Qt::Key_F3);
     reverse_find_text->setIcon (QIcon (QStringLiteral (":/icons/up")));
-    connect (reverse_find_text, &QAction::triggered, [this, search_box]()
+    connect (reverse_find_text, &QAction::triggered, [this]()
     {
         WebView* view = qobject_cast<WebView*>(tab_manager->currentWidget());
         if (view)
@@ -400,7 +417,7 @@ MainWindow::MainWindow()
     search_bar->addAction (reverse_find_text);
 
 
-    connect (search_box, &QLineEdit::textChanged, [this, search_box]()
+    connect (search_box, &QLineEdit::textChanged, [this]()
     {
         WebView* view = qobject_cast<WebView*>(tab_manager->currentWidget());
         if (view)
@@ -424,13 +441,15 @@ TabWidget* MainWindow::tabWidget() const
     return tab_manager;
 }*/
 
-void MainWindow::closeEvent (QCloseEvent*)
+void MainWindow::closeEvent (QCloseEvent* event)
 {
     save_contacts();
     delete tox_manager;
 
     tab_manager->cleanup();
+    tab_manager->deleteLater();
     save_settings();
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::chat (const QString &message, const long friend_number)

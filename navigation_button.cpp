@@ -14,7 +14,7 @@ void NavButton::mousePressEvent (QMouseEvent* event)
     {
         emit left_clicked();
     }
-    else if (event->button() == Qt::MidButton)
+    else if (event->button() == Qt::MiddleButton)
     {
         emit mid_clicked();
     }

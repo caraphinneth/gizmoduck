@@ -1,4 +1,5 @@
 #include <QFile>
+#include <QDebug>
 
 #include "userscript.h"
 
@@ -10,6 +11,8 @@ UserScript::UserScript(): QWebEngineScript()
 
 void UserScript::load_from_file (const QString& filename)
 {
+    qDebug() << "Loading script from file:"  << filename;
+
     QFile file (filename);
     file.open (QIODevice::ReadOnly | QIODevice::Text);
     QString source = file.readAll();

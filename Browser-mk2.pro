@@ -1,6 +1,7 @@
-QT += widgets webenginewidgets sql
-CONFIG += c++14 exceptions_off
+QT += widgets webenginewidgets sql network
+CONFIG += c++14
 CONFIG -= app_bundle
+DEFINES += QT_MESSAGELOGCONTEXT
 
 win32:QMAKE_CXXFLAGS+="-O2"
 !win32 {
@@ -9,7 +10,7 @@ win32:QMAKE_CXXFLAGS+="-O2"
 
 #-g -ggdb"
 #-flto=8"
-#QMAKE_LFLAGS+="-g -ggdb"
+#QMAKE_LFLAGS+="-g -pg"
 
 !win32 {
     LIBS += -ltoxcore -lsodium
@@ -45,7 +46,6 @@ SOURCES += main.cpp \
     file_dialog.cpp \
     side_tabs.cpp \
     settings_tab.cpp \
-    gl_widget.cpp \
     debug_tab.cpp \
     userscript.cpp \
     request_filter.cpp \
@@ -71,7 +71,6 @@ HEADERS += \
     request_filter.h \
     side_tabs.h \
     setting_tab.h \
-    gl_widget.h \
     debug_tab.h \
     userscript.h \
     tox_client.h \

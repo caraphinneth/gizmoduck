@@ -1,10 +1,13 @@
 #pragma once
 
 #include <QHash>
+#include <QLabel>
 #include <QPair>
+#include <QPlainTextEdit>
+#include <QPushButton>
 #include <QTimer>
+#include <QStandardPaths>
 #include "input_widget.h"
-#include "gl_widget.h"
 #include "tox_client.h"
 
 const QString appdata_path = QStandardPaths::writableLocation (QStandardPaths::AppDataLocation)+"/Gizmoduck";

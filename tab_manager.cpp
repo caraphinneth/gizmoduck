@@ -1,4 +1,6 @@
+#include <QMimeDatabase>
 #include <QSaveFile>
+#include <QStackedWidget>
 #include <QWebEngineProfile>
 #include <QWebEngineSettings>
 #include <QWebEngineScriptCollection>
@@ -12,11 +14,13 @@
 TabWidget::TabWidget (QWidget* parent): QStackedWidget (parent)
 {
     // Create QWebEngineProfile with the settings we prefer.
-    profile = QWebEngineProfile::defaultProfile();
+    profile = new QWebEngineProfile("Default");
     //profile->settings()->setAttribute (QWebEngineSettings::ErrorPageEnabled, false); // Disable Chromium error pages (they may look ugly when adblocking).
     profile->settings()->setAttribute (QWebEngineSettings::FullScreenSupportEnabled, true);
     //profile->settings()->setAttribute (QWebEngineSettings::ScreenCaptureEnabled,true);
-    profile->settings()->setAttribute (QWebEngineSettings::JavascriptCanOpenWindows, false);
+    profile->settings()->setAttribute (QWebEngineSettings::JavascriptCanOpenWindows, true);
+    profile->settings()->setAttribute (QWebEngineSettings::JavascriptCanAccessClipboard, true);
+    profile->settings()->setAttribute (QWebEngineSettings::JavascriptCanPaste, true);
     profile->settings()->setAttribute (QWebEngineSettings::PluginsEnabled, true);
     profile->settings()->setAttribute (QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
     //profile->settings()->setAttribute (QWebEngineSettings::FocusOnNavigationEnabled, true);
@@ -26,9 +30,9 @@ TabWidget::TabWidget (QWidget* parent): QStackedWidget (parent)
     //profile->settings()->setUnknownUrlSchemePolicy (QWebEngineSettings::AllowAllUnknownUrlSchemes);
     profile->settings()->setAttribute (QWebEngineSettings::AllowRunningInsecureContent, true);
 
-    profile->settings()->setFontFamily (QWebEngineSettings::StandardFont, "Roboto");
-    profile->settings()->setFontFamily (QWebEngineSettings::SerifFont, "Roboto");
-    profile->settings()->setFontFamily (QWebEngineSettings::SansSerifFont, "Roboto");
+    profile->settings()->setFontFamily (QWebEngineSettings::StandardFont, "Noto Sans SemiCondensed");
+    profile->settings()->setFontFamily (QWebEngineSettings::SerifFont, "Noto Sans SemiCondensed");
+    profile->settings()->setFontFamily (QWebEngineSettings::SansSerifFont, "Noto Sans SemiCondensed");
 
     profile->setSpellCheckEnabled (false);
 
@@ -50,7 +54,7 @@ TabWidget::TabWidget (QWidget* parent): QStackedWidget (parent)
         profile->scripts()->insert (new_script);
     }
 
-    //profile->setHttpUserAgent ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Gizmoduck/0.1.1 Chrome/61.0.3163.140 Safari/537.36");
+    profile->setHttpUserAgent ("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/102.0.0.0 Safari/537.36");
     //profile->setHttpUserAgent ("Mozilla/5.0 (X11; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0");
     //profile->setHttpUserAgent ("Googlebot/2.1 (+http://www.google.com/bot.html)");
     //profile->setHttpAcceptLanguage ("ru, en-gb, en-us;q=0.9, en;q=0.8|ru");
@@ -61,7 +65,7 @@ TabWidget::TabWidget (QWidget* parent): QStackedWidget (parent)
     // Should be moved to a separate widget later.
     connect (profile, &QWebEngineProfile::downloadRequested, this, &TabWidget::download);
 
-    tabBar = new SideTabs (this, 162, 40);
+    tabBar = new SideTabs (this, 162, 44);
 
     connect (tabBar->model(), &QAbstractItemModel::rowsRemoved, [this](const QModelIndex& /*parent*/, int /*first*/, int /*last*/)
     {
@@ -82,19 +86,18 @@ TabWidget::TabWidget (QWidget* parent): QStackedWidget (parent)
 
     connect (tabBar, &SideTabs::temp_pass_wheel_event, [this](QWheelEvent* event)
     {
-        WebView* view = qobject_cast<WebView*>(widget (currentIndex()));
-        if (view)
+        if (current_view())
         {
-            QString host = host_views.key (view);
+            QString host = host_views.key (current_view());
             if (tab_groups.contains (host))
             {
                 TabGroup* group = tab_groups.value (host);
                 // Reaching for a page pointer here is a disaster, don't do that. .adjusted (QUrl::RemoveQuery)
-                auto it = std::find (group->order.begin(), group->order.end(), view->url().toString());
+                int i = group->order.indexOf(current_view()->url().toString());
 
                 if (event->angleDelta().y() > 0)
                 {
-                    if (it == group->order.begin())
+                    if (i == 0)
                     {
                         if (tabBar->currentIndex().row() > 0)
                         {
@@ -102,40 +105,36 @@ TabWidget::TabWidget (QWidget* parent): QStackedWidget (parent)
                             QModelIndex index = tabBar->model()->index (tabBar->currentIndex().row()-1, 0);
                             tabBar->setCurrentIndex (index);
                             emit current_changed (index.row());
-                            //WebView* v = qobject_cast<WebView*>(widget (currentIndex()));
-                            //history.add (v->page()->url());
+                            //history.add (current_view()->page()->url());
                             //qDebug() << "History list:" << history;
                         }
                     }
                     else
                     {
-                        --it;
-                        view->setPage (group->value (*it));
-                        history.add (view->page()->url());
+                        --i;
+                        current_view()->setPage (group->value(group->order.at (i)).data());
+                        history.add (current_view()->page()->url());
                         //qDebug() << "History list:" << history;
                     }
                 }
                 else if (event->angleDelta().y() < 0)
                 {
-                    auto last = group->order.end();
-                    --last;
-                    if (it == last)
+                    if (i == group->order.size()-1)
                     {
                         if (tabBar->currentIndex().row() < count()-1) // maybe don't mix
                         {
                             QModelIndex index = tabBar->model()->index (tabBar->currentIndex().row()+1, 0);
                             tabBar->setCurrentIndex (index);
                             emit current_changed (index.row());
-                            //WebView* v = qobject_cast<WebView*>(widget (currentIndex()));
-                            //history.add (v->page()->url());
+                            //history.add (current_view()->page()->url());
                             //qDebug() << "History list:" << history;
                         }
                     }
                     else
                     {
-                        ++it;
-                        view->setPage (group->value (*it));
-                        history.add (view->page()->url());
+                        ++i;
+                        current_view()->setPage (group->value(group->order.at (i)).data());
+                        history.add (current_view()->page()->url());
                         //qDebug() << "History list:" << history;
                     }
                 }
@@ -200,13 +199,13 @@ void TabWidget::setTabText (int index, const QString& text)
 WebView* TabWidget::create_tab (bool at_end)
 {
     WebView* view = new WebView (this);
-    view->setAttribute (Qt::WA_DontShowOnScreen);
+    //view->setAttribute (Qt::WA_DontShowOnScreen);
 
     //The model should take the ownership of the item.
     QStandardItem* item = new QStandardItem (view->title());
     item->setData (reinterpret_cast<quintptr>(view), Qt::UserRole);
 
-    // Forbid dropping 'into' a tab header. Not to be consused with the one in ListView.
+    // Forbid dropping 'into' a tab header. Not to be confused with the one in ListView.
     item->setDropEnabled (false);
 
     QStandardItemModel* model = static_cast<QStandardItemModel*>(tabBar->model());
@@ -268,6 +267,8 @@ WebView* TabWidget::create_tab (bool at_end)
     {
         int index = tabBar->indexOf (view);
 
+        //view->page()->profile()->requestIconForIconURL(url, 16, view->page()->WebPage::getFavicon);
+
         if (currentIndex() == index)
            emit url_changed (url);
     });
@@ -287,8 +288,8 @@ WebView* TabWidget::create_tab (bool at_end)
         int index = tabBar->indexOf (view);
         if (index != -1)
         {
-            if (view->icon().isNull())
-                setTabIcon (index, (QIcon (QStringLiteral (":/icons/gizmoduck"))));
+            //if (view->icon().isNull())
+            //    setTabIcon (index, (QIcon (QStringLiteral (":/icons/gizmoduck"))));
             emit update_session();
         }
     });
@@ -318,82 +319,68 @@ void TabWidget::close_page (int index)
             TabGroup* group = tab_groups.value (host);
             if (group->count()==1)
             {
-                //qDebug() << "Closing single-paged tab.";
+                qDebug() << "Closing single-paged tab.";
                 close_tab (index);
                 emit debug_tabs_updated();
             }
             else
             {
-                QSaveFile file ("recently_closed.dat"); // For now only handles one...
-                file.open (QIODevice::WriteOnly);
-                QDataStream out (&file);
-                if (group->contains (view->url().toString()))//.adjusted (QUrl::RemoveQuery)
-                {
-                    WebPage* p = group->value (view->url().toString()); //qobject_cast<WebPage*>(view->page()); //.adjusted (QUrl::RemoveQuery)
-                    //qDebug() << "Local: saving page" << p->url().toString();
-                    out << *p->history();
-                    file.commit();
-                    qDebug() << "Removing allocation" << p->history()->currentItem().url().toString();//.adjusted (QUrl::RemoveQuery)
-                    group->remove (p->history()->currentItem().url().toString());//.adjusted (QUrl::RemoveQuery)
-                    emit debug_tabs_updated();
-                    //disconnect (p, &WebPage::fullScreenRequested, this, nullptr);
-                    //disconnect (p, &WebPage::urlChanged, this, nullptr);
-                    p->deleteLater();
-                }
-                else
-                {
-                        qDebug() << "Not in group (stray redirect?). Not deleting.";
-                        //p = qobject_cast<WebPage*>(view->page());
-                        //p.clear();
-                }
+                QString url = view->url().toString();
 
-                if (!group->isEmpty())
+                bool found = false;
+                for (auto i=history.rbegin(); i!=history.rend(); ++i)
                 {
-                    bool found = false;
-                    for (auto i=history.rbegin(); i!=history.rend(); ++i)
+                    QString s = i->toString();//.adjusted (QUrl::RemoveQuery)
+
+                    // FIXME: That's a rather fragile condition considering it prevents a segfault!
+                    if ((group->contains (s)) && (s!=url))
                     {
-                        QString s = i->toString();//.adjusted (QUrl::RemoveQuery)
-                        if (group->contains (s))
+                        qDebug()<< "Switching to page" << s;
+                        QSharedPointer<WebPage> p (group->value (s));
+                        if (p.isNull())
                         {
-                            qDebug() << "Switching to page" << i->toString();
-                            if (!group->value(s))
-                            {
-                                qDebug()<<"BUG: page is invalid!";
-                            }
-                            else
-                            {
-                                qDebug()<<"Appers to be valid.";
-                                view->setPage (group->value(s));
-                                history.add (*i);
-                                found = true;
-                                break;
-                            }
+                            qDebug()<<"BUG: page is invalid!";
+                        }
+                        else
+                        {
+                            qDebug()<< "Appears to be valid: " << p.data();
+                            view->setPage (p.data());
+                            history.add (*i);
+                            found = true;
+                            qDebug()<< "Switched successfully.";
+                            break;
                         }
                     }
-                    if (!found)
-                    {
-                        qDebug() << "No previous tab in history or orphans onlny!";
-                        auto last = group->end();
-                        --last;
-                        WebPage* last_page = last.value();
-                        view->setPage (last_page);
-                    }
+                }
+                if (!found)
+                {
+                    qDebug() << "No previous tab in history or orphans only!";
+                    auto last = std::prev (group->end());
+                    view->setPage (last.value().data());
+                }
+
+
+                if (group->contains (url))//.adjusted (QUrl::RemoveQuery)
+                {
+                    QSaveFile file ("recently_closed.dat"); // For now only handles one...
+                    file.open (QIODevice::WriteOnly);
+                    QDataStream out (&file);
+                    QSharedPointer<WebPage> p (group->value (url)); //qobject_cast<WebPage*>(view->page()); //.adjusted (QUrl::RemoveQuery)
+                    qDebug() << "Local: saving page" << p->url().toString();
+                    out << *p->history();
+                    file.commit();
+                    qDebug() << "Removing allocation" << url; //.adjusted (QUrl::RemoveQuery)
+                    group->remove (url);//.adjusted (QUrl::RemoveQuery)
+                    emit debug_tabs_updated();
+                    p.data()->disconnect();
                 }
                 else
                 {
-                    qDebug() << "Group is empty, which should not happen! Discarding tab anyways";
-                    tab_groups.remove (host);
-                    host_views.remove (host);
-                    delete group;
-                    // FIXME: generally, not just the current tab might be closed. Handle it!
-                    int n = qMax (0, tabBar->currentIndex().row()-1);
-                    QModelIndex i = tabBar->model()->index (n, 0);
-                    tabBar->setCurrentIndex (i);
-                    emit currentChanged (i.row());
-                    view->deleteLater();
-                    removeWidget (tabBar->widget (index));
-                    tabBar->model()->removeRow (index);
+                    qDebug() << "Not in group (stray redirect?). Not deleting.";
+                    //QSharedPointer<WebPage> p (view->page());
+                    //p.clear();
                 }
+
             }
             emit update_session();
         }
@@ -405,6 +392,7 @@ void TabWidget::close_page (int index)
         tabBar->setCurrentIndex (i);
         emit currentChanged (i.row());
 
+        tabBar->widget (index)->disconnect();
         tabBar->widget (index)->deleteLater();
         removeWidget (tabBar->widget (index));
         tabBar->model()->removeRow (index);
@@ -420,19 +408,21 @@ void TabWidget::close_tab (int index)
         file.open (QIODevice::WriteOnly);
         QDataStream out (&file);
         QString host = host_views.key (view); // Not view->url().host()) since it might not be loaded.
+
+        // Do not disconnect the active page.
+        view->setPage(nullptr);
+
         if (tab_groups.contains (host))
         {
             TabGroup* group = tab_groups.value (host);
             //for (auto i = group->begin (); i!=group->end(); ++i)
             foreach (const QString& i, group->order)
             {
-                //qDebug() << "Saving page"  << p->url().toString();
-                out << *group->value(i)->history();
-
-                //disconnect (group->value(i), &WebPage::fullScreenRequested, this, nullptr);
-                //disconnect (group->value(i), &WebPage::urlChanged, this, nullptr);
-
-                group->value(i)->deleteLater();
+                QSharedPointer<WebPage> p = group->value(i);
+                qDebug() << "Saving page"  << i;
+                out << *p.data()->history();
+                p.data()->disconnect();
+                group->remove(i);
 
                 history.back();
             }
@@ -444,15 +434,21 @@ void TabWidget::close_tab (int index)
         }
         else
             qDebug() << "Debug: host not grouped, OK if empty. Host:" << host;
-        if (count()==1)
+
+        if (count() == 0)
             set_url (QUrl::fromUserInput("duckduckgo.com"), true);
-        int n = qMax (0, tabBar->currentIndex().row()-1);
+        int n = qMax (0, tabBar->currentIndex().row() - 1);
         QModelIndex i = tabBar->model()->index (n, 0);
         tabBar->setCurrentIndex (i);
+        qDebug() << i << i.row();
         emit current_changed (i.row());
-        view->deleteLater();
+
         removeWidget (tabBar->widget (index));
         tabBar->model()->removeRow (index);
+        view->disconnect();
+        // FIXME: something obscure still needs the view at this point.
+        view->deleteLater();
+
     }
 }
 
@@ -467,21 +463,19 @@ void TabWidget::restore_tab()
         TabGroup* group;
         while (!in.atEnd())
         {
-            WebPage* p (new WebPage (profile));
+            QSharedPointer<WebPage> p (new WebPage (profile));
             in >> *p->history();
             p->setLifecycleState (QWebEnginePage::LifecycleState::Frozen);
             QString host = p->history()->currentItem().url().host();
             QString url = p->history()->currentItem().url().toString();//.adjusted (QUrl::RemoveQuery)
-            qDebug() << "Loading page:"  << url;
+
+            group = assign_tab_group (host);
+            group->insert (url, p);
 
             install_page_signal_handler (p);
 
-            group = assign_tab_group (host);
-            auto it = group->order.end();
-            group->insert (url, p, it);
-
-            WebView* view = host_views.value (host);
-            view->setPage (p);
+            WebView* view = assign_host_view(host);
+            view->setPage (p.data());
             emit debug_tabs_updated();
         }
 
@@ -525,7 +519,6 @@ void TabWidget::set_url (const QUrl& url, bool background)
 
     QString key = url.toString(); //.adjusted (QUrl::RemoveQuery)
 
-    WebPage* p;
     if (!view->page()->url().isEmpty() && !background)
     {
         // qDebug() << "Setting page" << url.toString() << "page" <<view->page()->url().toString();
@@ -534,15 +527,13 @@ void TabWidget::set_url (const QUrl& url, bool background)
     }
     else
     {
-        auto it = std::find (group->order.begin(), group->order.end(), view->url().toString());
-        if (it != group->order.end())
-            ++it;
+        int i = group->order.indexOf(view->url().toString());
 
-        p = group->assign_page (key, it);
+        QSharedPointer<WebPage> p (group->assign_page (key, i));
         emit debug_tabs_updated();
 
-        view->setPage (p);
         p->setUrl (url);
+        view->setPage (p.data());
         history.add (p->url());
         p->old_url = url;
         install_page_signal_handler (p);
@@ -556,20 +547,18 @@ void TabWidget::set_url (const QUrl& url, bool background)
     }*/
 
     //setCurrentWidget (view);
-    //SIMPLIFY
-    //tabBar->setCurrentIndex (tabBar->model()->index (tabBar->indexOf (view), 0));
 
     QModelIndex index = tabBar->model()->index (tabBar->indexOf (view), 0);
     tabBar->setCurrentIndex (index);
     emit current_changed (index.row());
 }
 
-void TabWidget::install_page_signal_handler (WebPage* p)
+void TabWidget::install_page_signal_handler (QSharedPointer<WebPage> p)
 {
-    connect (p, &WebPage::fullScreenRequested, this, &TabWidget::fullscreen_request, Qt::UniqueConnection);
+    connect (p.data(), &WebPage::fullScreenRequested, this, &TabWidget::fullscreen_request, Qt::UniqueConnection);
 
-    //disconnect (p.data(), &WebPage::urlChanged, this, nullptr);
-    connect (p, &WebPage::urlChanged, [this, p](const QUrl& new_url)
+    disconnect (p.data(), &WebPage::urlChanged, this, nullptr);
+    connect (p.data(), &WebPage::urlChanged, [this, p] (const QUrl& new_url)
     {
         QString final_host = new_url.host();
         QString final_url = new_url.toString();//.adjusted (QUrl::RemoveQuery)
@@ -581,7 +570,7 @@ void TabWidget::install_page_signal_handler (WebPage* p)
         TabGroup* group = assign_tab_group (host);
         WebView* view = host_views.value (host);
 
-        qDebug()<<"Debug: existing page changed its URL to" << final_url;
+        qDebug() << "Existing page" << key << "changed its URL to" << final_url;
 
         // A redirect happened, reattach page.
         if (final_host != host)
@@ -598,13 +587,15 @@ void TabWidget::install_page_signal_handler (WebPage* p)
                 QModelIndex index = tabBar->model()->index (n, 0);
                 tabBar->setCurrentIndex (index);
                 emit current_changed (index.row());
+                view->disconnect();
                 view->deleteLater();
                 removeWidget (view);
                 tabBar->model()->removeRow (tabBar->indexOf (view));
             }
             else
             {
-                view->setPage (group->values().last());
+                auto last = group->order.last();
+                view->setPage (group->value (last).data());
             }
 
             TabGroup* new_group = assign_tab_group (final_host);
@@ -619,19 +610,18 @@ void TabWidget::install_page_signal_handler (WebPage* p)
                     if (new_group->value (final_url) != p)
                     {
                         qDebug() << "Deleting old page" << final_url;
-                        new_group->value (final_url)->deleteLater();
+                        new_group->value (final_url).clear();
                     }
                 }
                 WebView* new_view = host_views.value (final_host);
 
-                auto it = new_group->order.end();
-                new_group->insert (final_url, p, it);
+                new_group->insert (final_url, p);
                 emit debug_tabs_updated();
 
                 history.add (p->url());
                 // FIXME: Do not activate widgets mindlessly, since this affects session load, too.
                 //setCurrentWidget (new_view);
-                new_view->setPage (p);
+                new_view->setPage (p.data());
             }
             // Creating a new group.
             else
@@ -640,11 +630,10 @@ void TabWidget::install_page_signal_handler (WebPage* p)
 
                 WebView* v = create_tab();
                 host_views.insert (final_host, v);
-                auto it = new_group->order.end();
-                new_group->insert (final_url, p, it);
+                new_group->insert (final_url, p);
                 emit debug_tabs_updated();
 
-                v->setPage (p);
+                v->setPage (p.data());
                 history.add (p->url());
 
                 QModelIndex index = tabBar->model()->index (tabBar->indexOf (v), 0);
@@ -655,10 +644,8 @@ void TabWidget::install_page_signal_handler (WebPage* p)
         // It's a same host, so probably JS engine being malefic.
         else if (final_url != key)
         {
-            qDebug() << "Removing" << key <<",replacing with"<< final_url;
+            qDebug() << "Removing" << key << ", replacing with" << final_url;
 
-            //group->insert (final_url, p);
-            //group->remove (key);
             group->replace (key, final_url, p);
             emit debug_tabs_updated();
 
@@ -666,36 +653,38 @@ void TabWidget::install_page_signal_handler (WebPage* p)
         }
         else
         {
-            qDebug() << "Equal" << key <<"and"<< final_url;
+            qDebug() << "Equal" << key << "and" << final_url;
         }
         p->old_url = new_url;
     });
 }
 
+WebView* TabWidget::current_view()
+{
+    return qobject_cast<WebView*>(widget (currentIndex()));
+}
+
 void TabWidget::back()
 {
-    WebView* view = qobject_cast<WebView*>(widget (currentIndex()));
-    if (view)
+    if (current_view())
     {
-        view->back();
+        current_view()->back();
        // view->setFocus();
     }
 }
 
 void TabWidget::forward()
 {
-    WebView* view = qobject_cast<WebView*>(widget (currentIndex()));
-    if (view)
+    if (current_view())
     {
-        view->forward();
+        current_view()->forward();
        // view->setFocus();
     }
 }
 
 void TabWidget::refresh()
 {
-    WebView* view = qobject_cast<WebView*>(widget (currentIndex()));
-    if (view)
+    if (current_view())
     {
         /*UserScript jade_script;
         jade_script.load_from_file ("userscripts/jade_script.js");
@@ -704,56 +693,52 @@ void TabWidget::refresh()
         profile->scripts ()->remove (profile->scripts ()->findScript ("Jade script"));
         profile->scripts()->insert (jade_script);*/
 
-        setTabIcon (tabBar->indexOf (view), QIcon());
-        view->reload();
+        setTabIcon (tabBar->indexOf (current_view()), QIcon());
+        current_view()->reload();
         // view->setFocus();
     }
 }
 
 void TabWidget::refresh_no_cache()
 {
-    WebView* view = qobject_cast<WebView*>(widget (currentIndex()));
-    if (view)
+    if (current_view())
     {
-        setTabIcon (tabBar->indexOf (view), QIcon());
-        view->triggerPageAction (QWebEnginePage::ReloadAndBypassCache);
+        setTabIcon (tabBar->indexOf (current_view()), QIcon());
+        current_view()->triggerPageAction (QWebEnginePage::ReloadAndBypassCache);
     }
 }
 
 // FIXME: rework this, and history in general.
 void TabWidget::back_in_new_tab()
 {
-    WebView* view = qobject_cast<WebView*>(widget (currentIndex()));
-    if (view)
+    if (current_view())
     {
-        if (!view->page()->history()->backItem().url().isEmpty())
-            set_url (view->page()->history()->backItem().url(), true);
+        if (!current_view()->page()->history()->backItem().url().isEmpty())
+            set_url (current_view()->page()->history()->backItem().url(), true);
     }
 }
 
 void TabWidget::forward_in_new_tab()
 {
-    WebView *view = qobject_cast<WebView*>(widget (currentIndex()));
-    if (view)
+    if (current_view())
     {
-        if (!view->page()->history()->forwardItem().url().isEmpty())
-            set_url (view->page()->history()->forwardItem().url(), true);
+        if (!current_view()->page()->history()->forwardItem().url().isEmpty())
+            set_url (current_view()->page()->history()->forwardItem().url(), true);
     }
 }
 
 void TabWidget::current_changed (int index)
 {
     TabWidget::setCurrentWidget (tabBar->widget (index));
-    WebView* view = qobject_cast<WebView*>(widget (currentIndex()));
-    if (view)
+    if (current_view())
     {
-        view->setFocus();
-        history.add (view->page()->url());
+        current_view()->setFocus();
+        history.add (current_view()->page()->url());
         // This reacts to dragging. Fix that.
         //qDebug() << "Switched to page" << history.current->toString();
         //hide();
         //show();
-        emit url_changed (view->url());
+        emit url_changed (current_view()->url());
     }
     else
     {
@@ -783,14 +768,14 @@ void TabWidget::save_state()
             TabGroup* group = tab_groups.value (host_views.key (view));
             foreach (auto j, group->order)
             {
-                WebPage* p = group->value(j);
+                QSharedPointer<WebPage> p (group->value(j));
 
-                if (p)
+                try
                 {
                     //qDebug() << "Global: saving page"  << p->url().toString();
                     out << *p->history();
                 }
-                else
+                catch (...)
                 {
                     qDebug() << "BUG: page is invalid.";
                 }
@@ -818,8 +803,8 @@ void TabWidget::load_state()
     QDataStream in2 (&file2);
     while (!in2.atEnd())
     {
-        QStandardItem *item1 = new QStandardItem;
-        QStandardItem *item2 = new QStandardItem;
+        QStandardItem* item1 = new QStandardItem;
+        QStandardItem* item2 = new QStandardItem;
         QVariant v;
         in2 >> v;
         item1->setText (v.toString());
@@ -838,7 +823,7 @@ void TabWidget::load_state()
     QDataStream in (&file);
     while (!in.atEnd())
     {
-        WebPage* p (new WebPage (profile));
+        QSharedPointer<WebPage> p = QSharedPointer<WebPage>(new WebPage (profile));
         in >> *p->history();
         p->setLifecycleState (QWebEnginePage::LifecycleState::Frozen);
         QString host = p->history()->currentItem().url().host();
@@ -846,8 +831,7 @@ void TabWidget::load_state()
         qDebug() << "Loading page:" << url;
 
         TabGroup* group = assign_tab_group (host);
-        auto it = group->order.end();
-        group->insert (url, p, it); // insert() replaces any possible dupes.
+        group->insert (url, p); // insert() replaces any possible dupes.
 
         history.add (p->history()->currentItem().url());
         install_page_signal_handler (p);
@@ -861,15 +845,14 @@ void TabWidget::load_state()
 
         setTabIcon (tabBar->indexOf (view), QIcon (QStringLiteral (":/icons/freeze")));
         TabGroup* group = tab_groups.value(i);
-        auto last = group->value (group->order.back());
-        view->setPage (last);
+        view->setPage (group->value (group->order.back()).data());
     }
     tabBar->setCurrentIndex (tabBar->model()->index (0, 0));
 }
 
-void TabWidget::download (QWebEngineDownloadItem* download)
+void TabWidget::download (QWebEngineDownloadRequest* download)
 {
-    Q_ASSERT (download && download->state() == QWebEngineDownloadItem::DownloadRequested);
+    Q_ASSERT (download && download->state() == QWebEngineDownloadRequest::DownloadRequested);
 
     // qDebug() << "Download mime:" << download->mimeType();
 
@@ -877,6 +860,10 @@ void TabWidget::download (QWebEngineDownloadItem* download)
     {
         QMimeDatabase db;
         QString suffix = db.mimeTypeForName (download->mimeType()).preferredSuffix();
+        if (suffix == "jfif")
+        {
+            suffix = "jpg";
+        }
         download->setDownloadFileName (download->downloadFileName() + "." + suffix);
     }
 
@@ -950,15 +937,14 @@ DebugTab* TabWidget::debug_tab()
 
 void TabWidget::fullscreen_request (QWebEngineFullScreenRequest request)
 {
-    WebView* view = qobject_cast<WebView*>(widget (currentIndex()));
-    if (view)
+    if (current_view())
     {
         if (request.toggleOn())
         {
             if (fullscreen)
                 return;
             request.accept();
-            fullscreen.reset (new FullScreenWindow (view));
+            fullscreen.reset (new FullScreenWindow (current_view()));
         } else
         {
             if (!fullscreen)
@@ -966,6 +952,21 @@ void TabWidget::fullscreen_request (QWebEngineFullScreenRequest request)
             request.accept();
             fullscreen.reset();
         }
+    }
+}
+
+WebView* TabWidget::assign_host_view (const QString& host)
+{
+    if (host_views.contains (host))
+    {
+        WebView* view = host_views.value (host);
+        return view;
+    }
+    else
+    {
+        WebView* view = create_tab();
+        host_views.insert (host, view);
+        return view;
     }
 }
 
@@ -985,17 +986,28 @@ TabGroup* TabWidget::assign_tab_group (const QString& host)
     }
 }
 
+// Ensure the pages are deleted before the profile release.
 void TabWidget::cleanup()
 {
     save_state();
+
+    for (int row = 0; row < tabBar->model()->rowCount(); ++row)
+    {
+         WebView* view = qobject_cast<WebView*>(tabBar->widget (row));
+         view->setPage(nullptr);
+    }
+
     for (auto i = tab_groups.begin(); i != tab_groups.end(); ++i)
     {
         TabGroup* group = i.value();
         for (auto j = group->begin(); j != group->end(); ++j)
         {
-            j.value()->deleteLater();
+            j.value().data()->disconnect();
+            j.value().clear();
         }
+        delete(group);
     }
+    qDebug() << "Cleanup complete.";
 }
 
 WebPage* TabWidget::page_back (TabGroup* group)
@@ -1007,7 +1019,7 @@ WebPage* TabWidget::page_back (TabGroup* group)
         {
             qDebug() << "Switching to page" << i->toString();
             history.add (*i);
-            return (group->value(s));
+            return (group->value(s).data());
         }
     }
     return nullptr;
@@ -1022,7 +1034,7 @@ WebPage* TabWidget::page_forward(TabGroup* group)
         {
             qDebug() << "Switching to page" << i->toString();
             history.add (*i);
-            return (group->value(s));
+            return (group->value(s).data());
         }
     }
     return nullptr;

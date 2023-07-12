@@ -2,12 +2,13 @@
 #include <QContextMenuEvent>
 #include <QMenu>
 #include <QMouseEvent>
-#include <QWebEngineContextMenuData>
+#include <QWebEngineContextMenuRequest>
 
 #include "browser_mainwindow.h"
 #include "tab_manager.h"
 #include "webview.h"
 
+/*
 bool WebView::eventFilter (QObject* object, QEvent* event)
 {
     if (object->parent() == this && event->type() == QEvent::MouseMove)
@@ -17,6 +18,7 @@ bool WebView::eventFilter (QObject* object, QEvent* event)
 
     return false;
 }
+*/
 
 WebView::WebView (QWidget* parent): QWebEngineView (parent)
 {
@@ -29,7 +31,7 @@ WebView::WebView (QWidget* parent): QWebEngineView (parent)
     });
 }
 
-QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType type)
+QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType /*type*/)
 {
     MainWindow* win = qobject_cast<MainWindow*>(window());
     if (!win)
@@ -68,7 +70,8 @@ void WebView::intercept_popup (const QUrl& url)
     if (WebView* view = qobject_cast<WebView*>(sender()))
     {
         emit link_requested (url.toString(), true);
-        disconnect (view, &WebView::urlChanged, this, nullptr);
+        // disconnect (view, &WebView::urlChanged, this, nullptr);
+        view->disconnect();
         view->deleteLater();
     }
 }
@@ -94,16 +97,17 @@ void WebView::follow_link()
 
 void WebView::contextMenuEvent (QContextMenuEvent* event)
 {
-    QMenu* menu = page()->createStandardContextMenu();
+    QMenu* menu = createStandardContextMenu();
 
     if (!menu)
         return;
-    QWebEngineContextMenuData data_layer = page()->contextMenuData();
 
     if (!menu->actions().isEmpty())
     {
 
     }
+
+    QWebEngineContextMenuRequest* data = lastContextMenuRequest();
 
     const QList<QAction*> actions = menu->actions();
 
@@ -119,22 +123,21 @@ void WebView::contextMenuEvent (QContextMenuEvent* event)
     }
 
 
-    if (data_layer.isValid())
     {
-        if (!data_layer.selectedText().isEmpty())
+        if (!data->selectedText().isEmpty())
         {
             QFontMetrics fontMetric (menu->font());
-            const QString elidedText = fontMetric.elidedText (data_layer.selectedText(), Qt::ElideRight, 100);
+            const QString elidedText = fontMetric.elidedText (data->selectedText(), Qt::ElideRight, 100);
             QAction* action = new QAction (tr("Search \"")+elidedText+tr("\" on the web"), this);
-            action->setData (data_layer.selectedText());
+            action->setData (data->selectedText());
             connect (action, &QAction::triggered, this, &WebView::search_selected);
             menu->addAction (action);
 
-            QUrl url = QUrl::fromUserInput (data_layer.selectedText());
+            QUrl url = QUrl::fromUserInput (data->selectedText());
             if (url.isValid())
             {
                 QAction* action2 = new QAction (tr("Follow \"")+elidedText+"\"", this);
-                action2->setData (data_layer.selectedText());
+                action2->setData (data->selectedText());
                 connect (action2, &QAction::triggered, this, &WebView::follow_link);
                 menu->addAction (action2);
                 // action2->deleteLater ();
@@ -153,12 +156,14 @@ void WebView::contextMenuEvent (QContextMenuEvent* event)
     menu->popup (event->globalPos());
 }
 
+/*
 void WebView::mouseMoveEvent (QMouseEvent* event)
 {
     position = event->pos();
     // qDebug() << event->x() << event->y();
     QWebEngineView::mouseMoveEvent (event);
 }
+*/
 /*
 QSize WebView::sizeHint (void) const
 {

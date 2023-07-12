@@ -1,15 +1,40 @@
 #include <QApplication>
 #include <QLibraryInfo>
+#include <QSettings>
 #include <QTranslator>
 
 #include "browser_mainwindow.h"
 
+void debug_handler (QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    QByteArray localMsg = msg.toLocal8Bit();
+    const char* file = context.file ? context.file : "";
+    const char* function = context.function ? context.function : "";
+    FILE* f = fopen ("debug.log", "a");
+    switch (type)
+    {
+    case QtDebugMsg:
+        fprintf (f, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
+        break;
+    case QtInfoMsg:
+        fprintf (f, "Info: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
+        break;
+    case QtWarningMsg:
+        fprintf (f, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
+        break;
+    case QtCriticalMsg:
+        fprintf (f, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
+        break;
+    case QtFatalMsg:
+        fprintf (f, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), file, context.line, function);
+        break;
+    }
+    fclose (f);
+}
+
 int main(int argc, char *argv[])
 {
-    QCoreApplication::setAttribute (Qt::AA_EnableHighDpiScaling);
-    QCoreApplication::setAttribute (Qt::AA_UseHighDpiPixmaps);
-    //QCoreApplication::setAttribute (Qt::AA_ShareOpenGLContexts);
-
+    QCoreApplication::setAttribute (Qt::AA_ShareOpenGLContexts);
     QCoreApplication::setApplicationName ("Gizmoduck");
     // Windows will fail to write settings without organization.
 #ifdef WIN32
@@ -72,15 +97,12 @@ int main(int argc, char *argv[])
     */
     settings.endGroup();
 
-    //arguments.append ("--proxy-pac-url=file:///home/daiyousei/proxy.pac");
-    //arguments.append ("--proxy-pac-url=http://miningbase.tk/hamster/static/proxy.pac");
-    //rguments.append ("--use-vulkan");
+    //arguments.append ("--use-vulkan");
     //arguments.append ("--webview-enable-vulkan");
     //arguments.append ("--enable-features=Vulkan");
-    //arguments.append ("--enable-zero-copy");
-    arguments.append ("--allow-file-access-from-files");
-    //arguments.append ("--enable-oop-rasterization");
-    arguments.append ("--use-gl=egl");
+    //arguments.append ("--allow-file-access-from-files");
+    //#arguments.append ("--enable-oop-rasterization");
+    //arguments.append ("--use-gl=egl");
 
     argc = arguments.count();
 
@@ -89,7 +111,9 @@ int main(int argc, char *argv[])
     {
         newargv[i] = new char[arguments[i].toLocal8Bit().size()+1]; // This dies fast so yeah...
         strcpy (newargv[i], arguments[i].toLocal8Bit().data());
-    }
+    }    
+
+    qInstallMessageHandler (debug_handler);
 
     QApplication app (argc, newargv);
     app.setWindowIcon (QIcon (QStringLiteral (":/icons/gizmoduck")));

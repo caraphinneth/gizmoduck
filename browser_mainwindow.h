@@ -34,6 +34,8 @@ private:
     NavButton* close_button;
     NavButton* tox_button;
     NavButton* settings_button;
+    QLineEdit* search_box;
+    QMenu* contact_menu;
 
     QHash <uint32_t, ToxWidget*> active_chats;
 

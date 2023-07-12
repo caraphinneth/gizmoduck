@@ -3,6 +3,7 @@
 #include <QLineEdit>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QWebEngineHistory>
 
 #include "file_dialog.h"
 #include "webpage.h"
@@ -11,18 +12,22 @@
 WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (profile, parent)
 {
     old_url = url();
+
     connect(this, &WebPage::authenticationRequired, this, &WebPage::handleAuthenticationRequired);
 
     lifecycle = new QTimer (this);
     connect(this, &WebPage::recommendedStateChanged, [this]()
     {
+        qDebug() << "State change advised:" << recommendedState();
         if (recommendedState()==QWebEnginePage::LifecycleState::Active)
             //lifecycle->start (1);
             setLifecycleState (QWebEnginePage::LifecycleState::Active);
         else if (!isVisible()&&
                  (url().host()!="discord.com")&&
+                 (url().host()!="twitter.com")&&
                  (url().host()!="tripwire.eve-apps.com")&&
-                 (url().host()!="colab.research.google.com")
+                 (url().host()!="colab.research.google.com")&&
+                 (url().host()!="localhost")
                  )
         {
             if (recommendedState()==QWebEnginePage::LifecycleState::Frozen)
@@ -38,18 +43,28 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
             emit iconChanged (QIcon (QStringLiteral (":/icons/sleep")));
         else if (state == QWebEnginePage::LifecycleState::Frozen)
             emit iconChanged (QIcon (QStringLiteral (":/icons/freeze")));
-        else
-            emit iconChanged (icon());
-    });
+        //else
+            //qDebug() << icon();
+            //emit icon_changed (icon());
+     });
+
+    // connect (this, &WebPage::state_icon_changed, QWebEngineView::forPage(this), &QWebEngineView::iconChanged);
 
     connect (lifecycle, &QTimer::timeout, [this]()
     {
         if (lifecycleState() != recommendedState())
         {
             setLifecycleState (recommendedState());
-            qDebug() << "State for" << url() << "changed to" << lifecycleState ();
+            qDebug() << "State for" << url() << "changed to" << lifecycleState();
         }
     });
+}
+
+WebPage::~WebPage()
+{
+    lifecycle->stop();
+    delete(lifecycle);
+    //QWebEnginePage::~QWebEnginePage();
 }
 
 //TODO: args
@@ -57,7 +72,7 @@ QStringList WebPage::chooseFiles (QWebEnginePage::FileSelectionMode mode, const 
 {
     QStringList list;
     QScopedPointer <FileDialog> dialog;
-    dialog. reset (new FileDialog (view(), tr("Select File"), "", tr("All Files (*.*)")));
+    dialog.reset (new FileDialog (QWebEngineView::forPage(this), tr("Select File"), "", tr("All Files (*.*)")));
     dialog->setAcceptMode (QFileDialog::AcceptOpen);
 
     if (mode == QWebEnginePage::FileSelectOpen)
@@ -74,7 +89,7 @@ QStringList WebPage::chooseFiles (QWebEnginePage::FileSelectionMode mode, const 
 
 void WebPage::handleAuthenticationRequired (const QUrl& url, QAuthenticator* auth)
 {
-    QWidget* mainWindow = view()->window();
+    QWidget* mainWindow = QWebEngineView::forPage(this)->window();
 
     QDialog dialog (mainWindow);
     dialog.setModal (true);
@@ -117,7 +132,7 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
     //||(type == QWebEnginePage::NavigationTypeTyped)
     if (((type == QWebEnginePage::NavigationTypeLinkClicked)) && isMainFrame)
     {
-        WebView* v = qobject_cast<WebView*>(view());
+        WebView* v = qobject_cast<WebView*>(QWebEngineView::forPage(this));
         if (v)
         {
             // emit v->loadFinished (false);
@@ -132,7 +147,7 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
         if (v)
         {
             qDebug() << "Intercepting" << url << "request by" << this->url().host();
-            emit v->link_requested (url.toString());
+            emit v->link_requested (url.toString(), false);
             return false;
         }
     }*/
