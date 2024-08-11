@@ -21,7 +21,7 @@ signals:
 
 private:
     void wheelEvent (QWheelEvent* event);
-    QMovie* loading_icon;
+    QIcon loading_icon;
 };
 
 class TabHeader: public QStyledItemDelegate
@@ -29,7 +29,7 @@ class TabHeader: public QStyledItemDelegate
     Q_OBJECT
 
 public:
-    explicit TabHeader (QObject* parent = nullptr, int w=162, int h=40, QMovie* default_icon=new QMovie(":/icons/loading"));
+    explicit TabHeader (QObject* parent = nullptr, int w=162, int h=40, QIcon default_icon=QIcon(QStringLiteral(":/icons/gizmoduck")));
 
     QSize iconSize;
     QMargins margins;
@@ -37,7 +37,7 @@ public:
     int verticalSpacing;
     int width;
     int height;
-    QMovie* loading_icon;
+    QIcon loading_icon;
     void paint (QPainter* painter, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     QSize sizeHint (const QStyleOptionViewItem& /*option*/, const QModelIndex& /*index*/) const override;
 };

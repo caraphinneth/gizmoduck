@@ -7,10 +7,10 @@ SideTabs::SideTabs (QWidget* parent, int w, int h): QListView (parent)
 {
     setFixedWidth (w);
 
-    loading_icon = new QMovie (":/icons/loading");
-    loading_icon->start();
+    //loading_icon = new QMovie (":/icons/loading");
+    //loading_icon->start();
 
-    auto* tab = new TabHeader (this, w, h, loading_icon);
+    auto* tab = new TabHeader (this, w, h);
 
     QPalette p (palette());
 
@@ -41,16 +41,19 @@ SideTabs::SideTabs (QWidget* parent, int w, int h): QListView (parent)
 
     setItemDelegate (tab);
 
-    // FIXME: only update the animating tab
+
+    /* FIXME: only update the animating tab
     connect (loading_icon, &QMovie::frameChanged, [this]()
     {
         dataChanged (model()->index (0,1), model()->index (model()->rowCount()-1, 0), QVector<int>(Qt::DecorationRole));
     });
+    */
+
 }
 
 QWidget* SideTabs::widget (int index)
 {
-    return reinterpret_cast<QWidget*>(model()->index (index, 0).data (Qt::UserRole).value<quintptr>());
+    return reinterpret_cast<QWidget*>(model()->index(index, 0).data (Qt::UserRole).value<quintptr>());
 }
 
 // Don't look at me like that. QLayout and thus QStackedWidget, and thus QTabWidget do iteration to retrieve indexOf(). So do we.
@@ -68,7 +71,7 @@ int SideTabs::indexOf (QWidget* widget)
     return -1;
 }
 
-TabHeader::TabHeader (QObject* parent, int w, int h, QMovie* default_icon) : QStyledItemDelegate (parent)
+TabHeader::TabHeader (QObject* parent, int w, int h, QIcon default_icon) : QStyledItemDelegate (parent)
 {
     iconSize = QSize (16, 16);
     margins = QMargins (0, 0, 0, 0);
@@ -110,9 +113,12 @@ void TabHeader::paint (QPainter* painter, const QStyleOptionViewItem& option, co
     // Draw message icon
     const QRect icon_rect = contentRect.adjusted (5, 10, 5, 10);
     if (hasIcon)
-        painter->drawPixmap (icon_rect.left(), icon_rect.top(),  opt.icon.pixmap (iconSize));
+        painter->drawPixmap (icon_rect.left(), icon_rect.top(), opt.icon.pixmap(iconSize));
     else
-        painter->drawPixmap (icon_rect.left(), icon_rect.top(), loading_icon->currentPixmap());
+    {
+        //painter->drawPixmap (icon_rect.left(), icon_rect.top(), loading_icon.pixmap(iconSize));
+    }
+
 
     // Draw message text
     QRect text_rect = contentRect.adjusted( 26, 3, -5, -5);

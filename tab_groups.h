@@ -3,6 +3,11 @@
 
 #include "webpage.h"
 
+class PagePointer: public QSharedPointer<WebPage>
+{
+
+};
+
 struct TabGroup: public QHash<QString, QSharedPointer<WebPage>>
 {
 
@@ -11,35 +16,38 @@ public:
 
     QStringList order;
     // Insert at position or replace the value for an existing key, keeping position.
-    void insert (const QString& key,QSharedPointer<WebPage> const &value, int position = -1)
+    void insert(const QString& key, QSharedPointer<WebPage> const &value, int position=-1)
     {
-        if (contains (key))
+        if (contains(key))
         {
             // preserve position for now
         }
         // insert at end
-        else if (position == -1)
+        else if(position == -1)
         {
-            order.push_back (key);
+            order.push_back(key);
         }
         else
         {
-            order.insert (position+1, key);
+            order.insert(position+1, key);
         }
 
-        QHash::insert (key, value);
+        QHash::insert(key, value);
     }
 
     void remove (const QString& key)
     {
-        order.removeOne (key);
-        QHash::remove (key);
+        order.removeAll(key);
+        QHash::remove(key);
     }
 
     void replace (const QString& old_key, const QString& new_key, QSharedPointer<WebPage> const value)
     {
         // URL of existing page changed, preserve position
-        order.replace (order.indexOf (old_key), new_key);
+        if (order.contains(old_key))
+        {
+            order.replace (order.indexOf (old_key), new_key);
+        }
         QHash::remove (old_key);
         QHash::insert (new_key, value);
     }
@@ -52,7 +60,7 @@ public:
         }
         else
         {
-            QSharedPointer<WebPage> p  (new WebPage (profile));
+            QSharedPointer<WebPage> p (new WebPage (profile));
             insert (key, p, position);
             return p;
         }
@@ -66,12 +74,12 @@ public:
     void insert (const QString& key, TabGroup* const &value)
     {
         QHash::insert (key, value);
-        order.removeOne (key);
+        order.removeAll (key);
         order.push_back (key);
     }
     void remove (const QString& key)
     {
-        order.removeOne (key);
+        order.removeAll (key);
         QHash::remove (key);
     }
 };

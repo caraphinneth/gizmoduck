@@ -452,6 +452,13 @@ void MainWindow::closeEvent (QCloseEvent* event)
     QMainWindow::closeEvent(event);
 }
 
+void MainWindow::open_url(const QUrl url)
+{
+    tab_manager->set_url(url);
+    raise();
+    activateWindow();
+}
+
 void MainWindow::chat (const QString &message, const long friend_number)
 {
     if (!active_chats.contains (friend_number))

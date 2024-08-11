@@ -20,8 +20,10 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
     {
         qDebug() << "State change advised:" << recommendedState();
         if (recommendedState()==QWebEnginePage::LifecycleState::Active)
+        {
             //lifecycle->start (1);
             setLifecycleState (QWebEnginePage::LifecycleState::Active);
+        }
         else if (!isVisible()&&
                  (url().host()!="discord.com")&&
                  (url().host()!="twitter.com")&&
@@ -37,18 +39,27 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
         }
     });
 
-    connect (this, &WebPage::lifecycleStateChanged, [this](QWebEnginePage::LifecycleState state)
+    connect (this, &WebPage::lifecycleStateChanged, [this, profile](QWebEnginePage::LifecycleState state)
     {
         if (state == QWebEnginePage::LifecycleState::Discarded)
-            emit iconChanged (QIcon (QStringLiteral (":/icons/sleep")));
+            emit iconChanged(QIcon(QStringLiteral (":/icons/sleep")));
         else if (state == QWebEnginePage::LifecycleState::Frozen)
-            emit iconChanged (QIcon (QStringLiteral (":/icons/freeze")));
-        //else
-            //qDebug() << icon();
-            //emit icon_changed (icon());
-     });
+            emit iconChanged(QIcon(QStringLiteral (":/icons/freeze")));
 
-    // connect (this, &WebPage::state_icon_changed, QWebEngineView::forPage(this), &QWebEngineView::iconChanged);
+        else
+            profile->requestIconForPageURL(url(), 16, [this](const QIcon &icon, const QUrl, const QUrl)
+            {
+                if (icon.isNull())
+                {
+                    emit iconChanged(QIcon(QStringLiteral(":/icons/gizmoduck")));
+                }
+                else
+                {
+                    emit iconChanged(icon);
+                }
+            });
+
+     });
 
     connect (lifecycle, &QTimer::timeout, [this]()
     {
@@ -127,23 +138,22 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
 {
     if (isMainFrame)
         qDebug() << "Going to url" << url << "by navitype" << type;
-    //else
-       // qDebug() << "NON_MAINFRAME request of url" << url << "by navitype" << type;
+    else
+        qDebug() << "NON_MAINFRAME request of url" << url << "by navitype" << type;
     //||(type == QWebEnginePage::NavigationTypeTyped)
     if (((type == QWebEnginePage::NavigationTypeLinkClicked)) && isMainFrame)
     {
-        WebView* v = qobject_cast<WebView*>(QWebEngineView::forPage(this));
-        if (v)
+        if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
         {
-            // emit v->loadFinished (false);
-            emit v->link_requested (url.toString(), false);
+            //qDebug() << "Clicked the link" << url.toString();
+            emit view->link_requested (url.toString(), false);
             return false;
         }
     }
 
-    /*else if (((type == QWebEnginePage::NavigationTypeRedirect) && isMainFrame))// && (this->url().host() != url.host()))
+   /* else if (((type == QWebEnginePage::NavigationTypeRedirect) && isMainFrame))// && (this->url().host() != url.host()))
     {
-        WebView* v = qobject_cast<WebView*>(view());
+        WebView* v = qobject_cast<WebView*>(QWebEngineView::forPage(this));
         if (v)
         {
             qDebug() << "Intercepting" << url << "request by" << this->url().host();

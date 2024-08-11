@@ -5,7 +5,7 @@ DEFINES += QT_MESSAGELOGCONTEXT
 
 win32:QMAKE_CXXFLAGS+="-O2"
 !win32 {
-    QMAKE_CXXFLAGS+="-O2 -march=native -ftree-vectorize -floop-interchange -ftree-loop-distribution -floop-strip-mine -floop-block -Wall -Wextra -Wpedantic"
+    QMAKE_CXXFLAGS+="-O3 -pipe -march=native -ftree-vectorize -fno-predictive-commoning -fno-semantic-interposition -floop-nest-optimize -fipa-pta -fdevirtualize-at-ltrans -Wall -Wextra -Wpedantic -flto=6"
 }
 
 #-g -ggdb"

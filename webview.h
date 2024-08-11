@@ -9,6 +9,7 @@ struct WebView: public QWebEngineView
 
 public:
     WebView (QWidget* parent = nullptr);
+    WebView (QWebEngineProfile *profile, QWidget* parent = nullptr);
 
 protected:
     void contextMenuEvent (QContextMenuEvent* event) override; // Our own context menu.
@@ -26,6 +27,7 @@ signals:
 private:
     void search_selected();
     void follow_link();
+    void run_yt_dlp();
     void intercept_popup (const QUrl& url);
 
     // QPoint position;

@@ -1,0 +1,14 @@
+avatars/
+.qtc_clangd/
+debug.log
+*.dat
+savedata.tox
+moc_*
+*.o
+.qmake.stash
+*.user*
+*.debug
+whitelist/
+scripts/
+Browser-mk2
+*qmlcache*

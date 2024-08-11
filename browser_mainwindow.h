@@ -12,7 +12,8 @@ struct MainWindow: public QMainWindow
 
 public:
     MainWindow();
-    //TabWidget* tabWidget() const; // Returns tab_manager for handling new window commands from webviews. Bad.
+    void open_url(const QUrl url);
+    TabWidget* tab_manager;
 
 protected:
     void closeEvent (QCloseEvent*) override;
@@ -24,7 +25,6 @@ private slots:
 private:
 
     ToxManager* tox_manager;
-    TabWidget* tab_manager;
 
     QToolBar* search_bar;
     QLineEdit* address_box;

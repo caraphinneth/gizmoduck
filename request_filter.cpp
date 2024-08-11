@@ -24,14 +24,14 @@ QList <whitelist_record> load_filter_from_file (const QString& filename, QWebEng
     return ret;
 }
 
-QStringList TLD (const QString& value)
+QStringList TLD(const QString& value)
 {
     QStringList list = value.split ('.');
     while (list.count() > 2) list.removeFirst();
     return list;
 }
 
-QStringList SLD (const QString& value)
+QStringList SLD(const QString& value)
 {
     QStringList list = value.split ('.');
     while (list.count() > 3) list.removeFirst();
@@ -182,7 +182,7 @@ void RequestFilter::interceptRequest (QWebEngineUrlRequestInfo& info)
     // Per-domain quirks
     if (info.requestUrl().host()=="accounts.google.com")
     {
-        QString edge_agent = user_agent + " Mozilla/5.0 ({os_info}; rv:90.0) Gecko/20100101 Firefox/90.0";
+        QString edge_agent = " Mozilla/5.0 ({os_info}; rv:90.0) Gecko/20100101 Firefox/90.0";
         info.setHttpHeader ("User-Agent", edge_agent.toUtf8());
     }
 

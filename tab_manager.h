@@ -72,7 +72,7 @@ private:
     TabGroups tab_groups;
     TabGroup* assign_tab_group (const QString& host);
     QHash <QString, WebView*> host_views;
-    WebView* assign_host_view (const QString& host);
+    WebView *assign_host_view(const QString& host);
 
     WebView* current_view();
 

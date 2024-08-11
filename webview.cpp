@@ -3,6 +3,7 @@
 #include <QMenu>
 #include <QMouseEvent>
 #include <QWebEngineContextMenuRequest>
+#include <QProcess>
 
 #include "browser_mainwindow.h"
 #include "tab_manager.h"
@@ -22,6 +23,7 @@ bool WebView::eventFilter (QObject* object, QEvent* event)
 
 WebView::WebView (QWidget* parent): QWebEngineView (parent)
 {
+    /*
     QApplication::instance()->installEventFilter(this);
     setMouseTracking (true);
 
@@ -29,7 +31,14 @@ WebView::WebView (QWidget* parent): QWebEngineView (parent)
     {
         // QToolTip::showText (mapToGlobal (position), selectedText());
     });
+    */
 }
+
+WebView::WebView (QWebEngineProfile* profile, QWidget* parent): QWebEngineView (profile, parent)
+{
+
+}
+
 
 QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType /*type*/)
 {
@@ -37,30 +46,8 @@ QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType /*type*/)
     if (!win)
         return nullptr;
 
-/*
-    switch (type)
-    {
-        case QWebEnginePage::WebBrowserTab:
-            return win->tabWidget()->create_tab (false, false);
-
-        case QWebEnginePage::WebBrowserBackgroundTab:
-            return win->tabWidget()->create_tab (true, false);
-
-        case QWebEnginePage::WebBrowserWindow:
-            return win->tabWidget()->create_tab (false, false);
-
-        case QWebEnginePage::WebDialog:
-        {
-            return win->tabWidget()->create_tab(true, false);
-            //WebPopupWindow *popup = new WebPopupWindow(page()->profile());
-            //return popup->view();
-        }
-    }
-
-    return nullptr;
-    */
-
-    WebView* view = new WebView();
+    // Have to do this ugly profile passthrough because Qt6.
+    WebView* view = new WebView(win->tab_manager->profile);
     connect (view, &WebView::urlChanged, this, &WebView::intercept_popup);
     return view;
 }
@@ -69,8 +56,7 @@ void WebView::intercept_popup (const QUrl& url)
 {
     if (WebView* view = qobject_cast<WebView*>(sender()))
     {
-        emit link_requested (url.toString(), true);
-        // disconnect (view, &WebView::urlChanged, this, nullptr);
+        emit link_requested(url.toString(), true);
         view->disconnect();
         view->deleteLater();
     }
@@ -82,7 +68,7 @@ void WebView::search_selected()
     if (!action)
       return;
 
-    emit search_requested (action->data().toString());
+    emit search_requested(action->data().toString());
 }
 
 void WebView::follow_link()
@@ -92,7 +78,28 @@ void WebView::follow_link()
     if (!action)
       return;
 
-    emit link_requested (action->data().toString(), false);
+    emit link_requested(action->data().toString(), false);
+}
+
+void WebView::run_yt_dlp()
+{
+    QAction* action = qobject_cast<QAction*> (sender());
+
+    if (!action)
+      return;
+
+    QStringList args;
+    args << "--proxy" << "socks5://localhost:1080/" << "--cookies-from-browser" << "chromium" << "--trim-filenames" << "40" << "-P" << QStandardPaths::writableLocation(QStandardPaths::HomeLocation) << action->data().toString();
+    QProcess* process = new QProcess(this);
+    connect(process, &QProcess::finished, [process](int exitCode, QProcess::ExitStatus exitStatus)
+    {
+        QByteArray output = process->readAllStandardOutput();
+        qDebug() << "Output:" << output;
+        qDebug() << "yt-dlp finished with exit code:" << exitCode;
+        process->deleteLater();  // Clean up the process object
+    });
+    // QScopedPointer<QProcess> process(new QProcess());
+    process->start("yt-dlp", args);
 }
 
 void WebView::contextMenuEvent (QContextMenuEvent* event)
@@ -112,7 +119,7 @@ void WebView::contextMenuEvent (QContextMenuEvent* event)
     const QList<QAction*> actions = menu->actions();
 
     // Look for the default link option, and modify some.
-    auto it = std::find (actions.cbegin(), actions.cend(), page()->action (QWebEnginePage::OpenLinkInThisWindow));
+    auto it = std::find (actions.cbegin(), actions.cend(), page()->action(QWebEnginePage::OpenLinkInThisWindow));
     if (it != actions.cend())
     {
         (*it)->setText(tr("Open Link in This Tab"));
@@ -127,17 +134,17 @@ void WebView::contextMenuEvent (QContextMenuEvent* event)
         if (!data->selectedText().isEmpty())
         {
             QFontMetrics fontMetric (menu->font());
-            const QString elidedText = fontMetric.elidedText (data->selectedText(), Qt::ElideRight, 100);
+            const QString elidedText = fontMetric.elidedText(data->selectedText(), Qt::ElideRight, 100);
             QAction* action = new QAction (tr("Search \"")+elidedText+tr("\" on the web"), this);
-            action->setData (data->selectedText());
-            connect (action, &QAction::triggered, this, &WebView::search_selected);
+            action->setData(data->selectedText());
+            connect(action, &QAction::triggered, this, &WebView::search_selected);
             menu->addAction (action);
 
             QUrl url = QUrl::fromUserInput (data->selectedText());
             if (url.isValid())
             {
                 QAction* action2 = new QAction (tr("Follow \"")+elidedText+"\"", this);
-                action2->setData (data->selectedText());
+                action2->setData(data->selectedText());
                 connect (action2, &QAction::triggered, this, &WebView::follow_link);
                 menu->addAction (action2);
                 // action2->deleteLater ();
@@ -151,7 +158,12 @@ void WebView::contextMenuEvent (QContextMenuEvent* event)
     connect (action3, &QAction::triggered, this, &WebView::follow_link);
     menu->addAction (action3);
 
-    menu->addAction (page()->action (QWebEnginePage::InspectElement));
+    QAction* action4 = new QAction (tr("Run yt-dlp"), this);
+    action4->setData(this->url().toString());
+    connect (action4, &QAction::triggered, this, &WebView::run_yt_dlp);
+    menu->addAction (action4);
+
+    menu->addAction (page()->action(QWebEnginePage::InspectElement));
 
     menu->popup (event->globalPos());
 }
