@@ -12,3 +12,4 @@ whitelist/
 scripts/
 Browser-mk2
 *qmlcache*
+testing.db

@@ -13,7 +13,7 @@ public:
 
 protected:
     void contextMenuEvent (QContextMenuEvent* event) override; // Our own context menu.
-    QWebEngineView* createWindow (QWebEnginePage::WebWindowType) override; // Overload to handle links requiring new window.
+    QWebEngineView* createWindow (QWebEnginePage::WebWindowType type) override; // Overload to handle links requiring new window.
 
     // Experimental
     // void mouseMoveEvent (QMouseEvent* event) override;

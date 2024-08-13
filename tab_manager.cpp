@@ -253,7 +253,7 @@ WebView* TabWidget::create_tab (bool at_end)
     }
 
     int index = tabBar->indexOf(view);
-    if ((index != -1) && (view->icon() != QIcon(QStringLiteral (":/icons/freeze"))))
+    if (index != -1)
     {
         setTabIcon(index, QIcon(QStringLiteral(":/icons/gizmoduck")));
     }

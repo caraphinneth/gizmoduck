@@ -40,15 +40,23 @@ WebView::WebView (QWebEngineProfile* profile, QWidget* parent): QWebEngineView (
 }
 
 
-QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType /*type*/)
+QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType type)
 {
     MainWindow* win = qobject_cast<MainWindow*>(window());
     if (!win)
         return nullptr;
 
+    bool background = (type == QWebEnginePage::WebBrowserBackgroundTab);
+
     // Have to do this ugly profile passthrough because Qt6.
-    WebView* view = new WebView(win->tab_manager->profile);
-    connect (view, &WebView::urlChanged, this, &WebView::intercept_popup);
+    WebView* view = new WebView(win->tab_manager->profile, win->tab_manager);
+    // connect (view, &WebView::urlChanged, this, &WebView::intercept_popup);
+    connect (view, &WebView::urlChanged, [this, view, background](const QUrl& url)
+    {
+        emit link_requested(url.toString(), background);
+        view->disconnect();
+        view->deleteLater();
+    });
     return view;
 }
 
@@ -56,7 +64,7 @@ void WebView::intercept_popup (const QUrl& url)
 {
     if (WebView* view = qobject_cast<WebView*>(sender()))
     {
-        emit link_requested(url.toString(), true);
+        emit link_requested(url.toString(), false);
         view->disconnect();
         view->deleteLater();
     }
@@ -98,7 +106,6 @@ void WebView::run_yt_dlp()
         qDebug() << "yt-dlp finished with exit code:" << exitCode;
         process->deleteLater();  // Clean up the process object
     });
-    // QScopedPointer<QProcess> process(new QProcess());
     process->start("yt-dlp", args);
 }
 
