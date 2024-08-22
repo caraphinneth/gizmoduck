@@ -3,11 +3,6 @@
 
 #include "webpage.h"
 
-class PagePointer: public QSharedPointer<WebPage>
-{
-
-};
-
 struct TabGroup: public QHash<QString, QSharedPointer<WebPage>>
 {
 
@@ -23,64 +18,75 @@ public:
             // preserve position for now
         }
         // insert at end
-        else if(position == -1)
-        {
-            order.push_back(key);
-        }
         else
         {
-            order.insert(position+1, key);
+            if(position == -1)
+            {
+                order.push_back(key);
+            }
+            else
+            {
+                order.insert(position+1, key);
+            }
+            QHash::insert(key, value);
         }
-
-        QHash::insert(key, value);
     }
 
-    void remove (const QString& key)
+    void remove(const QString& key)
     {
         order.removeAll(key);
         QHash::remove(key);
     }
 
-    void replace (const QString& old_key, const QString& new_key, QSharedPointer<WebPage> const value)
+    void replace(const QString& old_key, const QString& new_key, QSharedPointer<WebPage> const value)
     {
         // URL of existing page changed, preserve position
         if (order.contains(old_key))
         {
-            order.replace (order.indexOf (old_key), new_key);
+            order.replace(order.indexOf(old_key), new_key);
         }
-        QHash::remove (old_key);
-        QHash::insert (new_key, value);
+        QHash::insert(new_key, value);
+        QHash::remove(old_key);
     }
 
-    QSharedPointer<WebPage> assign_page (const QString& key, int position)
+    QWeakPointer<WebPage> get_page(const QString& key, int position=-2)
+    // If no position is provided, works as getter.
+    // If position specified, works as getter if the key is present.
+    // Otherwise, inserts a new page into the hashtable.
     {
-        if (contains (key))
+        if (contains(key))
         {
-            return value (key);
+            return QWeakPointer<WebPage>(value(key));
+        }
+        else if (position != -2)
+        {
+            QSharedPointer<WebPage> p(new WebPage(profile));
+            insert(key, p, position);
+            return QWeakPointer<WebPage>(p);
         }
         else
         {
-            QSharedPointer<WebPage> p (new WebPage (profile));
-            insert (key, p, position);
-            return p;
+            qDebug() << "BUG: a page does not exist in this group!" << key;
+            return QWeakPointer<WebPage>();
         }
+
     }
 };
 
-struct TabGroups: public QHash <QString, TabGroup*>
+struct TabGroups: public QHash<QString, TabGroup*>
 {
 public:
     QStringList order;
-    void insert (const QString& key, TabGroup* const &value)
+    void insert(const QString& key, TabGroup* const &value)
     {
-        QHash::insert (key, value);
-        order.removeAll (key);
-        order.push_back (key);
+        QHash::insert(key, value);
+        order.removeAll(key);
+        order.push_back(key);
     }
-    void remove (const QString& key)
+    void remove(const QString& key)
     {
-        order.removeAll (key);
-        QHash::remove (key);
+        order.removeAll(key);
+        QHash::remove(key);
     }
 };
 

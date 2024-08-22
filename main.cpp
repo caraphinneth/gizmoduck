@@ -6,6 +6,8 @@
 #include <QSettings>
 #include <QTranslator>
 
+#include <jemalloc/jemalloc.h>
+
 #include "browser_mainwindow.h"
 
 QString url_argument()

@@ -77,8 +77,8 @@ private:
     WebView* current_view();
 
     //void wheelEvent (QWheelEvent* event);
-    WebPage* page_back (TabGroup* group);
-    WebPage* page_forward (TabGroup* group);
+    QWeakPointer<WebPage> page_back (TabGroup* group);
+    QWeakPointer<WebPage> page_forward (TabGroup* group);
 
     void setTabIcon (int index, const QIcon& icon);
     void setTabText (int index, const QString& text);

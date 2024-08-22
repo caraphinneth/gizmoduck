@@ -11,7 +11,7 @@
     <message>
         <location filename="debug_tab.cpp" line="11"/>
         <source>Tab groups:</source>
-        <translation type="unfinished"></translation>
+        <translation>Группы вкладок:</translation>
     </message>
 </context>
 <context>
@@ -37,22 +37,22 @@
     <message>
         <location filename="browser_mainwindow.cpp" line="107"/>
         <source>Find text: </source>
-        <translation type="unfinished"></translation>
+        <translation>Найти: </translation>
     </message>
     <message>
         <location filename="browser_mainwindow.cpp" line="232"/>
         <source>[Connecting...]</source>
-        <translation type="unfinished"></translation>
+        <translation>[Соединение...]</translation>
     </message>
     <message>
         <location filename="browser_mainwindow.cpp" line="268"/>
         <source>Fetching contacts...</source>
-        <translation type="unfinished"></translation>
+        <translation>Получение списка контактов...</translation>
     </message>
     <message>
         <location filename="browser_mainwindow.cpp" line="271"/>
         <source>Add contact...</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить контакт...</translation>
     </message>
     <message>
         <location filename="browser_mainwindow.cpp" line="351"/>
@@ -63,7 +63,7 @@
     <message>
         <location filename="browser_mainwindow.cpp" line="529"/>
         <source>Paste a full tox ID (NOT just public key) to add contact:</source>
-        <translation type="unfinished"></translation>
+        <translation>Вставьте полный tox ID (НЕ только публичный ключ) для добавления:</translation>
     </message>
     <message>
         <source>Toggle proxy</source>
@@ -186,22 +186,22 @@ Disabling may cause visual artifacts when scrolling fast.</source>
     <message>
         <location filename="settings_tab.cpp" line="57"/>
         <source>Messenger</source>
-        <translation type="unfinished"></translation>
+        <translation>Чат</translation>
     </message>
     <message>
         <location filename="settings_tab.cpp" line="83"/>
         <source>Select File</source>
-        <translation type="unfinished">Выбрать файл</translation>
+        <translation>Выбрать файл</translation>
     </message>
     <message>
         <location filename="settings_tab.cpp" line="83"/>
         <source>All Files (*.*)</source>
-        <translation type="unfinished">Все файлы (*.*)</translation>
+        <translation>Все файлы (*.*)</translation>
     </message>
     <message>
         <location filename="settings_tab.cpp" line="114"/>
         <source>Content Filters:</source>
-        <translation type="unfinished"></translation>
+        <translation>Фильтры:</translation>
     </message>
 </context>
 <context>
@@ -239,7 +239,7 @@ Disabling may cause visual artifacts when scrolling fast.</source>
     <message>
         <location filename="tox_ui.cpp" line="335"/>
         <source>Friend request.</source>
-        <translation type="unfinished"></translation>
+        <translation>Добавить в друзья.</translation>
     </message>
 </context>
 <context>
@@ -252,33 +252,33 @@ Disabling may cause visual artifacts when scrolling fast.</source>
     <message>
         <location filename="tox_ui.cpp" line="436"/>
         <source>Select File</source>
-        <translation type="unfinished">Выбрать файл</translation>
+        <translation>Выбрать файл</translation>
     </message>
     <message>
         <location filename="tox_ui.cpp" line="436"/>
         <source>All Files (*.*)</source>
-        <translation type="unfinished">Все файлы (*.*)</translation>
+        <translation>Все файлы (*.*)</translation>
     </message>
     <message>
         <location filename="tox_ui.cpp" line="516"/>
         <source> is typing...</source>
-        <translation type="unfinished"></translation>
+        <translation> печатает...</translation>
     </message>
 </context>
 <context>
     <name>WebPage</name>
     <message>
-        <location filename="webpage.cpp" line="86"/>
+        <location filename="webpage.cpp" line="87"/>
         <source>Select File</source>
         <translation>Выбрать файл</translation>
     </message>
     <message>
-        <location filename="webpage.cpp" line="86"/>
+        <location filename="webpage.cpp" line="87"/>
         <source>All Files (*.*)</source>
         <translation>Все файлы (*.*)</translation>
     </message>
     <message>
-        <location filename="webpage.cpp" line="110"/>
+        <location filename="webpage.cpp" line="111"/>
         <source>Enter username and password for &quot;%1&quot; at %2</source>
         <translation>Введите логин и пароль для &quot;%1&quot; на %2</translation>
     </message>
@@ -290,34 +290,34 @@ Disabling may cause visual artifacts when scrolling fast.</source>
 <context>
     <name>WebView</name>
     <message>
-        <location filename="webview.cpp" line="124"/>
+        <location filename="webview.cpp" line="127"/>
         <source>Open Link in This Tab</source>
         <translation>Открыть в текущей вкладке</translation>
     </message>
     <message>
-        <location filename="webview.cpp" line="137"/>
+        <location filename="webview.cpp" line="140"/>
         <source>Search &quot;</source>
         <translation>Найти &quot;</translation>
     </message>
     <message>
-        <location filename="webview.cpp" line="137"/>
+        <location filename="webview.cpp" line="140"/>
         <source>&quot; on the web</source>
         <translation>&quot; в интернете</translation>
     </message>
     <message>
-        <location filename="webview.cpp" line="145"/>
+        <location filename="webview.cpp" line="148"/>
         <source>Follow &quot;</source>
         <translation>Перейти по ссылке &quot;</translation>
     </message>
     <message>
-        <location filename="webview.cpp" line="155"/>
+        <location filename="webview.cpp" line="158"/>
         <source>Translate Page</source>
         <translation>Перевести страницу</translation>
     </message>
     <message>
-        <location filename="webview.cpp" line="160"/>
+        <location filename="webview.cpp" line="163"/>
         <source>Run yt-dlp</source>
-        <translation type="unfinished"></translation>
+        <translation>Скачать видео</translation>
     </message>
     <message>
         <source>Search </source>

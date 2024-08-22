@@ -28,7 +28,6 @@ private:
     void search_selected();
     void follow_link();
     void run_yt_dlp();
-    void intercept_popup (const QUrl& url);
 
     // QPoint position;
 };

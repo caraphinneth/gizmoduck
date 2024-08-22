@@ -27,6 +27,7 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
         else if (!isVisible()&&
                  (url().host()!="discord.com")&&
                  (url().host()!="twitter.com")&&
+                 (url().host()!="x.com")&&
                  (url().host()!="tripwire.eve-apps.com")&&
                  (url().host()!="colab.research.google.com")&&
                  (url().host()!="localhost")
@@ -146,18 +147,17 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
         if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
         {
             //qDebug() << "Clicked the link" << url.toString();
-            emit view->link_requested (url.toString(), false);
+            emit view->link_requested(url.toString(), false);
             return false;
         }
     }
-
-   /* else if (((type == QWebEnginePage::NavigationTypeRedirect) && isMainFrame))// && (this->url().host() != url.host()))
+    /*
+    else if (((type == QWebEnginePage::NavigationTypeRedirect) && isMainFrame) && (this->url().host() != url.host()))
     {
-        WebView* v = qobject_cast<WebView*>(QWebEngineView::forPage(this));
-        if (v)
+        if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
         {
             qDebug() << "Intercepting" << url << "request by" << this->url().host();
-            emit v->link_requested (url.toString(), false);
+            emit view->link_requested (url.toString(), false);
             return false;
         }
     }*/
@@ -173,16 +173,15 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
             return false;
         }
     }*/
-    /*
     else if ((type == QWebEnginePage::NavigationTypeTyped) && (this->url().host() != url.host()) && isMainFrame)
     {
-        WebView* v = qobject_cast<WebView*>(view());
-        if (v)
+        if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
         {
-            emit v->link_requested (url.toString());
+            qDebug() << "Intercepting pseudo-typed" << url << "request by" << this->url().host();
+            emit view->link_requested (url.toString(), false);
             return false;
         }
-    }*/
+    }
     return true;
 }
 

@@ -2,6 +2,7 @@ QT += widgets webenginewidgets sql network
 CONFIG += c++14
 CONFIG -= app_bundle
 DEFINES += QT_MESSAGELOGCONTEXT
+LIBS += -ljemalloc
 
 win32:QMAKE_CXXFLAGS+="-O2"
 !win32 {

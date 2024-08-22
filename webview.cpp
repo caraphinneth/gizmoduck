@@ -53,22 +53,17 @@ QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType type)
     // connect (view, &WebView::urlChanged, this, &WebView::intercept_popup);
     connect (view, &WebView::urlChanged, [this, view, background](const QUrl& url)
     {
-        emit link_requested(url.toString(), background);
-        view->disconnect();
-        view->deleteLater();
+        // TODO: redirectors
+        if (url.host()!="t.co")
+        {
+            emit link_requested(url.toString(), background);
+            view->disconnect();
+            view->deleteLater();
+        }
     });
     return view;
 }
 
-void WebView::intercept_popup (const QUrl& url)
-{
-    if (WebView* view = qobject_cast<WebView*>(sender()))
-    {
-        emit link_requested(url.toString(), false);
-        view->disconnect();
-        view->deleteLater();
-    }
-}
 void WebView::search_selected()
 {
     QAction* action = qobject_cast<QAction*> (sender());
@@ -97,7 +92,7 @@ void WebView::run_yt_dlp()
       return;
 
     QStringList args;
-    args << "--proxy" << "socks5://localhost:1080/" << "--cookies-from-browser" << "chromium" << "--trim-filenames" << "40" << "-P" << QStandardPaths::writableLocation(QStandardPaths::HomeLocation) << action->data().toString();
+    args << "--proxy" << "socks5://localhost:1080/" << "--cookies-from-browser" << "chromium" << "--trim-filenames" << "20" << "-P" << QStandardPaths::writableLocation(QStandardPaths::HomeLocation) << action->data().toString();
     QProcess* process = new QProcess(this);
     connect(process, &QProcess::finished, [process](int exitCode, QProcess::ExitStatus exitStatus)
     {
