@@ -112,7 +112,7 @@ public:
         else
             current = insert (std::next(current), url);
 
-        qDebug()<< "History now points at" << current->toString();
+        //qDebug() << "History now points at" << current->toString();
     }
     void forward()
     {
@@ -123,7 +123,7 @@ public:
     {
         if (current!=begin())
             --current;
-        qDebug()<< "History now points at" << current->toString();       
+        // qDebug() << "History now points at" << current->toString();
     }
 
 };

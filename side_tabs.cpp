@@ -3,16 +3,16 @@
 
 #include "side_tabs.h"
 
-SideTabs::SideTabs (QWidget* parent, int w, int h): QListView (parent)
+SideTabs::SideTabs(QWidget* parent, int w, int h): QListView(parent)
 {
     setFixedWidth (w);
 
     //loading_icon = new QMovie (":/icons/loading");
     //loading_icon->start();
 
-    auto* tab = new TabHeader (this, w, h);
+    auto* tab = new TabHeader(this, w, h);
 
-    QPalette p (palette());
+    QPalette p(palette());
 
     p.setBrush(QPalette::Base, QColor("#EFEFEF")); // background
     p.setBrush(QPalette::Light, QColor("#c1c1c1")); // inactive tab
@@ -24,23 +24,22 @@ SideTabs::SideTabs (QWidget* parent, int w, int h): QListView (parent)
     //setFont (QFont ("Noto Sans Display ExtraCondensed ExtraBold", 10));
     setFont (QFont ("Roboto Condensed Medium", 10));
 
-    setWordWrap (true);
-    setVerticalScrollBarPolicy (Qt::ScrollBarAlwaysOff);
-    setHorizontalScrollBarPolicy (Qt::ScrollBarAlwaysOff);
+    setWordWrap(true);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 
-    setUniformItemSizes (true);
-    setDragEnabled (true);
-    setAcceptDrops (true);
-    setDragDropMode (QAbstractItemView::InternalMove);
-    setDropIndicatorShown (true);
-    setSelectionMode (QAbstractItemView::SingleSelection);
-    setSelectionBehavior (QAbstractItemView::SelectItems);
-    setDefaultDropAction (Qt::MoveAction);
-    setEditTriggers (NoEditTriggers);
-    setModel (new QStandardItemModel (this));
+    setUniformItemSizes(true);
+    setDragEnabled(true);
+    setAcceptDrops(true);
+    setDragDropMode(QAbstractItemView::InternalMove);
+    setDropIndicatorShown(true);
+    setSelectionMode(QAbstractItemView::SingleSelection);
+    setSelectionBehavior(QAbstractItemView::SelectItems);
+    setDefaultDropAction(Qt::MoveAction);
+    setEditTriggers(NoEditTriggers);
+    setModel(new QStandardItemModel(this));
 
-    setItemDelegate (tab);
-
+    setItemDelegate(tab);
 
     /* FIXME: only update the animating tab
     connect (loading_icon, &QMovie::frameChanged, [this]()

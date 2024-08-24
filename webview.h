@@ -23,11 +23,16 @@ signals:
     void icon_changed (const QIcon& icon);
     void search_requested (const QString& text);
     void link_requested (const QString& url, bool background);
+    void went_to_sleep();
+    void page_requested(QWeakPointer<WebPage> page);
 
 private:
     void search_selected();
     void follow_link();
     void run_yt_dlp();
+
+public slots:
+    void set_page(QWeakPointer<WebPage> page);
 
     // QPoint position;
 };

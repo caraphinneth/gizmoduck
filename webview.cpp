@@ -34,11 +34,22 @@ WebView::WebView (QWidget* parent): QWebEngineView (parent)
     */
 }
 
-WebView::WebView (QWebEngineProfile* profile, QWidget* parent): QWebEngineView (profile, parent)
+WebView::WebView(QWebEngineProfile* profile, QWidget* parent): QWebEngineView (profile, parent)
 {
 
 }
 
+void WebView::set_page(QWeakPointer<WebPage> page)
+{
+    if (auto lock = page.lock())
+    {
+        setPage(lock.data());
+    }
+    else
+    {
+        qDebug() << "BUG: page requested is null or deleted!";
+    }
+}
 
 QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType type)
 {

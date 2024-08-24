@@ -6,7 +6,8 @@ LIBS += -ljemalloc
 
 win32:QMAKE_CXXFLAGS+="-O2"
 !win32 {
-    QMAKE_CXXFLAGS+="-O3 -pipe -march=native -ftree-vectorize -fno-predictive-commoning -fno-semantic-interposition -floop-nest-optimize -fipa-pta -fdevirtualize-at-ltrans -Wall -Wextra -Wpedantic -flto=6"
+    #QMAKE_CXXFLAGS+="-O3 -pipe -march=native -ftree-vectorize -fno-predictive-commoning -fno-semantic-interposition -floop-nest-optimize -fipa-pta -fdevirtualize-at-ltrans -Wall -Wextra -Wpedantic -flto=6"
+    QMAKE_CXXFLAGS+="-Og -pipe -march=native -ftree-vectorize -Wall -Wextra -Wpedantic"
 }
 
 #-g -ggdb"

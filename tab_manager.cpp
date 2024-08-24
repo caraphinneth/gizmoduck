@@ -28,7 +28,7 @@ TabWidget::TabWidget (QWidget* parent): QStackedWidget (parent)
     profile->settings()->setAttribute (QWebEngineSettings::WebRTCPublicInterfacesOnly, true);
     profile->settings()->setAttribute (QWebEngineSettings::PlaybackRequiresUserGesture, false);
     profile->settings()->setAttribute (QWebEngineSettings::DnsPrefetchEnabled, true);
-    //profile->settings()->setUnknownUrlSchemePolicy (QWebEngineSettings::AllowAllUnknownUrlSchemes);
+    profile->settings()->setUnknownUrlSchemePolicy (QWebEngineSettings::AllowAllUnknownUrlSchemes);
     profile->settings()->setAttribute (QWebEngineSettings::AllowRunningInsecureContent, true);
 
     profile->settings()->setFontFamily (QWebEngineSettings::StandardFont, "Noto Sans SemiCondensed");
@@ -86,9 +86,11 @@ TabWidget::TabWidget (QWidget* parent): QStackedWidget (parent)
 
     connect (tabBar, &SideTabs::pressed, [this](const QModelIndex& index)
     {
-        tabBar->setCurrentIndex (index);
+        tabBar->setCurrentIndex(index);
         emit current_changed (index.row());
     });
+
+
 
     connect (tabBar, &SideTabs::temp_pass_wheel_event, [this](QWheelEvent* event)
     {
@@ -120,17 +122,9 @@ TabWidget::TabWidget (QWidget* parent): QStackedWidget (parent)
                     {
                         --i;
                         qDebug() << "Trying index" << i;
-                        if (auto p = group->value(group->order.at(i)))
-                        {
-                            current_view()->setPage(p.data());
-                            history.add(current_view()->page()->url());
-                            //qDebug() << "History list:" << history;
-                        }
-                        else
-                        {
-                            qDebug() << "BUG: page is invalid:" << group->order.at(i);
-                            group->remove(group->order.at(i));
-                        }
+                        emit current_view()->page_requested(group->get_page(group->order.at(i)));
+                        history.add(current_view()->page()->url());
+                        // Ditto.
                     }
                 }
                 else if (event->angleDelta().y() < 0)
@@ -149,17 +143,13 @@ TabWidget::TabWidget (QWidget* parent): QStackedWidget (parent)
                     else
                     {
                         ++i;
-                        if (auto page = group->get_page(group->order.at(i)).lock())
-                        {
-                            current_view()->setPage(page.data());
-                            history.add (current_view()->page()->url());
-                            //qDebug() << "History list:" << history;
-                        }
-                        else
-                        {
-                            qDebug() << "BUG: page is invalid:" << group->order.at(i);
-                            group->remove(group->order.at(i));
-                        }
+                        qDebug() << "Trying index" << i;
+                        emit current_view()->page_requested(group->get_page(group->order.at(i)));
+                        history.add(current_view()->page()->url());
+                        /*
+                        TODO: if bugs persist, consider checking the result and removing key.
+                        group->remove(group->order.at(i));
+                        */
                     }
                 }
             }
@@ -216,39 +206,39 @@ void TabWidget::setTabIcon (int index, const QIcon& icon)
 void TabWidget::setTabText (int index, const QString& text)
 {
     QModelIndex model_index = tabBar->model()->index (index, 0);
-    tabBar->model()->setData (model_index, text);
+    tabBar->model()->setData(model_index, text);
 }
 
 // Create a new web tab, link its events to interface where needed.
 WebView* TabWidget::create_tab (bool at_end)
 {
-    WebView* view = new WebView (this);
+    WebView* view = new WebView(this);
     //view->setAttribute (Qt::WA_DontShowOnScreen);
 
     //The model should take the ownership of the item.
-    QStandardItem* item = new QStandardItem (view->title());
-    item->setData (reinterpret_cast<quintptr>(view), Qt::UserRole);
+    QStandardItem* item = new QStandardItem(view->title());
+    item->setData(reinterpret_cast<quintptr>(view), Qt::UserRole);
 
     // Forbid dropping 'into' a tab header. Not to be confused with the one in ListView.
-    item->setDropEnabled (false);
+    item->setDropEnabled(false);
 
     QStandardItemModel* model = static_cast<QStandardItemModel*>(tabBar->model());
 
     if (!at_end)
     {
-        insertWidget (currentIndex()+1, view);
+        insertWidget(currentIndex()+1, view);
         if (!tabBar->selectionModel()->selectedIndexes().isEmpty())
         {
             int row = tabBar->selectionModel()->selectedIndexes().first().row();
-            model->insertRow (row+1, item);
+            model->insertRow(row+1, item);
         }
         else
-            model->appendRow (item);
+            model->appendRow(item);
     }
     else
     {
-        addWidget (view);
-        model->appendRow (item);
+        addWidget(view);
+        model->appendRow(item);
     }
 
     int index = tabBar->indexOf(view);
@@ -260,12 +250,12 @@ WebView* TabWidget::create_tab (bool at_end)
     // Autoassign tab title.
     connect (view, &QWebEngineView::titleChanged, [this, view] (const QString& title)
     {
-        int index = tabBar->indexOf (view);
+        int index = tabBar->indexOf(view);
         // Work around the bug(?) with returning url sometimes on heavily updated titles (may cause flicker).
         if ((index != -1) && (!title.startsWith ("http")) && (title!="about:blank"))
         {
-            setTabText (index, title);
-            QList<QStandardItem*> vl (suggestions.findItems (view->url().toString()));
+            setTabText(index, title);
+            QList<QStandardItem*> vl(suggestions.findItems(view->url().toString()));
             if (vl.isEmpty ())
             {
                 if (!view->url().toString().contains (title))
@@ -283,7 +273,7 @@ WebView* TabWidget::create_tab (bool at_end)
             }
             else
             {
-                suggestions.moveRow (QModelIndex(), suggestions.indexFromItem (vl.at(0)).row(), QModelIndex(), 0);
+                suggestions.moveRow(QModelIndex(), suggestions.indexFromItem (vl.at(0)).row(), QModelIndex(), 0);
             }
             vl.clear();
         }
@@ -294,18 +284,18 @@ WebView* TabWidget::create_tab (bool at_end)
     // Better than linking at top level, since url may change with both navigation and tab switching.
     connect (view, &QWebEngineView::urlChanged, [this, view] (const QUrl& url)
     {
-        int index = tabBar->indexOf (view);
+        int index = tabBar->indexOf(view);
 
         //view->page()->profile()->requestIconForIconURL(url, 16, view->page()->WebPage::getFavicon);
 
         if (currentIndex() == index)
-           emit url_changed (url);
+            emit url_changed (url);
     });
 
     // Set tab icon according to favicon.
     connect (view, &QWebEngineView::iconChanged, [this, view] (const QIcon& icon)
     {
-        int index = tabBar->indexOf (view);
+        int index = tabBar->indexOf(view);
         if (!icon.isNull() && (index != -1))
         {
             setTabIcon(index, icon);
@@ -336,15 +326,29 @@ WebView* TabWidget::create_tab (bool at_end)
     });
 
     // Install a handler for the context menu action.
-    connect (view, &WebView::search_requested, [this] (const QString& text)
+    connect (view, &WebView::search_requested, [this](const QString& text)
     {
          set_url (QUrl::fromUserInput ("https://duckduckgo.com/?q="+text));
     });
 
-    connect (view, &WebView::link_requested, [this] (const QString& url, const bool background)
+    connect (view, &WebView::link_requested, [this](const QString& url, const bool background)
     {
          set_url(QUrl::fromUserInput(url), background);
     });
+
+    /*
+    connect (view, &WebView::went_to_sleep, [this, view]()
+    {
+        int index = tabBar->indexOf(view);
+
+        if ((index!=-1) && (index < tabBar->model()->rowCount() - 1))
+        {
+            tabBar->model()->moveRow(tabBar->model()->index(index, 0), index, tabBar->model()->index(index+1, 0), 0);
+        }
+    });
+    */
+
+    connect(view, &WebView::page_requested, view, &WebView::set_page);
 
     return view;
 }
@@ -356,7 +360,7 @@ void TabWidget::close_page (int index)
     {
         //QString host = host_views.key (view); // Not view->url().host()) since it might not be loaded.
         QString host = view->history()->currentItem().url().host();
-        if (tab_groups.contains (host))
+        if (tab_groups.contains(host))
         {
             TabGroup* group = tab_groups.value (host);
             if ((group->count()==1) & (count() == 1))
@@ -382,17 +386,10 @@ void TabWidget::close_page (int index)
                     if ((group->contains(s)) && (s!=url))
                     {
                         qDebug()<< "Switching to page" << s;
-                        if (auto page = group->get_page(s).lock())
-                        {
-                            view->setPage(page.data());
-                            history.add(*i);
-                            found = true;
-                            break;
-                        }
-                        else
-                        {
-                            qDebug() << "BUG: a smart pointer object no longer exists!";
-                        }
+                        emit view->page_requested(group->get_page(s));
+                        history.add(*i);
+                        found = true;
+                        break;
                     }
                 }
                 if(!found)
@@ -404,7 +401,7 @@ void TabWidget::close_page (int index)
                         qDebug() << "BUG: page is invalid!";
                         last = std::prev(last);
                     }
-                    view->setPage(last.value().data());
+                    emit view->page_requested(last.value());
                 }
 
                 if (group->contains(url)) //.adjusted (QUrl::RemoveQuery)
@@ -436,18 +433,22 @@ void TabWidget::close_page (int index)
             }
             emit update_session();
         }
+        else
+        {
+            qDebug() << "Host not in tab groups (WTF?).";
+        }
     }
     else // Not a web view! Settings and debug tabs fall into this category.
     {
         int n = qMax(0, tabBar->currentIndex().row()-1);
         QModelIndex i = tabBar->model()->index (n, 0);
         tabBar->setCurrentIndex (i);
-        emit currentChanged (i.row());
+        emit currentChanged(i.row());
 
         tabBar->widget(index)->disconnect();
         //tabBar->widget (index)->deleteLater();
-        removeWidget(tabBar->widget (index));
-        tabBar->model()->removeRow (index);
+        removeWidget(tabBar->widget(index));
+        tabBar->model()->removeRow(index);
     }
 }
 
@@ -531,7 +532,7 @@ void TabWidget::restore_tab()
             install_page_signal_handler(p);
 
             WebView* view = assign_host_view(host);
-            view->setPage(p.data());
+            emit view->page_requested(p);
             emit debug_tabs_updated();
             p.clear();
         }
@@ -551,7 +552,7 @@ void TabWidget::restore_tab()
         qDebug() << "Page list:" << list;
         //setCurrentWidget (view);
 
-        //view->setPage (group->values().last());
+        //emit view->page_requested(group->values().last());
         */
     }
 
@@ -588,11 +589,12 @@ void TabWidget::set_url (const QUrl& url, bool background)
         qDebug() << "If you see this, page is about it be assigned.";
         int i = group->order.indexOf(view->url().toString());
 
+        // FIXME: overly complicated locking.
         if (auto page = group->get_page(key, i).lock())
         {
             emit debug_tabs_updated();
             page->setUrl(url);
-            view->setPage(page.data());
+            emit view->page_requested(group->get_page(key, i));
             history.add(page->url());
             page->old_url = url;
             install_page_signal_handler(page);
@@ -637,6 +639,7 @@ void TabWidget::install_page_signal_handler(QSharedPointer<WebPage> p)
         qDebug() << "Existing page" << key << "changed its URL to" << final_url;
 
         // A redirect happened, reattach page.
+        // EXPERIMENTAL: intercept all sorts of redirection here, rather than in acceptNavigationRequest().
         if (final_host != host)
         {
             group->remove (key);
@@ -662,14 +665,7 @@ void TabWidget::install_page_signal_handler(QSharedPointer<WebPage> p)
             else
             {
                 auto last = group->order.last();
-                if (auto new_page = group->get_page(last).lock())
-                {
-                    view->setPage(new_page.data());
-                }
-                else
-                {
-                    qDebug() << 'BUG: supposed new page is null or deleted.';
-                }
+                emit view->page_requested(group->get_page(last));
             }
 
             TabGroup* new_group = assign_tab_group (final_host);
@@ -685,7 +681,7 @@ void TabWidget::install_page_signal_handler(QSharedPointer<WebPage> p)
                     {
                         if (old_page != p)
                         {
-                            qDebug() << "Deleting old page" << final_url;
+                            qDebug() << "Marking old page for deletion:" << final_url;
                             old_page.data()->disconnect();
                             // clear() should not be needed.
                         }
@@ -699,19 +695,19 @@ void TabWidget::install_page_signal_handler(QSharedPointer<WebPage> p)
                 history.add(p->url());
                 // FIXME: Do not activate widgets mindlessly, since this affects session load, too.
                 //setCurrentWidget (new_view);
-                new_view->setPage(p.data());
+                emit new_view->page_requested(p);
             }
             // Creating a new group.
             else
             {
-                qDebug() << "Creating view for host " << final_host;
+                qDebug() << "Creating view for host:" << final_host;
 
                 WebView* v = create_tab();
                 host_views.insert(final_host, v);
                 new_group->insert(final_url, p);
                 emit debug_tabs_updated();
 
-                v->setPage(p.data());
+                emit v->page_requested(p);
                 history.add(p->url());
 
                 QModelIndex index = tabBar->model()->index(tabBar->indexOf(v), 0);
@@ -722,7 +718,7 @@ void TabWidget::install_page_signal_handler(QSharedPointer<WebPage> p)
         // It's a same host, so probably JS engine being malefic.
         else if ((final_url != key) & (!final_url.startsWith("file:")))
         {
-            qDebug() << "Removing" << key << ", replacing with" << final_url;
+            qDebug() << "Replacing URL.";
 
             group->replace(key, final_url, p);
             emit debug_tabs_updated();
@@ -805,23 +801,18 @@ void TabWidget::forward_in_new_tab()
     }
 }
 
-void TabWidget::current_changed (int index)
+void TabWidget::current_changed(int index)
 {
-    TabWidget::setCurrentWidget (tabBar->widget (index));
+    TabWidget::setCurrentWidget(tabBar->widget(index));
     if (current_view())
     {
         current_view()->setFocus();
         history.add (current_view()->page()->url());
-        // This reacts to dragging. Fix that.
-        //qDebug() << "Switched to page" << history.current->toString();
-        //hide();
-        //show();
         emit url_changed (current_view()->url());
     }
     else
     {
         emit url_changed (QUrl::fromUserInput(""));
-        //widget (currentIndex())->setFocus();
     }
 
 }
@@ -922,7 +913,7 @@ void TabWidget::load_state()
         setTabIcon(tabBar->indexOf(view), QIcon(QStringLiteral (":/icons/freeze")));
         TabGroup* group = tab_groups.value(i);
 
-        view->setPage(group->value(group->order.back()).data());
+        emit view->page_requested(group->value(group->order.back()));
     }
     tabBar->setCurrentIndex (tabBar->model()->index (0, 0));
 }
@@ -1000,7 +991,8 @@ DebugTab* TabWidget::debug_tab()
         int index = indexOf (view);
         if (index != -1)
         {
-            emit view->redraw_tabs (tab_groups);
+            emit view->redraw_tabs(tab_groups);
+            emit view->redraw_history(history);
         }
     });
 
@@ -1012,7 +1004,7 @@ DebugTab* TabWidget::debug_tab()
     return view;
 }
 
-void TabWidget::fullscreen_request (QWebEngineFullScreenRequest request)
+void TabWidget::fullscreen_request(QWebEngineFullScreenRequest request)
 {
     if (current_view())
     {
@@ -1032,7 +1024,7 @@ void TabWidget::fullscreen_request (QWebEngineFullScreenRequest request)
     }
 }
 
-WebView* TabWidget::assign_host_view (const QString& host)
+WebView* TabWidget::assign_host_view(const QString& host)
 {
     if (host_views.contains(host))
     {

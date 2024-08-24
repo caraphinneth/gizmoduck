@@ -18,7 +18,7 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
     lifecycle = new QTimer (this);
     connect(this, &WebPage::recommendedStateChanged, [this]()
     {
-        qDebug() << "State change advised:" << recommendedState();
+        // qDebug() << "State change advised:" << recommendedState();
         if (recommendedState()==QWebEnginePage::LifecycleState::Active)
         {
             //lifecycle->start (1);
@@ -43,7 +43,13 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
     connect (this, &WebPage::lifecycleStateChanged, [this, profile](QWebEnginePage::LifecycleState state)
     {
         if (state == QWebEnginePage::LifecycleState::Discarded)
+        {
             emit iconChanged(QIcon(QStringLiteral (":/icons/sleep")));
+            if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
+            {
+                emit view->went_to_sleep();
+            }
+        }
         else if (state == QWebEnginePage::LifecycleState::Frozen)
             emit iconChanged(QIcon(QStringLiteral (":/icons/freeze")));
 
@@ -139,10 +145,9 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
 {
     if (isMainFrame)
         qDebug() << "Going to url" << url << "by navitype" << type;
-    else
-        qDebug() << "NON_MAINFRAME request of url" << url << "by navitype" << type;
-    //||(type == QWebEnginePage::NavigationTypeTyped)
-    if (((type == QWebEnginePage::NavigationTypeLinkClicked)) && isMainFrame)
+
+    /*
+    if ((type == QWebEnginePage::NavigationTypeLinkClicked) && isMainFrame)
     {
         if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
         {
@@ -150,18 +155,18 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
             emit view->link_requested(url.toString(), false);
             return false;
         }
-    }
-    /*
+    }*/
+/*
     else if (((type == QWebEnginePage::NavigationTypeRedirect) && isMainFrame) && (this->url().host() != url.host()))
     {
         if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
         {
             qDebug() << "Intercepting" << url << "request by" << this->url().host();
-            emit view->link_requested (url.toString(), false);
+            emit view->link_requested(url.toString(), false);
             return false;
         }
-    }*/
-
+    }
+*/
     /*
     else if ((type == QWebEnginePage::NavigationTypeFormSubmitted) && isMainFrame)// && (this->url().host() != url.host()) && isMainFrame)
     {
@@ -173,14 +178,21 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
             return false;
         }
     }*/
+/*
     else if ((type == QWebEnginePage::NavigationTypeTyped) && (this->url().host() != url.host()) && isMainFrame)
     {
         if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
         {
             qDebug() << "Intercepting pseudo-typed" << url << "request by" << this->url().host();
-            emit view->link_requested (url.toString(), false);
+            emit view->link_requested(url.toString(), false);
             return false;
         }
+    }
+*/
+    else if (!isMainFrame)
+    {
+        qDebug() << "NON_MAINFRAME request of url" << url << "by navitype" << type << "passed through.";
+        return true;
     }
     return true;
 }
