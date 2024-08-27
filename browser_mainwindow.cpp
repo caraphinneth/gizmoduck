@@ -59,14 +59,18 @@ MainWindow::MainWindow()
     toolbar->addWidget (back_button);
     toolbar->addWidget (forward_button);
 
-    address_box = new QLineEdit (toolbar);
-    toolbar->addWidget (address_box);
+    address_box = new QLineEdit(toolbar);
+    toolbar->addWidget(address_box);
 
-    toolbar->addWidget (refresh_button);
+    toolbar->addWidget(refresh_button);
 
-    settings_button = new NavButton (toolbar);
-    settings_button->setIcon (QIcon (QStringLiteral (":/icons/system")));
-    settings_button->setToolTip (tr("Settings"));
+    settings_button = new NavButton(toolbar);
+    settings_button->setIcon(QIcon(QStringLiteral(":/icons/system")));
+    settings_button->setToolTip(tr("Settings"));
+
+    dl_button = new NavButton (toolbar);
+    dl_button->setIcon (QIcon (QStringLiteral (":/icons/download")));
+    dl_button->setToolTip (tr("Downloads"));
 
     contact_menu = new QMenu();
 
@@ -77,6 +81,7 @@ MainWindow::MainWindow()
     toolbar->addWidget (tox_button);
 
     toolbar->addWidget (settings_button);
+    toolbar->addWidget (dl_button);
 
     close_button = new NavButton (toolbar);
     close_button->setIcon (QIcon (QStringLiteral (":/icons/close")));
@@ -206,11 +211,13 @@ MainWindow::MainWindow()
 
     QAction* refresh = new QAction (this);
     refresh->setShortcut (Qt::Key_F5);
-    connect (refresh, &QAction::triggered, tab_manager, &TabWidget::refresh);
+    connect(refresh, &QAction::triggered, tab_manager, &TabWidget::refresh);
     this->addAction (refresh);
 
     connect (settings_button, &NavButton::left_clicked, tab_manager, &TabWidget::settings_tab);
     connect (settings_button, &NavButton::right_clicked, tab_manager, &TabWidget::debug_tab);
+    connect (dl_button, &NavButton::left_clicked, tab_manager, &TabWidget::show_process_tab);
+    
 
     connect (close_button, &NavButton::left_clicked, [this]()
     {

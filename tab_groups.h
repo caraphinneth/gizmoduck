@@ -100,17 +100,17 @@ public:
         current = begin();
     }
 
-    void add (const QUrl& url)
+    void add(const QUrl& url)
     {
         if (url.isEmpty())
             return;
         if (current == end())
         {
-            push_back (url);
+            push_back(url);
             current = begin();
         }
         else
-            current = insert (std::next(current), url);
+            current = insert(std::next(current), url);
 
         //qDebug() << "History now points at" << current->toString();
     }

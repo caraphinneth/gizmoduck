@@ -10,7 +10,7 @@ struct SideTabs: public QListView
     Q_OBJECT
 
 public:
-    SideTabs (QWidget* parent = nullptr, int w=162, int h=40);
+    SideTabs(QWidget* parent = nullptr, int w=162, int h=40);
 
     // To simplify listview<->stackwidget connection, widget pointers are stored inside a list as Qt::UserRole.
     QWidget* widget (int index);

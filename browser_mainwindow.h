@@ -16,11 +16,11 @@ public:
     TabWidget* tab_manager;
 
 protected:
-    void closeEvent (QCloseEvent*) override;
+    void closeEvent(QCloseEvent*) override;
 
 private slots:
     // Handle incoming and outgoing chat messages, creating widgets as needed.
-    void chat (const QString& message, const long friend_number);
+    void chat(const QString& message, const long friend_number);
 
 private:
 
@@ -34,6 +34,7 @@ private:
     NavButton* close_button;
     NavButton* tox_button;
     NavButton* settings_button;
+    NavButton* dl_button;
     QLineEdit* search_box;
     QMenu* contact_menu;
 

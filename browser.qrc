@@ -23,6 +23,9 @@
         <file alias="freeze">res/icons/weather-snow-symbolic.svg</file>
         <file alias="up">res/icons/go-up-symbolic.svg</file>
         <file alias="down">res/icons/go-down-symbolic.svg</file>
+        <file alias="download">res/icons/folder-download-symbolic.svg</file>
+        <file alias="ok">res/icons/emblem-default-symbolic.svg</file>
+        <file alias="alert">res/icons/emblem-important-symbolic.svg</file>
     </qresource>
     <qresource prefix="/scripts">
         <file alias="custom_css">res/scripts/custom_css.js</file>

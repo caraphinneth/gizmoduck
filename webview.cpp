@@ -4,6 +4,7 @@
 #include <QMouseEvent>
 #include <QWebEngineContextMenuRequest>
 #include <QProcess>
+#include <QSettings>
 
 #include "browser_mainwindow.h"
 #include "tab_manager.h"
@@ -102,17 +103,21 @@ void WebView::run_yt_dlp()
     if (!action)
       return;
 
-    QStringList args;
-    args << "--proxy" << "socks5://localhost:1080/" << "--cookies-from-browser" << "chromium" << "--trim-filenames" << "20" << "-P" << QStandardPaths::writableLocation(QStandardPaths::HomeLocation) << action->data().toString();
-    QProcess* process = new QProcess(this);
-    connect(process, &QProcess::finished, [process](int exitCode, QProcess::ExitStatus exitStatus)
-    {
-        QByteArray output = process->readAllStandardOutput();
-        qDebug() << "Output:" << output;
-        qDebug() << "yt-dlp finished with exit code:" << exitCode;
-        process->deleteLater();  // Clean up the process object
-    });
-    process->start("yt-dlp", args);
+    QSettings settings;
+    settings.beginGroup("External");
+    QString default_args = settings.value("commandline", "").toString();
+    settings.endGroup();
+
+    QString cookie_path = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath("Gizmoduck/QtWebEngine/Default/Cookies");
+    QString download_path = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+
+    QStringList arg_list = default_args.split(' ', Qt::SkipEmptyParts);
+
+    arg_list << "-C" << cookie_path << "-P" << download_path << action->data().toString();
+
+    qDebug() << "Argument list:" << arg_list;
+
+    emit process_requested("yt-dlp", arg_list);
 }
 
 void WebView::contextMenuEvent (QContextMenuEvent* event)

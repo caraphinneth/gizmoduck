@@ -24,7 +24,7 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
             //lifecycle->start (1);
             setLifecycleState (QWebEnginePage::LifecycleState::Active);
         }
-        else if (!isVisible()&&
+        else if (!isVisible()&& // TODO: a setting for permamently awake pages.
                  (url().host()!="discord.com")&&
                  (url().host()!="twitter.com")&&
                  (url().host()!="x.com")&&
@@ -34,9 +34,9 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
                  )
         {
             if (recommendedState()==QWebEnginePage::LifecycleState::Frozen)
-                lifecycle->start (15*60*1000);
+                lifecycle->start(15*60*1000);
             else if (recommendedState()==QWebEnginePage::LifecycleState::Discarded)
-                lifecycle->start (15*60*1000);
+                lifecycle->start(30*60*1000);
         }
     });
 
@@ -73,7 +73,7 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
         if (lifecycleState() != recommendedState())
         {
             setLifecycleState (recommendedState());
-            qDebug() << "State for" << url() << "changed to" << lifecycleState();
+            // qDebug() << "State for" << url() << "changed to" << lifecycleState();
         }
     });
 }
@@ -141,12 +141,14 @@ void WebPage::handleAuthenticationRequired (const QUrl& url, QAuthenticator* aut
     }
 }
 
+// We currently do fine without it, but the example code is left intact in case it's needed again.
+/*
 bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool isMainFrame)
 {
     if (isMainFrame)
         qDebug() << "Going to url" << url << "by navitype" << type;
 
-    /*
+
     if ((type == QWebEnginePage::NavigationTypeLinkClicked) && isMainFrame)
     {
         if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
@@ -155,8 +157,8 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
             emit view->link_requested(url.toString(), false);
             return false;
         }
-    }*/
-/*
+    }
+
     else if (((type == QWebEnginePage::NavigationTypeRedirect) && isMainFrame) && (this->url().host() != url.host()))
     {
         if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
@@ -166,8 +168,8 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
             return false;
         }
     }
-*/
-    /*
+
+
     else if ((type == QWebEnginePage::NavigationTypeFormSubmitted) && isMainFrame)// && (this->url().host() != url.host()) && isMainFrame)
     {
         WebView* v = qobject_cast<WebView*>(view());
@@ -177,8 +179,7 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
             emit v->link_requested (url.toString());
             return false;
         }
-    }*/
-/*
+
     else if ((type == QWebEnginePage::NavigationTypeTyped) && (this->url().host() != url.host()) && isMainFrame)
     {
         if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
@@ -188,7 +189,7 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
             return false;
         }
     }
-*/
+
     else if (!isMainFrame)
     {
         qDebug() << "NON_MAINFRAME request of url" << url << "by navitype" << type << "passed through.";
@@ -196,4 +197,4 @@ bool WebPage::acceptNavigationRequest(const QUrl& url, NavigationType type, bool
     }
     return true;
 }
-
+*/

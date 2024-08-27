@@ -6,5 +6,5 @@ struct UserScript: public QWebEngineScript
 
 public:
     UserScript();
-    void load_from_file (const QString& filename);
+    void load_from_file(const QString& filename);
 };

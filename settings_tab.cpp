@@ -162,14 +162,35 @@ SettingsTab::SettingsTab (QWidget* parent): QWidget (parent)
     });
 
 
-    QVBoxLayout* filtering_layout = new QVBoxLayout (this);
-    filtering_layout->addWidget (filter_selector);
-    filtering_layout->addWidget (comment);
-    content_filters->setLayout (filtering_layout);
+    QVBoxLayout* filtering_layout = new QVBoxLayout(this);
+    filtering_layout->addWidget(filter_selector);
+    filtering_layout->addWidget(comment);
+    content_filters->setLayout(filtering_layout);
 
-    QVBoxLayout* layout = new QVBoxLayout (this);
-    layout->addWidget (messenger);
-    layout->addWidget (content_filters);
-    layout->addStretch (1);
+    settings.beginGroup("External");
+    QGroupBox* external = new QGroupBox(tr("External tools"), this);
+    QLabel* commandline_label = new QLabel("gallery-dl/yt-dlp commandline arguments:", this);
+    QLineEdit* commandline = new QLineEdit(settings.value("commandline", "").toString(), this);
+    commandline->setPlaceholderText("--proxy socks5://localhost:1080/ --cookies-from-browser chromium --trim-filenames 20");
+    settings.endGroup();
+
+    connect (commandline, &QLineEdit::editingFinished, [this, commandline]()
+    {
+        QSettings settings;
+        settings.beginGroup("External");
+        settings.setValue("commandline", commandline->text());
+        settings.endGroup();
+    });
+
+    QVBoxLayout* external_layout = new QVBoxLayout(this);
+    external_layout->addWidget(commandline_label);
+    external_layout->addWidget(commandline);
+    external->setLayout(external_layout);
+
+    QVBoxLayout* layout = new QVBoxLayout(this);
+    layout->addWidget(messenger);
+    layout->addWidget(content_filters);
+    layout->addWidget(external);
+    layout->addStretch(1);
     setLayout(layout);
 }

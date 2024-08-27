@@ -6,7 +6,7 @@
 
 #include "input_widget.h"
 
-InputWidget::InputWidget (QWidget* parent) : QLineEdit (parent)
+InputWidget::InputWidget(QWidget* parent) : QLineEdit (parent)
 {
     setAcceptDrops (true);
 }
@@ -30,7 +30,7 @@ bool InputWidget::check_for_image()
     return true;
 }
 
-void InputWidget::keyPressEvent (QKeyEvent* event)
+void InputWidget::keyPressEvent(QKeyEvent* event)
 {
     if (event->matches (QKeySequence::Paste) && check_for_image())
     {

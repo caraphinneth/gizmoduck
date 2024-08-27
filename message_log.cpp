@@ -10,7 +10,7 @@
 
 #include "message_log.h"
 
-MessageLog::MessageLog (QWidget* parent, const QString& _name): QTableView (parent)
+MessageLog::MessageLog(QWidget* parent, const QString& _name): QTableView (parent)
 {
     setVerticalScrollMode (QAbstractItemView::ScrollPerPixel);
 

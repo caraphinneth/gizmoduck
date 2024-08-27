@@ -1,5 +1,5 @@
 QT += widgets webenginewidgets sql network
-CONFIG += c++14
+CONFIG += c++20
 CONFIG -= app_bundle
 DEFINES += QT_MESSAGELOGCONTEXT
 LIBS += -ljemalloc
@@ -41,6 +41,8 @@ SOURCES += main.cpp \
     fullscreen.cpp \
     input_widget.cpp \
     message_log.cpp \
+    process_manager.cpp \
+    process_tab.cpp \
     tab_manager.cpp \
     webview.cpp \
     navigation_button.cpp \
@@ -64,6 +66,8 @@ HEADERS += \
     fullscreen.h \
     input_widget.h \
     message_log.h \
+    process_manager.h \
+    process_tab.h \
     tab_groups.h \
     tab_manager.h \
     webview.h \

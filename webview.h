@@ -8,8 +8,8 @@ struct WebView: public QWebEngineView
     Q_OBJECT
 
 public:
-    WebView (QWidget* parent = nullptr);
-    WebView (QWebEngineProfile *profile, QWidget* parent = nullptr);
+    WebView (QWidget* parent=nullptr);
+    WebView (QWebEngineProfile* profile, QWidget* parent=nullptr);
 
 protected:
     void contextMenuEvent (QContextMenuEvent* event) override; // Our own context menu.
@@ -23,8 +23,8 @@ signals:
     void icon_changed (const QIcon& icon);
     void search_requested (const QString& text);
     void link_requested (const QString& url, bool background);
+    void process_requested(const QString& executable, const QStringList& arguments);
     void went_to_sleep();
-    void page_requested(QWeakPointer<WebPage> page);
 
 private:
     void search_selected();

@@ -4,14 +4,17 @@
 #include <QTabWidget>
 #include <QWebEngineHistory>
 #include <QWebEngineFullScreenRequest>
-#include "webview.h"
-#include "setting_tab.h"
+
 #include "debug_tab.h"
 #include "fullscreen.h"
+#include "process_manager.h"
+#include "process_tab.h"
 #include "request_filter.h"
+#include "setting_tab.h"
+#include "side_tabs.h"
 #include "tab_groups.h"
 #include "tox_ui.h"
-#include "side_tabs.h"
+#include "webview.h"
 
 struct TabWidget: public QStackedWidget
 {
@@ -29,23 +32,25 @@ public:
 
     SettingsTab* settings_tab();
     DebugTab* debug_tab();
+    ProcessTab* show_process_tab();
 
 signals:
-    //void title_changed (const QString &title);
-    void url_changed (const QUrl& url);
-    void print_to_debug_tab (const QString& text);
+    //void title_changed(const QString &title);
+    void url_changed(const QUrl& url);
+    void print_to_debug_tab(const QString& text);
     void reload_filters();
     void avatar_changed();
-    void name_update (const QString& name);
-    void status_update (const QString& status);
+    void name_update(const QString& name);
+    void status_update(const QString& status);
     void update_session();
     void debug_tabs_updated();
+    void page_requested(QWeakPointer<WebPage> page);
 
 public slots:
-    void set_url (const QUrl& url, bool background=false);
-    void close_page (int index);
-    void close_tab (int index);
-    WebView* create_tab (bool at_end = false);
+    void set_url(const QUrl& url, bool background=false);
+    void close_page(int index);
+    void close_tab(int index);
+    WebView* create_tab(bool at_end=false);
     void restore_tab();
     void back();
     void forward();
@@ -56,7 +61,7 @@ public slots:
 
     void save_state();
     void load_state();
-    void download (QWebEngineDownloadRequest* download);
+    void download(QWebEngineDownloadRequest* download);
     void cleanup();
 
 private slots:
@@ -65,6 +70,8 @@ private slots:
 
 private:
     QTimer* autosave;
+    ProcessManager* process_manager;
+    ProcessTab* process_tab;
     RequestFilter* request_filter;
     QScopedPointer<FullScreenWindow> fullscreen;
     void install_page_signal_handler (QSharedPointer<WebPage> p);
@@ -80,6 +87,7 @@ private:
     QWeakPointer<WebPage> page_back (TabGroup* group);
     QWeakPointer<WebPage> page_forward (TabGroup* group);
 
-    void setTabIcon (int index, const QIcon& icon);
-    void setTabText (int index, const QString& text);
+    void setTabIcon(int index, const QIcon& icon);
+    void setTabText(int index, const QString& text);
+    void set_page(WebView* view, QWeakPointer<WebPage> page);
 };

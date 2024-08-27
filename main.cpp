@@ -78,16 +78,16 @@ int main(int argc, char **argv)
     app.setWindowIcon (QIcon (QStringLiteral (":/icons/gizmoduck")));
 
     QTranslator qt_translator;
-    qt_translator.load ("qt_" + QLocale::system().name(), QLibraryInfo::location (QLibraryInfo::TranslationsPath));
-    app.installTranslator (&qt_translator);
+    qt_translator.load("qt_" + QLocale::system().name(), QLibraryInfo::location (QLibraryInfo::TranslationsPath));
+    app.installTranslator(&qt_translator);
 
     QTranslator webengine_translator;
-    webengine_translator.load ("qtwebengine_" + QLocale::system().name(), QLibraryInfo::location (QLibraryInfo::TranslationsPath));
-    app.installTranslator (&webengine_translator);
+    webengine_translator.load("qtwebengine_" + QLocale::system().name(), QLibraryInfo::location (QLibraryInfo::TranslationsPath));
+    app.installTranslator(&webengine_translator);
 
     QTranslator browser_translator;
-    browser_translator.load (":/locale/gizmoduck_" + QLocale::system().name());
-    app.installTranslator (&browser_translator);
+    browser_translator.load(":/locale/gizmoduck_" + QLocale::system().name());
+    app.installTranslator(&browser_translator);
 
     QSharedMemory sharedMemory(uniqueKey);
     if (sharedMemory.attach())

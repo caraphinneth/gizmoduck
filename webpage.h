@@ -8,15 +8,15 @@ struct WebPage : public QWebEnginePage
     Q_OBJECT
 
 public:
-    WebPage (QWebEngineProfile* profile, QWidget* parent = nullptr);
-    ~WebPage ();
+    WebPage(QWebEngineProfile* profile, QWidget* parent=nullptr);
+    ~WebPage();
     QTimer* lifecycle;
     QUrl old_url;
 
 private slots:
-    void handleAuthenticationRequired (const QUrl& url, QAuthenticator* auth);
+    void handleAuthenticationRequired(const QUrl& url, QAuthenticator* auth);
 
 protected:
-    QStringList chooseFiles (QWebEnginePage::FileSelectionMode mode, const QStringList& oldFiles, const QStringList& acceptedMimeTypes) override; // Overload to implement non-useless file dialog.
-    bool acceptNavigationRequest (const QUrl& url, NavigationType type, bool isMainFrame) override;
+    QStringList chooseFiles(QWebEnginePage::FileSelectionMode mode, const QStringList& oldFiles, const QStringList& acceptedMimeTypes) override; // Overload to implement non-useless file dialog.
+    // bool acceptNavigationRequest(const QUrl& url, NavigationType type, bool isMainFrame) override;
 };
