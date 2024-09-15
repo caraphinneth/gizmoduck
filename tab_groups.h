@@ -56,6 +56,10 @@ public:
     {
         if (contains(key))
         {
+            if (position != -2)
+            {
+                qDebug() << "WARNING: the page is supposed to be new, but already exists:" << key;
+            }
             return QWeakPointer<WebPage>(value(key));
         }
         else if (position != -2)
@@ -90,12 +94,12 @@ public:
     }
 };
 
-class History: public std::list<QUrl>
+class History : public QList<QUrl>
 {
 public:
-    std::list<QUrl>::iterator current;
+    QList<QUrl>::iterator current;
 
-    History() : std::list<QUrl>()
+    History() : QList<QUrl>()
     {
         current = begin();
     }
@@ -111,19 +115,17 @@ public:
         }
         else
             current = insert(std::next(current), url);
-
-        //qDebug() << "History now points at" << current->toString();
     }
+
     void forward()
     {
         if (current!=std::prev(end()))
             ++current;
     }
+
     void back()
     {
         if (current!=begin())
             --current;
-        // qDebug() << "History now points at" << current->toString();
     }
-
 };

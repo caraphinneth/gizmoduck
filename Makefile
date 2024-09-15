@@ -14,9 +14,9 @@ EQ            = =
 
 CC            = gcc
 CXX           = g++
-DEFINES       = -DQT_MESSAGELOGCONTEXT -DQT_DEPRECATED_WARNINGS -DQT_NO_DEBUG -DQT_WEBENGINEWIDGETS_LIB -DQT_PRINTSUPPORT_LIB -DQT_WIDGETS_LIB -DQT_WEBENGINECORE_LIB -DQT_QUICK_LIB -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_QMLMODELS_LIB -DQT_WEBCHANNEL_LIB -DQT_QML_LIB -DQT_NETWORK_LIB -DQT_QMLINTEGRATION_LIB -DQT_POSITIONING_LIB -DQT_SQL_LIB -DQT_CORE_LIB
+DEFINES       = -DQT_MESSAGELOGCONTEXT -DQT_SHAREDPOINTER_TRACK_POINTERS -DQT_DEPRECATED_WARNINGS -DQT_NO_DEBUG -DQT_WEBENGINEWIDGETS_LIB -DQT_PRINTSUPPORT_LIB -DQT_WIDGETS_LIB -DQT_WEBENGINECORE_LIB -DQT_QUICK_LIB -DQT_OPENGL_LIB -DQT_GUI_LIB -DQT_QMLMODELS_LIB -DQT_WEBCHANNEL_LIB -DQT_QML_LIB -DQT_NETWORK_LIB -DQT_QMLINTEGRATION_LIB -DQT_POSITIONING_LIB -DQT_SQL_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -O2 -g -Wall -Wextra -fPIC -D_REENTRANT $(DEFINES)
-CXXFLAGS      = -pipe -Og -pipe -march=native -ftree-vectorize -Wall -Wextra -Wpedantic -O2 -g -std=gnu++2a -Wall -Wextra -fPIC -D_REENTRANT $(DEFINES)
+CXXFLAGS      = -pipe -O3 -pipe -march=native -ftree-vectorize -fno-predictive-commoning -fno-semantic-interposition -floop-nest-optimize -fipa-pta -fdevirtualize-at-ltrans -Wall -Wextra -Wpedantic -flto=6 -O2 -g -std=gnu++2a -Wall -Wextra -fPIC -D_REENTRANT $(DEFINES)
 INCPATH       = -I. -I/usr/include/qt6 -I/usr/include/qt6/QtWebEngineWidgets -I/usr/include/qt6/QtPrintSupport -I/usr/include/qt6/QtWidgets -I/usr/include/qt6/QtWebEngineCore -I/usr/include/qt6/QtQuick -I/usr/include/qt6/QtOpenGL -I/usr/include/qt6/QtGui -I/usr/include/qt6/QtQmlModels -I/usr/include/qt6/QtWebChannel -I/usr/include/qt6/QtQml -I/usr/include/qt6/QtNetwork -I/usr/include/qt6/QtQmlIntegration -I/usr/include/qt6/QtPositioning -I/usr/include/qt6/QtSql -I/usr/include/qt6/QtCore -I. -I/usr/lib64/qt6/mkspecs/linux-g++
 QMAKE         = /usr/lib64/qt6/bin/qmake6
 DEL_FILE      = rm -f
@@ -958,7 +958,7 @@ compiler_moc_predefs_make_all: moc_predefs.h
 compiler_moc_predefs_clean:
 	-$(DEL_FILE) moc_predefs.h
 moc_predefs.h: /usr/lib64/qt6/mkspecs/features/data/dummy.cpp
-	g++ -pipe -Og -pipe -march=native -ftree-vectorize -Wall -Wextra -Wpedantic -O2 -g -std=gnu++2a -Wall -Wextra -fPIC -dM -E -o moc_predefs.h /usr/lib64/qt6/mkspecs/features/data/dummy.cpp
+	g++ -pipe -O3 -pipe -march=native -ftree-vectorize -fno-predictive-commoning -fno-semantic-interposition -floop-nest-optimize -fipa-pta -fdevirtualize-at-ltrans -Wall -Wextra -Wpedantic -flto=6 -O2 -g -std=gnu++2a -Wall -Wextra -fPIC -dM -E -o moc_predefs.h /usr/lib64/qt6/mkspecs/features/data/dummy.cpp
 
 compiler_moc_header_make_all: moc_browser_mainwindow.cpp moc_fullscreen.cpp moc_input_widget.cpp moc_message_log.cpp moc_process_manager.cpp moc_process_tab.cpp moc_tab_manager.cpp moc_webview.cpp moc_navigation_button.cpp moc_webpage.cpp moc_file_dialog.cpp moc_request_filter.cpp moc_side_tabs.cpp moc_setting_tab.cpp moc_debug_tab.cpp moc_tox_ui.cpp
 compiler_moc_header_clean:

@@ -20,9 +20,15 @@ bool WebView::eventFilter (QObject* object, QEvent* event)
 
     return false;
 }
-*/
+
 
 WebView::WebView (QWidget* parent): QWebEngineView (parent)
+{
+
+}
+*/
+
+WebView::WebView(QWebEngineProfile* profile, QWidget* parent): QWebEngineView (profile, parent)
 {
     /*
     QApplication::instance()->installEventFilter(this);
@@ -33,23 +39,6 @@ WebView::WebView (QWidget* parent): QWebEngineView (parent)
         // QToolTip::showText (mapToGlobal (position), selectedText());
     });
     */
-}
-
-WebView::WebView(QWebEngineProfile* profile, QWidget* parent): QWebEngineView (profile, parent)
-{
-
-}
-
-void WebView::set_page(QWeakPointer<WebPage> page)
-{
-    if (auto lock = page.lock())
-    {
-        setPage(lock.data());
-    }
-    else
-    {
-        qDebug() << "BUG: page requested is null or deleted!";
-    }
 }
 
 QWebEngineView* WebView::createWindow (QWebEnginePage::WebWindowType type)
@@ -108,16 +97,40 @@ void WebView::run_yt_dlp()
     QString default_args = settings.value("commandline", "").toString();
     settings.endGroup();
 
-    QString cookie_path = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath("Gizmoduck/QtWebEngine/Default/Cookies");
+    QString cookie_path = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath("QtWebEngine/Default/Cookies");
     QString download_path = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
 
     QStringList arg_list = default_args.split(' ', Qt::SkipEmptyParts);
 
-    arg_list << "-C" << cookie_path << "-P" << download_path << action->data().toString();
+    arg_list << "-C" << cookie_path << "--windows-filenames" << "-P" << download_path << action->data().toString();
 
-    qDebug() << "Argument list:" << arg_list;
+    // qDebug() << "Argument list:" << arg_list;
 
     emit process_requested("yt-dlp", arg_list);
+}
+
+void WebView::run_gallery_dl()
+{
+    QAction* action = qobject_cast<QAction*> (sender());
+
+    if (!action)
+      return;
+
+    QSettings settings;
+    settings.beginGroup("External");
+    QString default_args = settings.value("commandline", "").toString();
+    settings.endGroup();
+
+    QString cookie_path = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation)).filePath("QtWebEngine/Default/Cookies");
+    QString download_path = QStandardPaths::writableLocation(QStandardPaths::HomeLocation);
+
+    QStringList arg_list = default_args.split(' ', Qt::SkipEmptyParts);
+
+    arg_list << "-C" << cookie_path << "-d" << download_path << action->data().toString();
+
+    // qDebug() << "Argument list:" << arg_list;
+
+    emit process_requested("gallery-dl", arg_list);
 }
 
 void WebView::contextMenuEvent (QContextMenuEvent* event)
@@ -137,12 +150,12 @@ void WebView::contextMenuEvent (QContextMenuEvent* event)
     const QList<QAction*> actions = menu->actions();
 
     // Look for the default link option, and modify some.
-    auto it = std::find (actions.cbegin(), actions.cend(), page()->action(QWebEnginePage::OpenLinkInThisWindow));
+    auto it = std::find(actions.cbegin(), actions.cend(), page()->action(QWebEnginePage::OpenLinkInThisWindow));
     if (it != actions.cend())
     {
         (*it)->setText(tr("Open Link in This Tab"));
         ++it;
-        QAction *before (it == actions.cend() ? nullptr : *it);
+        QAction* before (it == actions.cend() ? nullptr : *it);
         menu->insertAction(before, page()->action (QWebEnginePage::OpenLinkInNewWindow));
         menu->insertAction(before, page()->action (QWebEnginePage::OpenLinkInNewTab));
     }
@@ -171,15 +184,20 @@ void WebView::contextMenuEvent (QContextMenuEvent* event)
         }
     }
 
-    QAction* action3 = new QAction (tr("Translate Page"), this);
+    QAction* action3 = new QAction(tr("Translate Page"), this);
     action3->setData ("https://translate.google.com/translate?js=n&sl=auto&tl=en&u="+this->url().toString());
     connect (action3, &QAction::triggered, this, &WebView::follow_link);
-    menu->addAction (action3);
+    menu->addAction(action3);
 
     QAction* action4 = new QAction (tr("Run yt-dlp"), this);
     action4->setData(this->url().toString());
     connect (action4, &QAction::triggered, this, &WebView::run_yt_dlp);
-    menu->addAction (action4);
+    menu->addAction(action4);
+
+    QAction* action5 = new QAction (tr("Run gallery-dl"), this);
+    action5->setData(this->url().toString());
+    connect (action5, &QAction::triggered, this, &WebView::run_gallery_dl);
+    menu->addAction(action5);
 
     menu->addAction (page()->action(QWebEnginePage::InspectElement));
 

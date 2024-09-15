@@ -11,7 +11,7 @@ ProcessTab::ProcessTab(QWidget* parent): QWidget(parent)
     process_list->setModel(model);
     QStyledItemDelegate* delegate = new ProcessInfo(process_list);
     process_list->setItemDelegate(delegate);
-    QVBoxLayout* layout(new QVBoxLayout (this));
+    QVBoxLayout* layout(new QVBoxLayout(this));
     layout->addWidget(label);
     layout->addWidget(process_list);
     setLayout(layout);

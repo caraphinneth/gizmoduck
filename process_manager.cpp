@@ -1,3 +1,4 @@
+#include <QDebug>
 #include "process_manager.h"
 
 

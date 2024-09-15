@@ -13,6 +13,11 @@
         <source>Tab groups:</source>
         <translation>Группы вкладок:</translation>
     </message>
+    <message>
+        <location filename="debug_tab.cpp" line="15"/>
+        <source>History:</source>
+        <translation>История:</translation>
+    </message>
 </context>
 <context>
     <name>FileDialog</name>
@@ -25,43 +30,48 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="browser_mainwindow.cpp" line="48"/>
+        <location filename="browser_mainwindow.cpp" line="46"/>
         <source>Navigation</source>
         <translation>Навигация</translation>
     </message>
     <message>
-        <location filename="browser_mainwindow.cpp" line="69"/>
+        <location filename="browser_mainwindow.cpp" line="67"/>
         <source>Settings</source>
         <translation>Настройки</translation>
     </message>
     <message>
-        <location filename="browser_mainwindow.cpp" line="107"/>
+        <location filename="browser_mainwindow.cpp" line="71"/>
+        <source>Downloads</source>
+        <translation>Загрузки</translation>
+    </message>
+    <message>
+        <location filename="browser_mainwindow.cpp" line="110"/>
         <source>Find text: </source>
         <translation>Найти: </translation>
     </message>
     <message>
-        <location filename="browser_mainwindow.cpp" line="232"/>
+        <location filename="browser_mainwindow.cpp" line="237"/>
         <source>[Connecting...]</source>
         <translation>[Соединение...]</translation>
     </message>
     <message>
-        <location filename="browser_mainwindow.cpp" line="268"/>
+        <location filename="browser_mainwindow.cpp" line="273"/>
         <source>Fetching contacts...</source>
         <translation>Получение списка контактов...</translation>
     </message>
     <message>
-        <location filename="browser_mainwindow.cpp" line="271"/>
+        <location filename="browser_mainwindow.cpp" line="276"/>
         <source>Add contact...</source>
         <translation>Добавить контакт...</translation>
     </message>
     <message>
-        <location filename="browser_mainwindow.cpp" line="351"/>
-        <location filename="browser_mainwindow.cpp" line="466"/>
+        <location filename="browser_mainwindow.cpp" line="356"/>
+        <location filename="browser_mainwindow.cpp" line="471"/>
         <source>Chat</source>
         <translation>Чат</translation>
     </message>
     <message>
-        <location filename="browser_mainwindow.cpp" line="529"/>
+        <location filename="browser_mainwindow.cpp" line="534"/>
         <source>Paste a full tox ID (NOT just public key) to add contact:</source>
         <translation>Вставьте полный tox ID (НЕ только публичный ключ) для добавления:</translation>
     </message>
@@ -70,9 +80,17 @@
         <translation type="vanished">Прокси вкл/выкл</translation>
     </message>
     <message>
-        <location filename="browser_mainwindow.cpp" line="83"/>
+        <location filename="browser_mainwindow.cpp" line="86"/>
         <source>Close the active tab</source>
         <translation>Закрыть вкладку</translation>
+    </message>
+</context>
+<context>
+    <name>ProcessTab</name>
+    <message>
+        <location filename="process_tab.cpp" line="8"/>
+        <source>Running processes:</source>
+        <translation>Запущенные процессы:</translation>
     </message>
 </context>
 <context>
@@ -203,6 +221,11 @@ Disabling may cause visual artifacts when scrolling fast.</source>
         <source>Content Filters:</source>
         <translation>Фильтры:</translation>
     </message>
+    <message>
+        <location filename="settings_tab.cpp" line="171"/>
+        <source>External tools</source>
+        <translation>Внешние инструменты</translation>
+    </message>
 </context>
 <context>
     <name>TabWidget</name>
@@ -219,19 +242,24 @@ Disabling may cause visual artifacts when scrolling fast.</source>
         <translation type="vanished">Сохранить как...</translation>
     </message>
     <message>
-        <location filename="tab_manager.cpp" line="968"/>
+        <location filename="tab_manager.cpp" line="1023"/>
         <source>Debug</source>
         <translation>Отладка</translation>
     </message>
     <message>
-        <location filename="tab_manager.cpp" line="934"/>
+        <location filename="tab_manager.cpp" line="990"/>
         <source>Save as</source>
         <translation>Сохранить как...</translation>
     </message>
     <message>
-        <location filename="tab_manager.cpp" line="947"/>
+        <location filename="tab_manager.cpp" line="1003"/>
         <source>Settings</source>
         <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="tab_manager.cpp" line="1060"/>
+        <source>Downloads</source>
+        <translation>Загрузки</translation>
     </message>
 </context>
 <context>
@@ -268,17 +296,17 @@ Disabling may cause visual artifacts when scrolling fast.</source>
 <context>
     <name>WebPage</name>
     <message>
-        <location filename="webpage.cpp" line="87"/>
+        <location filename="webpage.cpp" line="98"/>
         <source>Select File</source>
         <translation>Выбрать файл</translation>
     </message>
     <message>
-        <location filename="webpage.cpp" line="87"/>
+        <location filename="webpage.cpp" line="98"/>
         <source>All Files (*.*)</source>
         <translation>Все файлы (*.*)</translation>
     </message>
     <message>
-        <location filename="webpage.cpp" line="111"/>
+        <location filename="webpage.cpp" line="121"/>
         <source>Enter username and password for &quot;%1&quot; at %2</source>
         <translation>Введите логин и пароль для &quot;%1&quot; на %2</translation>
     </message>
@@ -290,34 +318,39 @@ Disabling may cause visual artifacts when scrolling fast.</source>
 <context>
     <name>WebView</name>
     <message>
-        <location filename="webview.cpp" line="127"/>
+        <location filename="webview.cpp" line="169"/>
         <source>Open Link in This Tab</source>
         <translation>Открыть в текущей вкладке</translation>
     </message>
     <message>
-        <location filename="webview.cpp" line="140"/>
+        <location filename="webview.cpp" line="182"/>
         <source>Search &quot;</source>
         <translation>Найти &quot;</translation>
     </message>
     <message>
-        <location filename="webview.cpp" line="140"/>
+        <location filename="webview.cpp" line="182"/>
         <source>&quot; on the web</source>
         <translation>&quot; в интернете</translation>
     </message>
     <message>
-        <location filename="webview.cpp" line="148"/>
+        <location filename="webview.cpp" line="190"/>
         <source>Follow &quot;</source>
         <translation>Перейти по ссылке &quot;</translation>
     </message>
     <message>
-        <location filename="webview.cpp" line="158"/>
+        <location filename="webview.cpp" line="200"/>
         <source>Translate Page</source>
         <translation>Перевести страницу</translation>
     </message>
     <message>
-        <location filename="webview.cpp" line="163"/>
+        <location filename="webview.cpp" line="205"/>
         <source>Run yt-dlp</source>
         <translation>Скачать видео</translation>
+    </message>
+    <message>
+        <location filename="webview.cpp" line="210"/>
+        <source>Run gallery-dl</source>
+        <translation>Скачать изображения</translation>
     </message>
     <message>
         <source>Search </source>

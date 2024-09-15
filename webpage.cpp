@@ -9,13 +9,14 @@
 #include "webpage.h"
 #include "webview.h"
 
-WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (profile, parent)
+WebPage::WebPage(QWebEngineProfile* profile, QWidget* parent): QWebEnginePage(profile, parent)
 {
     old_url = url();
+    setProperty("icon", QIcon(QStringLiteral(":/icons/gizmoduck")));
 
     connect(this, &WebPage::authenticationRequired, this, &WebPage::handleAuthenticationRequired);
 
-    lifecycle = new QTimer (this);
+    lifecycle = new QTimer(this);
     connect(this, &WebPage::recommendedStateChanged, [this]()
     {
         // qDebug() << "State change advised:" << recommendedState();
@@ -26,8 +27,8 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
         }
         else if (!isVisible()&& // TODO: a setting for permamently awake pages.
                  (url().host()!="discord.com")&&
-                 (url().host()!="twitter.com")&&
-                 (url().host()!="x.com")&&
+                 // (url().host()!="twitter.com")&&
+                 // (url().host()!="x.com")&&
                  (url().host()!="tripwire.eve-apps.com")&&
                  (url().host()!="colab.research.google.com")&&
                  (url().host()!="localhost")
@@ -45,35 +46,33 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
         if (state == QWebEnginePage::LifecycleState::Discarded)
         {
             emit iconChanged(QIcon(QStringLiteral (":/icons/sleep")));
-            if (WebView* view = qobject_cast<WebView*>(QWebEngineView::forPage(this)))
-            {
-                emit view->went_to_sleep();
-            }
         }
         else if (state == QWebEnginePage::LifecycleState::Frozen)
             emit iconChanged(QIcon(QStringLiteral (":/icons/freeze")));
 
         else
-            profile->requestIconForPageURL(url(), 16, [this](const QIcon &icon, const QUrl, const QUrl)
+        {
+            profile->requestIconForPageURL(url(), 16, [this](const QIcon& icon, const QUrl&, const QUrl&)
             {
-                if (icon.isNull())
-                {
-                    emit iconChanged(QIcon(QStringLiteral(":/icons/gizmoduck")));
-                }
-                else
-                {
-                    emit iconChanged(icon);
-                }
+                emit iconChanged(icon.isNull() ? QIcon(QStringLiteral(":/icons/gizmoduck")) : icon);
             });
+        }
+    });
 
-     });
-
-    connect (lifecycle, &QTimer::timeout, [this]()
+    connect(lifecycle, &QTimer::timeout, [this]()
     {
-        if (lifecycleState() != recommendedState())
+        if ((lifecycleState() != recommendedState()) && (recommendedState() != QWebEnginePage::LifecycleState::Discarded))
         {
             setLifecycleState (recommendedState());
             // qDebug() << "State for" << url() << "changed to" << lifecycleState();
+        }
+    });
+
+    connect(this, &WebPage::urlChanged, [this](const QUrl& new_url)
+    {
+        if (!(old_url == new_url))
+        {
+            emit url_changed(old_url, new_url);
         }
     });
 }
@@ -81,16 +80,20 @@ WebPage::WebPage (QWebEngineProfile* profile, QWidget* parent): QWebEnginePage (
 WebPage::~WebPage()
 {
     lifecycle->stop();
-    delete(lifecycle);
-    //QWebEnginePage::~QWebEnginePage();
+}
+
+void WebPage::confirm_url_change(const QUrl& new_url)
+// Probably excessive, just to ensure thread safety.
+{
+    old_url = new_url;
 }
 
 //TODO: args
 QStringList WebPage::chooseFiles (QWebEnginePage::FileSelectionMode mode, const QStringList&/*oldFiles*/, const QStringList&/*acceptedMimeTypes*/)
 {
     QStringList list;
-    QScopedPointer <FileDialog> dialog;
-    dialog.reset (new FileDialog (QWebEngineView::forPage(this), tr("Select File"), "", tr("All Files (*.*)")));
+    QScopedPointer<FileDialog> dialog;
+    dialog.reset (new FileDialog(QWebEngineView::forPage(this), tr("Select File"), "", tr("All Files (*.*)")));
     dialog->setAcceptMode (QFileDialog::AcceptOpen);
 
     if (mode == QWebEnginePage::FileSelectOpen)
@@ -105,35 +108,32 @@ QStringList WebPage::chooseFiles (QWebEnginePage::FileSelectionMode mode, const 
     return list;
 }
 
-void WebPage::handleAuthenticationRequired (const QUrl& url, QAuthenticator* auth)
+void WebPage::handleAuthenticationRequired(const QUrl& url, QAuthenticator* auth)
 {
     QWidget* mainWindow = QWebEngineView::forPage(this)->window();
 
-    QDialog dialog (mainWindow);
-    dialog.setModal (true);
-    dialog.setWindowFlags (dialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+    QDialog dialog(mainWindow);
+    dialog.setModal(true);
+    dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowContextHelpButtonHint);
 
-    QScopedPointer <QLabel> auth_label;
-    auth_label.reset (new QLabel (tr ("Enter username and password for \"%1\" at %2").arg (auth->realm()).arg(url.toString().toHtmlEscaped())));
-    auth_label->setWordWrap (true);
+    QLabel* auth_label(new QLabel(tr("Enter username and password for \"%1\" at %2").arg (auth->realm()).arg(url.toString().toHtmlEscaped()), &dialog));
+    auth_label->setWordWrap(true);
 
-    QScopedPointer<QLineEdit> username;
-    username.reset (new QLineEdit (&dialog));
-    QScopedPointer<QLineEdit> password;
-    password.reset (new QLineEdit (&dialog));
+    QLineEdit* username(new QLineEdit(&dialog));
+    QLineEdit* password(new QLineEdit(&dialog));
 
-    QVBoxLayout* layout = new QVBoxLayout;
-    layout->addWidget (auth_label.data());
-    layout->addWidget (username.data());
-    layout->addWidget (password.data());
+    QVBoxLayout* layout = new QVBoxLayout(&dialog);
+    layout->addWidget(auth_label);
+    layout->addWidget(username);
+    layout->addWidget(password);
     dialog.setLayout(layout);
 
-    connect (password.data(), &QLineEdit::returnPressed, &dialog, &QDialog::accept);
+    connect(password, &QLineEdit::returnPressed, &dialog, &QDialog::accept);
 
     if (dialog.exec() == QDialog::Accepted)
     {
-        auth->setUser (username->text());
-        auth->setPassword (password->text());
+        auth->setUser(username->text());
+        auth->setPassword(password->text());
     }
     else
     {

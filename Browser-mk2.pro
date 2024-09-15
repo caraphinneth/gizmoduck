@@ -1,18 +1,19 @@
-QT += widgets webenginewidgets sql network
+QT += widgets webenginewidgets sql
 CONFIG += c++20
 CONFIG -= app_bundle
 DEFINES += QT_MESSAGELOGCONTEXT
+DEFINES += QT_SHAREDPOINTER_TRACK_POINTERS
 LIBS += -ljemalloc
 
 win32:QMAKE_CXXFLAGS+="-O2"
 !win32 {
-    #QMAKE_CXXFLAGS+="-O3 -pipe -march=native -ftree-vectorize -fno-predictive-commoning -fno-semantic-interposition -floop-nest-optimize -fipa-pta -fdevirtualize-at-ltrans -Wall -Wextra -Wpedantic -flto=6"
-    QMAKE_CXXFLAGS+="-Og -pipe -march=native -ftree-vectorize -Wall -Wextra -Wpedantic"
+    QMAKE_CXXFLAGS+="-O3 -pipe -march=native -ftree-vectorize -fno-predictive-commoning -fno-semantic-interposition -floop-nest-optimize -fipa-pta -fdevirtualize-at-ltrans -Wall -Wextra -Wpedantic -flto=6"
+    #QMAKE_CXXFLAGS+="-Og -pipe -march=native -Wall -Wextra -Wpedantic"
 }
 
-#-g -ggdb"
+#-g -ggdb -pg -ggdb3"
 #-flto=8"
-#QMAKE_LFLAGS+="-g -pg"
+#QMAKE_LFLAGS+="-pg"
 
 !win32 {
     LIBS += -ltoxcore -lsodium

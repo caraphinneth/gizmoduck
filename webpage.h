@@ -13,6 +13,12 @@ public:
     QTimer* lifecycle;
     QUrl old_url;
 
+public slots:
+    void confirm_url_change(const QUrl& new_url);
+
+signals:
+    void url_changed(const QUrl& old_url, const QUrl& new_url);
+
 private slots:
     void handleAuthenticationRequired(const QUrl& url, QAuthenticator* auth);
 

@@ -44,4 +44,17 @@ public:
         doc.drawContents(painter, option.rect);
         painter->restore();
     }
+
+
+    QSize sizeHint(const QStyleOptionViewItem& option, const QModelIndex& index) const override
+    {
+        QString htmlText = index.data(Qt::DisplayRole).toString();
+        QTextDocument doc;
+        doc.setHtml(htmlText);
+        doc.setTextWidth(option.rect.width());
+
+        // Use documentSize() to get the full height
+        QSize size = doc.size().toSize();
+        return QSize(size.width(), size.height());
+    }
 };

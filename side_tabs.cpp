@@ -145,7 +145,7 @@ QSize TabHeader::sizeHint (const QStyleOptionViewItem& /*option*/,  const QModel
     return QSize (width, height);
 }
 
-void SideTabs::wheelEvent (QWheelEvent* event)
+void SideTabs::wheelEvent(QWheelEvent* event)
 {
     emit temp_pass_wheel_event (event);
 }

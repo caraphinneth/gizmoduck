@@ -37,9 +37,7 @@ MainWindow::MainWindow()
     move (settings.value ("pos", QPoint (200, 200)).toPoint());
     settings.endGroup();
 
-    settings.beginGroup ("Interface");
-    QApplication::setWheelScrollLines (settings.value ("scroll_speed", 3).toInt());
-    settings.endGroup ();
+    QApplication::setWheelScrollLines(10);
 
     QNetworkProxyFactory::setUseSystemConfiguration (true);
 //    QNetworkProxyFactory factory;
@@ -175,12 +173,12 @@ MainWindow::MainWindow()
 
     connect (tab_manager, &TabWidget::url_changed, [this](const QUrl& url)
     {
-        WebView* view = qobject_cast<WebView*>(tab_manager->widget (tab_manager->currentIndex()));
+        WebView* view = qobject_cast<WebView*>(tab_manager->widget(tab_manager->currentIndex()));
         if (view)
         {
             address_box->setEnabled(true);
             if (url.toString()!="about:blank")
-                address_box->setText (url.toDisplayString());
+                address_box->setText(url.toDisplayString());
             else
             {
                 address_box->setText("");
@@ -190,11 +188,11 @@ MainWindow::MainWindow()
         else // Not a web tab.
         {
             address_box->setDisabled(true);
-            address_box->setText ("");
+            address_box->setText("");
         }
     });
 
-    connect (tab_manager->tabBar, &SideTabs::doubleClicked, [this]()
+    connect(tab_manager->tabBar, &SideTabs::doubleClicked, [this]()
     {
         address_box->selectAll();
         address_box->setFocus();
@@ -221,7 +219,7 @@ MainWindow::MainWindow()
 
     connect (close_button, &NavButton::left_clicked, [this]()
     {
-        tab_manager->close_page (tab_manager->tabBar->currentIndex().row());
+        tab_manager->close_page(tab_manager->tabBar->currentIndex().row());
     });
 
     connect (close_button, &NavButton::right_clicked, tab_manager, &TabWidget::restore_tab);

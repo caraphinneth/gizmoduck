@@ -37,6 +37,7 @@ public:
 signals:
     //void title_changed(const QString &title);
     void url_changed(const QUrl& url);
+    void url_change_confirmed(const QUrl& url);
     void print_to_debug_tab(const QString& text);
     void reload_filters();
     void avatar_changed();
@@ -74,7 +75,7 @@ private:
     ProcessTab* process_tab;
     RequestFilter* request_filter;
     QScopedPointer<FullScreenWindow> fullscreen;
-    void install_page_signal_handler (QSharedPointer<WebPage> p);
+    void manage_page (const QUrl& url_old, const QUrl& url_new);
 
     TabGroups tab_groups;
     TabGroup* assign_tab_group (const QString& host);
@@ -89,5 +90,7 @@ private:
 
     void setTabIcon(int index, const QIcon& icon);
     void setTabText(int index, const QString& text);
-    void set_page(WebView* view, QWeakPointer<WebPage> page);
+    void set_page(WebView* view, const QWeakPointer<WebPage> page);
+
+    void page_signal_handler(QSharedPointer<WebPage> p, const QUrl& new_url);
 };
